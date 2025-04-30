@@ -18,6 +18,11 @@ on:
         required: true
         type: boolean
         default: true
+      pushToTest:
+          description: 'Push images to the test ECR'
+          required: true
+          type: boolean
+          default: true
 
 env:
   FRONTEND_SRC_IMG: "${{ secrets.FRONTEND_SRC_REPO || 'ghcr.io/espoon-voltti/evaka/frontend-common' }}:${{ inputs.sourceCommit }}"
@@ -45,6 +50,8 @@ jobs:
         if: inputs.pushToDev
         uses: aws-actions/configure-aws-credentials@v4
         with:
+          mask-aws-account-id: true
+          unset-current-credentials: true
           role-to-assume: ${{ secrets.ECR_ROLE_ARN_DEV }}
           aws-region: ${{ vars.AWS_REGION }}
           role-duration-seconds: 900 # Min is 900
@@ -64,6 +71,38 @@ jobs:
           docker tag ${{ env.APIGW_SRC_IMG }} ${{ env.APIGW_DST_IMG }}
           docker tag ${{ env.SERVICE_SRC_IMG }} ${{ env.SERVICE_DST_IMG }}
           echo "Pushing images to Dev ECR"
+          echo -n "evaka/frontend-common image: "
+          docker push --quiet ${{ env.FRONTEND_DST_IMG }}
+          echo -n "evaka/api-gateway image: "
+          docker push --quiet ${{ env.APIGW_DST_IMG }}
+          echo -n "evaka-service image: "
+          docker push --quiet ${{ env.SERVICE_DST_IMG }}
+
+      - name: Configure AWS Credentials (Test)
+        if: inputs.pushToTest
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          mask-aws-account-id: true
+          unset-current-credentials: true
+          role-to-assume: ${{ secrets.ECR_ROLE_ARN_TEST }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-duration-seconds: 900 # Min is 900
+          retry-max-attempts: 3
+      - name: Login to ECR (Test)
+        if: inputs.pushToTest
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Tag and push images (Test)
+        if: inputs.pushToTest
+        env:
+          FRONTEND_DST_IMG: "${{ secrets.ECR_HOST_TEST }}/evaka/frontend-common:${{ inputs.sourceRelease }}"
+          APIGW_DST_IMG: "${{ secrets.ECR_HOST_TEST }}/evaka/api-gateway:${{ inputs.sourceRelease }}"
+          SERVICE_DST_IMG: "${{ secrets.ECR_HOST_TEST }}/evaka/service:${{ inputs.sourceRelease }}"
+        run: |
+          echo "Tagging Test images"
+          docker tag ${{ env.FRONTEND_SRC_IMG }} ${{ env.FRONTEND_DST_IMG }}
+          docker tag ${{ env.APIGW_SRC_IMG }} ${{ env.APIGW_DST_IMG }}
+          docker tag ${{ env.SERVICE_SRC_IMG }} ${{ env.SERVICE_DST_IMG }}
+          echo "Pushing images to Test ECR"
           echo -n "evaka/frontend-common image: "
           docker push --quiet ${{ env.FRONTEND_DST_IMG }}
           echo -n "evaka/api-gateway image: "
