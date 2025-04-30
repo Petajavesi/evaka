@@ -1,0 +1,72 @@
+name: Pet - Push release images to ECR
+
+on:
+  workflow_dispatch:
+    inputs:
+      sourceRelease:
+        description: 'Selected release version from the espoon-voltti/evaka repository'
+        required: true
+        type: string
+        default: 'v20250425'
+      sourceCommit:
+        description: 'Commit SHA in espoon-voltti/evaka repository that the selected release is based on'
+        required: true
+        type: string
+        default: 'ceeb79867b442564d5a428b7d7453ba1752d7e08'
+      pushToDev:
+        description: 'Push images to the development ECR'
+        required: true
+        type: boolean
+        default: true
+
+env:
+  FRONTEND_SRC_IMG: "${{ secrets.FRONTEND_SRC_REPO || 'ghcr.io/espoon-voltti/evaka/frontend-common' }}:${{ inputs.sourceCommit }}"
+  APIGW_SRC_IMG: "${{ secrets.APIGW_SRC_REPO || 'ghcr.io/espoon-voltti/evaka/api-gateway' }}:${{ inputs.sourceCommit }}"
+  SERVICE_SRC_IMG: "${{ secrets.SERVICE_SRC_REPO || 'ghcr.io/espoon-voltti/evaka/service' }}:${{ inputs.sourceCommit }}"
+
+jobs:
+  pull_tag_and_push:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+    
+      - name: Pull images from the source eVaka repo
+        run: |
+          echo "Pulling images from the source eVaka repo using tag: ${{ inputs.sourceCommit }}"
+          echo -n "evaka/frontend-common image: "
+          docker pull --quiet ${{ env.FRONTEND_SRC_IMG }}
+          echo -n "evaka/api-gateway image: "
+          docker pull --quiet ${{ env.APIGW_SRC_IMG }}
+          echo -n "evaka-service image: "
+          docker pull --quiet ${{ env.SERVICE_SRC_IMG }}
+          
+      - name: Configure AWS Credentials (Dev)
+        if: inputs.pushToDev
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.ECR_ROLE_ARN_DEV }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-duration-seconds: 900 # Min is 900
+          retry-max-attempts: 3
+      - name: Login to ECR (Dev)
+        if: inputs.pushToDev
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Tag and push images (Dev)
+        if: inputs.pushToDev
+        env:
+          FRONTEND_DST_IMG: "${{ secrets.ECR_HOST_DEV }}/evaka/frontend-common:${{ inputs.sourceRelease }}"
+          APIGW_DST_IMG: "${{ secrets.ECR_HOST_DEV }}/evaka/api-gateway:${{ inputs.sourceRelease }}"
+          SERVICE_DST_IMG: "${{ secrets.ECR_HOST_DEV }}/evaka/service:${{ inputs.sourceRelease }}"
+        run: |
+          echo "Tagging Dev images"
+          docker tag ${{ env.FRONTEND_SRC_IMG }} ${{ env.FRONTEND_DST_IMG }}
+          docker tag ${{ env.APIGW_SRC_IMG }} ${{ env.APIGW_DST_IMG }}
+          docker tag ${{ env.SERVICE_SRC_IMG }} ${{ env.SERVICE_DST_IMG }}
+          echo "Pushing images to Dev ECR"
+          echo -n "evaka/frontend-common image: "
+          docker push --quiet ${{ env.FRONTEND_DST_IMG }}
+          echo -n "evaka/api-gateway image: "
+          docker push --quiet ${{ env.APIGW_DST_IMG }}
+          echo -n "evaka-service image: "
+          docker push --quiet ${{ env.SERVICE_DST_IMG }}
