@@ -4,15 +4,10 @@ on:
   workflow_dispatch:
     inputs:
       sourceRelease:
-        description: 'Selected release version from the espoon-voltti/evaka repository'
+        description: 'Select release from https://github.com/espoon-voltti/evaka/releases or use "latest"'
         required: true
         type: string
-        default: 'v20250425'
-      sourceCommit:
-        description: 'Commit SHA in espoon-voltti/evaka repository that the selected release is based on'
-        required: true
-        type: string
-        default: 'ceeb79867b442564d5a428b7d7453ba1752d7e08'
+        default: 'latest'
       pushToDev:
         description: 'Push images to the development ECR'
         required: true
@@ -24,20 +19,38 @@ on:
           type: boolean
           default: true
 
-env:
-  FRONTEND_SRC_IMG: "${{ secrets.FRONTEND_SRC_REPO || 'ghcr.io/espoon-voltti/evaka/frontend-common' }}:${{ inputs.sourceCommit }}"
-  APIGW_SRC_IMG: "${{ secrets.APIGW_SRC_REPO || 'ghcr.io/espoon-voltti/evaka/api-gateway' }}:${{ inputs.sourceCommit }}"
-  SERVICE_SRC_IMG: "${{ secrets.SERVICE_SRC_REPO || 'ghcr.io/espoon-voltti/evaka/service' }}:${{ inputs.sourceCommit }}"
-
 jobs:
   pull_tag_and_push:
+    name: "Pull, tag and push images"
     runs-on: ubuntu-latest
     permissions:
       id-token: write
     steps:
-    
+      - name: Resolve release commit SHA
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO_NAME: evaka
+          REPO_OWNER: espoon-voltti
+        run: |
+          # Resolve commit SHA for the selected or the latest release
+          if [ "${{ inputs.sourceRelease }}" == "latest" ]; then
+            echo "Resolving latest release and its commit SHA.."
+            latest_release=$(gh api graphql -f query='{repository(owner:"espoon-voltti", name:"evaka"){latestRelease{tagName}}}' | jq -r '.data.repository.latestRelease.tagName')
+            echo "Latest release: \"$latest_release\""
+            commit_sha=$(gh api graphql -f query='{repository(owner:"espoon-voltti", name:"evaka"){latestRelease{tagCommit {oid}}}}' | jq -r '.data.repository.latestRelease.tagCommit.oid')
+          else
+            echo "Resolving commit SHA for the specific release: \"${{ inputs.sourceRelease }}\".."
+            commit_sha=$(gh api graphql -f query='{repository(owner:"espoon-voltti", name:"evaka"){release(tagName: "v20250418"){tagCommit{oid}}}}' | jq -r '.data.repository.release.tagCommit.oid')
+          fi
+          echo "Commit SHA: \"$commit_sha\""
+          echo "COMMIT_SHA=$commit_sha" >> $GITHUB_OUTPUT
+          echo "FRONTEND_SRC_IMG=ghcr.io/espoon-voltti/evaka/frontend-common:$commit_sha" >> $GITHUB_ENV
+          echo "APIGW_SRC_IMG=ghcr.io/espoon-voltti/evaka/api-gateway:$commit_sha" >> $GITHUB_ENV
+          echo "SERVICE_SRC_IMG=ghcr.io/espoon-voltti/evaka/service:$commit_sha" >> $GITHUB_ENV
+
       - name: Pull images from the source eVaka repo
         run: |
+          # Pull images from the source eVaka repo
           echo "Pulling images from the source eVaka repo using tag: ${{ inputs.sourceCommit }}"
           echo -n "evaka/frontend-common image: "
           docker pull --quiet ${{ env.FRONTEND_SRC_IMG }}
@@ -66,6 +79,7 @@ jobs:
           APIGW_DST_IMG: "${{ secrets.ECR_HOST_DEV }}/evaka/api-gateway:${{ inputs.sourceRelease }}"
           SERVICE_DST_IMG: "${{ secrets.ECR_HOST_DEV }}/evaka/service:${{ inputs.sourceRelease }}"
         run: |
+          # Tag and push images (Dev)
           echo "Tagging Dev images"
           docker tag ${{ env.FRONTEND_SRC_IMG }} ${{ env.FRONTEND_DST_IMG }}
           docker tag ${{ env.APIGW_SRC_IMG }} ${{ env.APIGW_DST_IMG }}
@@ -98,6 +112,7 @@ jobs:
           APIGW_DST_IMG: "${{ secrets.ECR_HOST_TEST }}/evaka/api-gateway:${{ inputs.sourceRelease }}"
           SERVICE_DST_IMG: "${{ secrets.ECR_HOST_TEST }}/evaka/service:${{ inputs.sourceRelease }}"
         run: |
+          # Tag and push images (Test)
           echo "Tagging Test images"
           docker tag ${{ env.FRONTEND_SRC_IMG }} ${{ env.FRONTEND_DST_IMG }}
           docker tag ${{ env.APIGW_SRC_IMG }} ${{ env.APIGW_DST_IMG }}
