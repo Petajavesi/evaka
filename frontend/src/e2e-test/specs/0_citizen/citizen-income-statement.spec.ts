@@ -4,7 +4,7 @@
 
 import HelsinkiDateTime from 'lib-common/helsinki-date-time'
 
-import { testAdult, Fixture } from '../../dev-api/fixtures'
+import { testAdult } from '../../dev-api/fixtures'
 import { resetServiceState } from '../../generated/api-clients'
 import CitizenHeader from '../../pages/citizen/citizen-header'
 import IncomeStatementsPage from '../../pages/citizen/citizen-income'
@@ -44,7 +44,7 @@ describe.each(envs)('Income statements', (env) => {
   beforeEach(async () => {
     await resetServiceState()
 
-    await Fixture.person(testAdult).saveAdult({
+    await testAdult.saveAdult({
       updateMockVtjWithDependants: []
     })
 
@@ -100,11 +100,12 @@ describe.each(envs)('Income statements', (env) => {
 
       // End date can be max 1y from start date so a warning is shown
       await incomeStatementsPage.setValidToDate('25.12.2045')
-      await incomeStatementsPage.incomeValidMaxRangeInfo.waitUntilVisible()
+      await incomeStatementsPage.incomeEndDateInfo.assertTextEquals(
+        'Valitse aikaisempi päivä'
+      )
 
       await incomeStatementsPage.setValidToDate(endDate)
       await incomeStatementsPage.incomeEndDateInfo.waitUntilHidden()
-      await incomeStatementsPage.incomeValidMaxRangeInfo.waitUntilHidden()
       await incomeStatementsPage.submit()
       await assertIncomeStatementCreated(startDate, now, env)
     })
