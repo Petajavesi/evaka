@@ -82,6 +82,7 @@ export const fi = {
     download: 'Lataa',
     cancel: 'Peruuta',
     goBack: 'Palaa',
+    leavePage: 'Poistu',
     confirm: 'Vahvista',
     period: 'Ajalle',
     search: 'Hae',
@@ -881,7 +882,8 @@ export const fi = {
         reject: 'Tee kielteinen päätös',
         rejectConfirmTitle: 'Haluatko varmasti tehdä kielteisen päätöksen?',
         annul: 'Mitätöi päätös',
-        annulConfirmTitle: 'Haluatko varmasti mitätöidä päätöksen?'
+        annulConfirmTitle: 'Haluatko varmasti mitätöidä päätöksen?',
+        decisionNumber: 'Päätösnumero'
       },
       editor: {
         lockedErrorTitle: 'Asiakirja on tilapäisesti lukittu',
@@ -1544,6 +1546,7 @@ export const fi = {
         title: 'Uusi sijoitus',
         text: 'Tästä sijoituksesta ei voi lähettää päätöstä. Jos sijoitus menee päällekkäin lapsen aiemmin luotujen sijoituksien kanssa, näitä sijoituksia lyhennetään tai ne poistetaan automaattisesti.',
         temporaryDaycareWarning: 'HUOM! Älä käytä varasijoitusta tehdessäsi!',
+        startDateMissing: 'Alkupäivä on pakollinen tieto',
         unitMissing: 'Yksikkö puuttuu',
         placeGuarantee: {
           title: 'Varhaiskasvatuspaikkatakuu',
@@ -2457,6 +2460,8 @@ export const fi = {
         group: 'Ryhmä',
         errors: {
           noGroup: 'Et ole valinnut ryhmää tai aktiivisia ryhmiä ei ole',
+          noStartDate: 'Et ole valinnut aloituspäivämäärää',
+          noEndDate: 'Et ole valinnut päättymispäivämäärää',
           groupNotStarted: 'Ryhmä ei ole vielä alkanut',
           groupEnded: 'Ryhmä on jo lakkautettu'
         }
@@ -3750,6 +3755,19 @@ export const fi = {
       club: 'Kerhohakemuksia',
       totalChildren: 'Lapsia hakenut yhteensä'
     },
+    childDocumentDecisions: {
+      title: 'Muut päätökset',
+      description: 'Päätöksen tekijälle lähetetyt muut lapsen päätökset.',
+      statusFilter: 'Näytettävät tilat',
+      otherFilters: 'Muut valinnat',
+      includeEnded: 'Näytä päättyneet päätökset',
+      templateName: 'Päätös',
+      childName: 'Lapsi',
+      modifiedAt: 'Muokattu',
+      decisionMaker: 'Päätöksen tekijä',
+      decisionMade: 'Päätös tehty',
+      status: 'Tila'
+    },
     decisions: {
       title: 'Päätökset',
       description: 'Raportti listaa tehtyjä päätöksiä yksiköittäin.',
@@ -4575,6 +4593,23 @@ export const fi = {
           'Tehostetun tuen lapsimäärä (kunnallinen)',
         statDay: '(tilanne 15.12.)'
       }
+    },
+    citizenDocumentResponseReport: {
+      title: 'Kuntalaisen lomakkeet',
+      description:
+        'Raportti listaa ryhmittäin kuntalaisten lomakkeiden uusimmat vastaukset kyllä/ei- tai monivalintakysymyksiin',
+      filters: {
+        unit: 'Yksikkö',
+        group: 'Ryhmä',
+        template: 'Lomake',
+        showBackupChildren: 'Näytä myös varasijoitettuna olevat'
+      },
+      headers: {
+        name: 'Nimi',
+        answeredAt: 'Vastattu'
+      },
+      noSentDocument: 'Ei lähetettyä lomaketta',
+      noAnswer: 'Ei vastattu'
     }
   },
   unitEditor: {
@@ -4681,8 +4716,6 @@ export const fi = {
     },
     placeholder: {
       name: 'Anna yksikölle nimi',
-      openingDate: 'Alkaen pp.kk.vvvv',
-      closingDate: 'Päättyen pp.kk.vvvv',
       area: 'Valitse alue',
       financeDecisionHandler: 'Valitse työntekijä',
       daycareType: 'Valitse tyyppi',
@@ -4762,6 +4795,7 @@ export const fi = {
     emptyInbox: 'Tämä kansio on tyhjä',
     replyToThread: 'Vastaa viestiin',
     archiveThread: 'Arkistoi viestiketju',
+    markUnread: 'Merkitse lukemattomaksi',
     changeFolder: {
       button: 'Vaihda kansiota',
       modalTitle: 'Valitse kansio',
@@ -5348,6 +5382,9 @@ export const fi = {
     noNotification: 'Ei ilmoitusta tällä hetkellä',
     setNotification: 'Aseta ilmoitus',
     text: 'Teksti',
+    textFi: 'Teksti suomeksi',
+    textSv: 'Teksti ruotsiksi',
+    textEn: 'Teksti englanniksi',
     validTo: 'Poistuu näkyvistä'
   },
   placementTool: {

@@ -168,6 +168,8 @@ export interface ChildDocumentCreateRequest {
 * Generated from fi.espoo.evaka.document.childdocument.ChildDocumentDecision
 */
 export interface ChildDocumentDecision {
+  createdAt: HelsinkiDateTime
+  decisionNumber: number
   id: ChildDocumentDecisionId
   status: ChildDocumentDecisionStatus
   validity: DateRange | null
@@ -199,12 +201,28 @@ export interface ChildDocumentDetails {
 }
 
 /**
+* Generated from fi.espoo.evaka.document.childdocument.ChildDocumentOrDecisionStatus
+*/
+export type ChildDocumentOrDecisionStatus =
+  | 'DRAFT'
+  | 'PREPARED'
+  | 'CITIZEN_DRAFT'
+  | 'DECISION_PROPOSAL'
+  | 'COMPLETED'
+  | 'ACCEPTED'
+  | 'REJECTED'
+  | 'ANNULLED'
+
+/**
 * Generated from fi.espoo.evaka.document.childdocument.ChildDocumentSummary
 */
 export interface ChildDocumentSummary {
   answeredAt: HelsinkiDateTime | null
   answeredBy: EvakaUser | null
+  childFirstName: string
+  childLastName: string
   decision: ChildDocumentDecision | null
+  decisionMaker: EvakaUser | null
   id: ChildDocumentId
   modifiedAt: HelsinkiDateTime
   publishedAt: HelsinkiDateTime | null
@@ -282,21 +300,48 @@ export interface DocumentTemplate {
   validity: DateRange
 }
 
+
+export namespace DocumentTemplateBasicsRequest {
+  /**
+  * Generated from fi.espoo.evaka.document.DocumentTemplateBasicsRequest.ArchivedExternally
+  */
+  export interface ArchivedExternally {
+    templateType: 'ARCHIVED_EXTERNALLY'
+    archiveDurationMonths: number
+    archiveExternally: boolean
+    confidentiality: DocumentConfidentiality | null
+    language: UiLanguage
+    legalBasis: string
+    name: string
+    placementTypes: PlacementType[]
+    processDefinitionNumber: string
+    type: DocumentType
+    validity: DateRange
+  }
+
+  /**
+  * Generated from fi.espoo.evaka.document.DocumentTemplateBasicsRequest.Regular
+  */
+  export interface Regular {
+    templateType: 'REGULAR'
+    archiveDurationMonths: number | null
+    archiveExternally: boolean
+    confidentiality: DocumentConfidentiality | null
+    language: UiLanguage
+    legalBasis: string
+    name: string
+    placementTypes: PlacementType[]
+    processDefinitionNumber: string | null
+    type: DocumentType
+    validity: DateRange
+  }
+}
+
 /**
 * Generated from fi.espoo.evaka.document.DocumentTemplateBasicsRequest
 */
-export interface DocumentTemplateBasicsRequest {
-  archiveDurationMonths: number | null
-  archiveExternally: boolean
-  confidentiality: DocumentConfidentiality | null
-  language: UiLanguage
-  legalBasis: string
-  name: string
-  placementTypes: PlacementType[]
-  processDefinitionNumber: string | null
-  type: DocumentType
-  validity: DateRange
-}
+export type DocumentTemplateBasicsRequest = DocumentTemplateBasicsRequest.ArchivedExternally | DocumentTemplateBasicsRequest.Regular
+
 
 /**
 * Generated from fi.espoo.evaka.document.DocumentTemplateContent
@@ -561,6 +606,7 @@ export function deserializeJsonChildDocumentCitizenSummary(json: JsonOf<ChildDoc
 export function deserializeJsonChildDocumentDecision(json: JsonOf<ChildDocumentDecision>): ChildDocumentDecision {
   return {
     ...json,
+    createdAt: HelsinkiDateTime.parseIso(json.createdAt),
     validity: (json.validity != null) ? DateRange.parseJson(json.validity) : null
   }
 }
@@ -631,10 +677,25 @@ export function deserializeJsonDocumentTemplate(json: JsonOf<DocumentTemplate>):
 }
 
 
-export function deserializeJsonDocumentTemplateBasicsRequest(json: JsonOf<DocumentTemplateBasicsRequest>): DocumentTemplateBasicsRequest {
+
+export function deserializeJsonDocumentTemplateBasicsRequestArchivedExternally(json: JsonOf<DocumentTemplateBasicsRequest.ArchivedExternally>): DocumentTemplateBasicsRequest.ArchivedExternally {
   return {
     ...json,
     validity: DateRange.parseJson(json.validity)
+  }
+}
+
+export function deserializeJsonDocumentTemplateBasicsRequestRegular(json: JsonOf<DocumentTemplateBasicsRequest.Regular>): DocumentTemplateBasicsRequest.Regular {
+  return {
+    ...json,
+    validity: DateRange.parseJson(json.validity)
+  }
+}
+export function deserializeJsonDocumentTemplateBasicsRequest(json: JsonOf<DocumentTemplateBasicsRequest>): DocumentTemplateBasicsRequest {
+  switch (json.templateType) {
+    case 'ARCHIVED_EXTERNALLY': return deserializeJsonDocumentTemplateBasicsRequestArchivedExternally(json)
+    case 'REGULAR': return deserializeJsonDocumentTemplateBasicsRequestRegular(json)
+    default: return json
   }
 }
 

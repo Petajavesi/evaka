@@ -18,7 +18,7 @@ import {
   Checkbox,
   Combobox,
   DatePicker,
-  DatePickerDeprecated,
+  DateRangePicker,
   Element,
   FileUpload,
   Modal,
@@ -134,6 +134,8 @@ export class AdditionalInformationSection extends Section {
   languageAtHomeDetails: Element
   languageAtHomeDetailsInput: TextInput
   specialDietCombobox: Combobox
+  nekkuEatsBreakfastCheckbox: Checkbox
+  nekkuDietSelect: Combobox
 
   constructor(page: Page, root: Element) {
     super(page, root)
@@ -148,14 +150,26 @@ export class AdditionalInformationSection extends Section {
       page.findByDataQa('input-language-at-home-details')
     )
     this.specialDietCombobox = new Combobox(page.findByDataQa('diet-input'))
+    this.nekkuEatsBreakfastCheckbox = new Checkbox(
+      page.findByDataQa('nekku-eats-breakfast-checkbox')
+    )
+    this.nekkuDietSelect = new Combobox(page.findByDataQa('nekku-diet-input'))
   }
 
   medication = this.find('[data-qa="medication"]')
   editBtn = this.find('[data-qa="edit-child-settings-button"]')
   medicationInput = new TextInput(this.find('[data-qa="medication-input"]'))
   confirmBtn = this.find('[data-qa="confirm-edited-child-button"]')
+  nekkuEatsBreakfast = this.find('[data-qa="nekku-eats-breakfast-display"]')
+  nekkuDiet = this.find('[data-qa="nekku-diet-display"]')
 
   readonly specialDiet = this.page.findByDataQa('diet-value-display')
+
+  getNekkuSpecialDietEditor() {
+    return new NekkuSpecialDietEditor(
+      this.findByDataQa('nekku-special-diet-editor')
+    )
+  }
 }
 
 class DailyServiceTimeSectionBaseForm extends Section {
@@ -412,9 +426,8 @@ export class BackupCaresSection extends Section {
     this.find('[data-qa="backup-care-select-unit"]')
   )
 
-  #dates = this.findAll('[data-qa="dates"] > *')
-  #startDate = new DatePickerDeprecated(this.#dates.nth(0))
-  #endDate = new DatePickerDeprecated(this.#dates.nth(1))
+  #startDate = new DatePicker(this.findByDataQa('backup-care-start-date'))
+  #endDate = new DatePicker(this.findByDataQa('backup-care-end-date'))
 
   #backupCares = this.find('[data-qa="backup-cares"]')
 
@@ -809,20 +822,18 @@ export class PlacementsSection extends Section {
     endDate: string
     placeGuarantee?: boolean
   }) {
-    await this.find('[data-qa="create-new-placement-button"]').click()
+    await this.findByDataQa('create-new-placement-button').click()
 
     const modal = new Modal(this.page.findByDataQa('modal'))
-    const unitSelect = new Combobox(modal.find('[data-qa="unit-select"]'))
+    const unitSelect = new Combobox(modal.findByDataQa('unit-select'))
     await unitSelect.fillAndSelectFirst(unitName)
 
-    const start = new DatePickerDeprecated(
-      modal.find('[data-qa="create-placement-start-date"]')
+    const start = new DatePicker(
+      modal.findByDataQa('create-placement-start-date')
     )
     await start.fill(startDate)
 
-    const end = new DatePickerDeprecated(
-      modal.find('[data-qa="create-placement-end-date"]')
-    )
+    const end = new DatePicker(modal.findByDataQa('create-placement-end-date'))
     await end.fill(endDate)
 
     if (placeGuarantee) {
@@ -1158,18 +1169,14 @@ class OtherAssistanceMeasureRow extends InlineAssistanceRow {
 }
 
 class FeeAlterationEditorPage {
-  startDateInput: DatePickerDeprecated
-  endDateInput: DatePickerDeprecated
+  dateRangePicker: DateRangePicker
   alterationValueInput: TextInput
   fileUpload: FileUpload
   saveButton: Element
 
   constructor(readonly page: Page) {
-    this.startDateInput = new DatePickerDeprecated(
-      page.findByDataQa('date-range-input-start-date')
-    )
-    this.endDateInput = new DatePickerDeprecated(
-      page.findByDataQa('date-range-input-end-date')
+    this.dateRangePicker = new DateRangePicker(
+      page.findByDataQa('fee-alteration-date-range-input')
     )
     this.alterationValueInput = new TextInput(
       page.findByDataQa('fee-alteration-amount-input')
@@ -1181,7 +1188,7 @@ class FeeAlterationEditorPage {
   }
 
   async waitUntilReady() {
-    await this.startDateInput.waitUntilVisible()
+    await this.dateRangePicker.start.waitUntilVisible()
   }
 }
 
@@ -1209,6 +1216,26 @@ export class FeeAlterationsSection extends Section {
     await waitUntilTrue(async () =>
       (await this.page.findAllByDataQa('attachment').allTexts()).includes(name)
     )
+  }
+}
+
+export class NekkuSpecialDietEditor extends Element {
+  getCheckBox(dietId: string, fieldId: string, optionKey: string) {
+    return new Checkbox(
+      this.findByDataQa(`${dietId}-${fieldId}-${optionKey}-checkbox`)
+    )
+  }
+
+  getCheckBoxValue(dietId: string, fieldId: string) {
+    return this.findByDataQa(`${dietId}-${fieldId}-value`)
+  }
+
+  getTextField(dietId: string, fieldId: string) {
+    return new TextInput(this.findByDataQa(`${dietId}-${fieldId}-textarea`))
+  }
+
+  getTextValue(dietId: string, fieldId: string) {
+    return this.findByDataQa(`${dietId}-${fieldId}-value`)
   }
 }
 

@@ -16,7 +16,6 @@ import {
   Checkbox,
   Combobox,
   DatePicker,
-  DatePickerDeprecated,
   MultiSelect,
   Page,
   Select,
@@ -93,6 +92,11 @@ export default class ReportsPage {
   async openSextetReport() {
     await this.page.findByDataQa('report-sextet').click()
     return new SextetReport(this.page)
+  }
+
+  async openChildDocumentDecisionsReport() {
+    await this.page.findByDataQa('report-child-document-decisions').click()
+    return new ChildDocumentDecisionsReport(this.page)
   }
 }
 
@@ -205,12 +209,8 @@ export class ApplicationsReport {
   }
 
   async selectDateRangePickerDates(from: LocalDate, to: LocalDate) {
-    const fromInput = new DatePickerDeprecated(
-      this.page.findByDataQa('datepicker-from')
-    )
-    const toInput = new DatePickerDeprecated(
-      this.page.findByDataQa('datepicker-to')
-    )
+    const fromInput = new DatePicker(this.page.findByDataQa('datepicker-from'))
+    const toInput = new DatePicker(this.page.findByDataQa('datepicker-to'))
     await fromInput.fill(from.format())
     await toInput.fill(to.format())
   }
@@ -791,6 +791,14 @@ export class ChildDocumentsReport {
       noDocuments: row.findByDataQa('no-documents-count'),
       total: row.findByDataQa('total-count')
     }
+  }
+}
+
+export class ChildDocumentDecisionsReport {
+  rows: ElementCollection
+
+  constructor(page: Page) {
+    this.rows = page.findByDataQa('report-table').findAll('tr')
   }
 }
 
