@@ -5,30 +5,41 @@
 package fi.espoo.evaka.nekku
 
 import fi.espoo.evaka.absence.AbsenceCategory
+import fi.espoo.evaka.absence.getDaycareIdByGroup
+import fi.espoo.evaka.daycare.getDaycareGroup
 import fi.espoo.evaka.decision.logger
 import fi.espoo.evaka.placement.PlacementType
 import fi.espoo.evaka.shared.ChildId
 import fi.espoo.evaka.shared.DaycareId
 import fi.espoo.evaka.shared.GroupId
+import fi.espoo.evaka.shared.async.AsyncJob
+import fi.espoo.evaka.shared.async.AsyncJobRunner
+import fi.espoo.evaka.shared.auth.UserRole
+import fi.espoo.evaka.shared.auth.getDaycareAclRows
 import fi.espoo.evaka.shared.db.Database
 import fi.espoo.evaka.shared.domain.FiniteDateRange
+import fi.espoo.evaka.shared.domain.HelsinkiDateTime
 import fi.espoo.evaka.shared.domain.TimeRange
 import java.time.LocalDate
 import org.jdbi.v3.json.Json
 
 /** Throws an IllegalStateException if Nekku returns an empty customer list. */
-fun fetchAndUpdateNekkuCustomers(client: NekkuClient, db: Database.Connection) {
+fun fetchAndUpdateNekkuCustomers(
+    client: NekkuClient,
+    db: Database.Connection,
+    asyncJobRunner: AsyncJobRunner<AsyncJob>,
+    now: HelsinkiDateTime,
+) {
     val customersFromNekku =
         client.getCustomers().map { it.toEvaka() }.filter { it.group.contains("Varhaiskasvatus") }
 
     if (customersFromNekku.isEmpty())
         error("Refusing to sync empty Nekku customer list into database")
     db.transaction { tx ->
-        val nulledCustomersCount =
-            tx.resetNekkuCustomerNumbersNotContainedWithin(customersFromNekku)
-        if (nulledCustomersCount != 0)
+        val nulledGroups = tx.resetNekkuCustomerNumbersNotContainedWithin(customersFromNekku)
+        if (nulledGroups.size != 0)
             logger.warn {
-                "Nekku customer list update caused $nulledCustomersCount customer numbers to be set to null"
+                "Nekku customer list update caused ${nulledGroups.size} customer numbers to be set to null"
             }
         val deletedCustomerCount = tx.setCustomerNumbers(customersFromNekku)
 
@@ -37,19 +48,49 @@ fun fetchAndUpdateNekkuCustomers(client: NekkuClient, db: Database.Connection) {
         logger.info {
             "Deleted: $deletedCustomerCount Nekku customer numbers, inserted ${customersFromNekku.size}"
         }
+
+        if (!nulledGroups.isEmpty()) {
+            val groupData = nulledGroups.mapNotNull { tx.getDaycareGroup(it) }
+            val groupsByUnit = groupData.groupBy { it.daycareId }
+            val units = groupData.map { it.daycareId }.distinct()
+            asyncJobRunner.plan(
+                tx,
+                units.flatMap {
+                    val supervisors =
+                        tx.getDaycareAclRows(it, false, UserRole.UNIT_SUPERVISOR).map {
+                            it.employee
+                        }
+                    supervisors.map { supervisor ->
+                        AsyncJob.SendNekkuCustomerNumberNullificationWarningEmail(
+                            it,
+                            supervisor.id,
+                            groupsByUnit[it]?.map { it.name } ?: listOf(),
+                        )
+                    }
+                },
+                runAt = now,
+            )
+        }
     }
 }
 
 fun Database.Transaction.resetNekkuCustomerNumbersNotContainedWithin(
     nekkuCustomerNumbers: List<NekkuCustomer>
-): Int {
+): List<GroupId> {
     val newNekkuCustomerNumbers = nekkuCustomerNumbers.map { it.number }
-    val affectedRows = execute {
+    val affectedGroups =
+        createQuery {
+                sql(
+                    "SELECT id FROM daycare_group WHERE nekku_customer_number != ALL (${bind(newNekkuCustomerNumbers)})"
+                )
+            }
+            .toList<GroupId>()
+    execute {
         sql(
             "UPDATE daycare_group SET nekku_customer_number = null WHERE nekku_customer_number != ALL (${bind(newNekkuCustomerNumbers)})"
         )
     }
-    return affectedRows
+    return affectedGroups
 }
 
 fun Database.Transaction.setCustomerNumbers(customerNumbers: List<NekkuCustomer>): Int {
@@ -529,3 +570,82 @@ fun Database.Read.getNekkuSpecialDietChoices(childId: ChildId): List<NekkuSpecia
             )
         }
         .toList<NekkuSpecialDietChoices>()
+
+fun Database.Read.getNekkuOrderReport(
+    daycareId: DaycareId,
+    groupId: GroupId,
+    date: LocalDate,
+): List<NekkuOrdersReport> =
+    createQuery {
+            sql(
+                "SELECT delivery_date, daycare_id, group_id, meal_sku, total_quantity, meal_time, meal_type, meals_by_special_diet FROM nekku_orders_report WHERE daycare_id = ${bind(daycareId)} AND group_id = (${bind(groupId)}) AND delivery_date = ${bind(date)} "
+            )
+        }
+        .toList<NekkuOrdersReport>()
+
+fun Database.Transaction.setNekkuReportOrderReport(
+    nekkuOrders: NekkuClient.NekkuOrders,
+    groupId: GroupId,
+    nekkuProducts: List<NekkuProduct>,
+) {
+
+    val daycareId = getDaycareIdByGroup(groupId)
+
+    val reportRows =
+        nekkuOrders.orders.first().items.map { item ->
+            val product = nekkuProducts.find { it.sku == item.sku } ?: error("Product.sku")
+            NekkuOrdersReport(
+                LocalDate.parse(nekkuOrders.orders.first().deliveryDate),
+                daycareId,
+                groupId,
+                item.sku,
+                item.quantity,
+                product.mealTime,
+                product.mealType,
+                item.productOptions?.map { it.value },
+            )
+        }
+
+    val deletedNekkuOrders = execute {
+        sql(
+            "DELETE FROM nekku_orders_report WHERE daycare_id = ${bind(daycareId)} AND group_id = ${bind(groupId)} AND delivery_date = ${bind(LocalDate.parse(nekkuOrders.orders.first().deliveryDate))}"
+        )
+    }
+
+    if (deletedNekkuOrders > 0) {
+        logger.info {
+            "Removed $deletedNekkuOrders orders for date:${nekkuOrders.orders.first().deliveryDate} daycareId=$daycareId groupId=$groupId before creating a specifying order"
+        }
+    }
+
+    executeBatch(reportRows) {
+        sql(
+            """
+INSERT INTO nekku_orders_report (
+delivery_date,
+daycare_id,
+group_id,
+meal_sku,
+total_quantity,
+meal_time,
+meal_type,
+meals_by_special_diet)
+VALUES (
+${bind {it.deliveryDate}},
+${bind {it.daycareId}},
+${bind {it.groupId}},
+${bind {it.mealSku}},
+${bind {it.totalQuantity}},
+${bind {it.mealTime}},
+${bind {it.mealType}},
+${bind {it.mealsBySpecialDiet}}
+)
+            """
+                .trimIndent()
+        )
+    }
+}
+
+fun Database.Read.getDaycareGroupIds(daycareId: DaycareId): List<GroupId> =
+    createQuery { sql("SELECT id FROM daycare_group WHERE daycare_id = ${bind(daycareId)}") }
+        .toList()
