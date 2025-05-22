@@ -4,12 +4,11 @@
 
 import React, { useCallback, useContext, useState } from 'react'
 
-import {
+import type {
   PaymentSortParam,
-  PaymentStatus,
   SortDirection
 } from 'lib-common/generated/api-types/invoicing'
-import { PaymentId } from 'lib-common/generated/api-types/shared'
+import type { PaymentId } from 'lib-common/generated/api-types/shared'
 import { constantQuery, useQueryResult } from 'lib-common/query'
 import { Container, ContentArea } from 'lib-components/layout/Container'
 import { Gap } from 'lib-components/white-space'
@@ -22,8 +21,7 @@ import Actions from './Actions'
 import PaymentFilters from './PaymentFilters'
 import Payments from './Payments'
 import { searchPaymentsQuery } from './queries'
-
-export const selectablePaymentStatuses: PaymentStatus[] = ['DRAFT', 'CONFIRMED']
+import { selectablePaymentStatuses } from './utils'
 
 export default React.memo(function PaymentsPage() {
   const {

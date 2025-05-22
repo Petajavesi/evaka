@@ -1,10 +1,9 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "baseUrl": "src",
     "noEmit": true
   },
-  "files": [],
+  "files": ["vite.config.ts"],
   "references": [
     { "path": "./src/citizen-frontend" },
     { "path": "./src/lib-common" },

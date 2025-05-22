@@ -5,19 +5,19 @@
 import React, { useCallback, useMemo, useRef } from 'react'
 import styled from 'styled-components'
 
-import { Result } from 'lib-common/api'
+import type { Result } from 'lib-common/api'
 import {
   required,
   validate,
   validateIf,
   validInt
 } from 'lib-common/form-validation'
-import {
+import type {
   IncomeStatementStatus,
-  OtherIncome,
-  otherIncomes
+  OtherIncome
 } from 'lib-common/generated/api-types/incomestatement'
-import { IncomeStatementId } from 'lib-common/generated/api-types/shared'
+import { otherIncomes } from 'lib-common/generated/api-types/incomestatement'
+import type { IncomeStatementId } from 'lib-common/generated/api-types/shared'
 import * as Form from 'lib-common/income-statements/form'
 import LocalDate from 'lib-common/local-date'
 import UnorderedList from 'lib-components/atoms/UnorderedList'
@@ -54,23 +54,21 @@ import { errorToInputInfo } from '../input-info-helper'
 import { useLang, useTranslation } from '../localization'
 
 import {
-  IncomeStatementUntypedAttachments,
-  IncomeStatementMissingAttachments,
-  AttachmentHandler,
   AttachmentSection,
-  useAttachmentHandler
+  IncomeStatementMissingAttachments,
+  IncomeStatementUntypedAttachments
 } from './IncomeStatementAttachments'
 import {
   ActionContainer,
   AssureCheckbox,
-  identity,
   LabelError,
-  LabelWithError,
-  SetStateCallback,
-  useFieldDispatch,
-  useFieldSetState
+  LabelWithError
 } from './IncomeStatementComponents'
-import { ErrorDisplayType } from './IncomeStatementEditor'
+import type { ErrorDisplayType } from './IncomeStatementEditor'
+import type { AttachmentHandler } from './attachmentHandler'
+import { useAttachmentHandler } from './attachmentHandler'
+import type { SetStateCallback } from './hooks'
+import { useFieldDispatch, useFieldSetState } from './hooks'
 
 interface Props {
   incomeStatementId: IncomeStatementId | undefined
@@ -525,6 +523,10 @@ const IncomeTypeSelection = React.memo(
     )
   })
 )
+
+function identity<T>(value: T): T {
+  return value
+}
 
 const GrossIncomeSelection = React.memo(function GrossIncomeSelection({
   formData,

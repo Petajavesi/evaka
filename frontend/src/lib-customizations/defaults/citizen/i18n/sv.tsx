@@ -2,19 +2,20 @@
 //
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
-import React, { ReactNode } from 'react'
+import type { ReactNode } from 'react'
+import React from 'react'
 
-import FiniteDateRange from 'lib-common/finite-date-range'
-import { EmailVerification } from 'lib-common/generated/api-types/pis'
-import LocalDate from 'lib-common/local-date'
+import type FiniteDateRange from 'lib-common/finite-date-range'
+import type { EmailVerification } from 'lib-common/generated/api-types/pis'
+import type LocalDate from 'lib-common/local-date'
 import { formatFirstName } from 'lib-common/names'
 import ExternalLink from 'lib-components/atoms/ExternalLink'
 import UnorderedList from 'lib-components/atoms/UnorderedList'
 import { Button } from 'lib-components/atoms/buttons/Button'
-import { Translations as ComponentTranslations } from 'lib-components/i18n'
+import type { Translations as ComponentTranslations } from 'lib-components/i18n'
 import { H1, H2, H3, P } from 'lib-components/typography'
 import { Gap } from 'lib-components/white-space'
-import { Translations } from 'lib-customizations/citizen'
+import type { Translations } from 'lib-customizations/citizen'
 import colors from 'lib-customizations/common'
 
 import components from '../../components/i18n/sv'
@@ -506,7 +507,10 @@ const sv: Translations = {
       attendanceAlreadyExistsErrorTitle:
         'De valda dagarna har redan anteckningar för närvaro',
       attendanceAlreadyExistsErrorDescription:
-        'Det är inte möjligt att tillägga en frånvaro för barnet på en dag som redan har en anteckning om närvaro.'
+        'Det är inte möjligt att tillägga en frånvaro för barnet på en dag som redan har en anteckning om närvaro.',
+      tooManyAbsencesErrorDescription:
+        'Yli viikon pituinen poissaolo esiopetuksesta on sallittu ainoastaan hyväksyttävästä syystä. (sv)',
+      tooManyAbsencesErrorLink: 'Tee poissaolohakemus (sv)'
     },
     holidayModal: {
       additionalInformation: 'Läs mera',
@@ -2908,7 +2912,10 @@ const sv: Translations = {
       success: 'Lomake lähetetty (sv)',
       sentInfo:
         'Jos haluat muuttaa annettuja vastauksia, pyydä henkilökunnalta uusi lomake. (sv)',
-      decisionNumber: 'Beslutsnummer'
+      decisionNumber: 'Beslutsnummer',
+      sendingConfirmationTitle: 'Är du säker på att du vill skicka dokumentet?',
+      sendingConfirmationText:
+        'Säkerställ att du har fyllt i alla fält. Svaren kan inte ändras efter att de har skickats.'
     }
   },
   accessibilityStatement: (

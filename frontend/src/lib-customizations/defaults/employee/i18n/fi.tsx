@@ -2,12 +2,13 @@
 //
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
-import React, { ReactNode } from 'react'
+import type { ReactNode } from 'react'
+import React from 'react'
 
-import FiniteDateRange from 'lib-common/finite-date-range'
-import { InvoiceStatus } from 'lib-common/generated/api-types/invoicing'
-import HelsinkiDateTime from 'lib-common/helsinki-date-time'
-import LocalDate from 'lib-common/local-date'
+import type FiniteDateRange from 'lib-common/finite-date-range'
+import type { InvoiceStatus } from 'lib-common/generated/api-types/invoicing'
+import type HelsinkiDateTime from 'lib-common/helsinki-date-time'
+import type LocalDate from 'lib-common/local-date'
 import { H3, P } from 'lib-components/typography'
 
 import components from '../../components/i18n/fi'
@@ -918,7 +919,9 @@ export const fi = {
           COMPLETED: 'Haluatko varmasti julkaista asiakirjan valmis-tilassa?'
         },
         goToCompletedConfirmText:
-          'Huoltaja saa nähdäkseen tämänhetkisen version. Valmis-tilassa olevaa asiakirjaa ei voi enää muokata.',
+          'Huoltaja saa nähdäkseen tämänhetkisen version. Valmis-tilassa olevaa asiakirjaa ei voi enää muokata. Vain pääkäyttäjä voi peruuttaa tämän.',
+        extraConfirmCompletion:
+          'Ymmärrän, että asiakirjaa ei tämän jälkeen voi enää muokata',
         goToPrevStatus: {
           DRAFT: 'Palauta luonnokseksi',
           PREPARED: 'Palauta laadituksi',
@@ -2046,20 +2049,27 @@ export const fi = {
         confirmText: 'Haluatko varmasti poistaa tulotiedon ajalta',
         cancelButton: 'Peruuta',
         deleteButton: 'Poista'
-      },
-      incomeNotifications: {
-        title: 'Muistutus tulotietojen päivittämisestä lähetetty'
       }
     },
     incomeStatement: {
       title: 'Tuloselvitykset',
+      notificationsTitle: 'Muistutukset tuloselvityksen tekemisestä',
       custodianTitle: 'Huollettavien tuloselvitykset',
       noIncomeStatements: 'Ei tuloselvityksiä',
       incomeStatementHeading: 'Asiakkaan tuloselvityslomake',
       sentAtHeading: 'Saapumispäivä',
       handledHeading: 'Käsitelty',
       open: 'Avaa lomake',
-      handled: 'Tuloselvitys käsitelty'
+      handled: 'Tuloselvitys käsitelty',
+      notificationSent: 'Lähetetty',
+      noNotifications: 'Ei lähetettyjä muistutuksia',
+      notificationTypes: {
+        INITIAL_EMAIL: 'Ensimmäinen muistutus',
+        REMINDER_EMAIL: 'Toinen muistutus',
+        EXPIRED_EMAIL: 'Tulot päättyneet',
+        NEW_CUSTOMER: 'Aloittava asiakas'
+      },
+      noCustodians: 'Ei huollettavia'
     },
     invoice: {
       createReplacementDrafts: 'Muodosta oikaisulaskut',
@@ -4198,6 +4208,7 @@ export const fi = {
         DAYCARE: 'varhaiskasvatuksessa',
         PRESCHOOL: 'esiopetuksessa'
       },
+      placementType: 'Toimintamuoto',
       level: 'Tuen taso ja muut toimet',
       showZeroRows: 'Näytä nollarivit',
       groupingTypes: {
@@ -4208,7 +4219,10 @@ export const fi = {
       basisMissing: 'Peruste puuttuu',
       action: 'Tukitoimi',
       actionMissing: 'Tukitoimi puuttuu',
-      assistanceNeedVoucherCoefficient: 'Korotettu PS-kerroin'
+      assistanceNeedVoucherCoefficient: 'Korotettu PS-kerroin',
+      daycareAssistanceNeedDecisions:
+        'Aktiiviset varhaiskasvatuksen tuen päätökset',
+      preschoolAssistanceNeedDecisions: 'Aktiiviset esiopetuksen tuen päätökset'
     },
     occupancies: {
       title: 'Täyttö- ja käyttöasteet',

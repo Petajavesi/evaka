@@ -10,12 +10,13 @@ import React, {
   useState
 } from 'react'
 
-import { Loading, Result } from 'lib-common/api'
-import {
+import type { Result } from 'lib-common/api'
+import { Loading } from 'lib-common/api'
+import type {
   CitizenMessageThread,
   MyAccountResponse
 } from 'lib-common/generated/api-types/messaging'
-import { MessageThreadId } from 'lib-common/generated/api-types/shared'
+import type { MessageThreadId } from 'lib-common/generated/api-types/shared'
 import HelsinkiDateTime from 'lib-common/helsinki-date-time'
 import {
   useMutation,
@@ -30,6 +31,7 @@ import {
   messageAccountQuery,
   receivedMessagesQuery
 } from './queries'
+import { isRegularThread } from './utils'
 
 export interface MessagePageState {
   messageAccount: Result<MyAccountResponse>
@@ -54,13 +56,6 @@ const defaultState: MessagePageState = {
 }
 
 export const MessageContext = createContext<MessagePageState>(defaultState)
-
-export const isRedactedThread = (
-  thread: CitizenMessageThread
-): thread is CitizenMessageThread.Redacted => thread.type === 'Redacted'
-export const isRegularThread = (
-  thread: CitizenMessageThread
-): thread is CitizenMessageThread.Regular => thread.type === 'Regular'
 
 const markMessagesReadByThreadId = (
   thread: CitizenMessageThread,

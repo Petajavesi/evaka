@@ -2,7 +2,10 @@
 //
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
-import { EmployeeId, PersonId } from 'lib-common/generated/api-types/shared'
+import type {
+  EmployeeId,
+  PersonId
+} from 'lib-common/generated/api-types/shared'
 import { evakaUserId } from 'lib-common/id-type'
 import LocalDate from 'lib-common/local-date'
 import LocalTime from 'lib-common/local-time'
@@ -17,9 +20,8 @@ import {
 } from '../../dev-api/fixtures'
 import { resetServiceState } from '../../generated/api-clients'
 import ErrorModal from '../../pages/employee/error-modal'
-import GuardianInformationPage, {
-  IncomeSection
-} from '../../pages/employee/guardian-information'
+import type { IncomeSection } from '../../pages/employee/guardian-information'
+import GuardianInformationPage from '../../pages/employee/guardian-information'
 import { waitUntilEqual, waitUntilFalse, waitUntilTrue } from '../../utils'
 import { Page } from '../../utils/page'
 import { employeeLogin } from '../../utils/user'
@@ -325,29 +327,12 @@ describe('Income', () => {
     await waitUntilEqual(() => incomesSection.incomeNotificationRows.count(), 3)
     await incomesSection.incomeNotificationRows
       .nth(0)
-      .assertTextEquals('15.02.2020 06:00')
+      .assertTextEquals('28.02.2020 06:00 (Aloittava asiakas)')
     await incomesSection.incomeNotificationRows
       .nth(1)
-      .assertTextEquals('22.02.2020 06:00')
-
+      .assertTextEquals('22.02.2020 06:00 (Toinen muistutus)')
     await incomesSection.incomeNotificationRows
       .nth(2)
-      .assertTextEquals('28.02.2020 06:00')
-  })
-
-  it('Income notification sent title is not shown if none has been sent', async () => {
-    const incomeEndDate = placementEnd.subMonths(1)
-    await Fixture.income({
-      personId: personId,
-      validFrom: placementStart,
-      validTo: incomeEndDate,
-      modifiedBy: evakaUserId(financeAdminId),
-      modifiedAt: placementStart.toHelsinkiDateTime(LocalTime.of(0, 0))
-    }).save()
-
-    await page.reload()
-    await waitUntilEqual(() => incomesSection.incomeListItems.count(), 1)
-    await waitUntilEqual(() => incomesSection.incomeNotifications.count(), 0)
-    await waitUntilEqual(() => incomesSection.incomeNotificationRows.count(), 0)
+      .assertTextEquals('15.02.2020 06:00 (Ensimmäinen muistutus)')
   })
 })

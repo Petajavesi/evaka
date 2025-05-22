@@ -4,7 +4,7 @@
 
 import React from 'react'
 
-import { ApplicationId } from 'lib-common/generated/api-types/shared'
+import type { ApplicationId } from 'lib-common/generated/api-types/shared'
 import HelsinkiDateTime from 'lib-common/helsinki-date-time'
 import LocalDate from 'lib-common/local-date'
 import { useIdRouteParam } from 'lib-common/useRouteParams'
@@ -25,7 +25,7 @@ import { useLang, useTranslation } from '../../../localization'
 import { isValidPreferredStartDate } from '../validations'
 
 import { ClubTermsInfo } from './ClubTermsInfo'
-import { ServiceNeedSectionProps } from './ServiceNeedSection'
+import type { ServiceNeedSectionProps } from './ServiceNeedSection'
 
 export default React.memo(function PreferredStartSubSection({
   originalPreferredStartDate,
@@ -162,7 +162,6 @@ export default React.memo(function PreferredStartSubSection({
                         ...formData.urgencyAttachments,
                         {
                           ...attachment,
-                          updated: HelsinkiDateTime.now(),
                           receivedAt: HelsinkiDateTime.now(),
                           type: 'URGENCY',
                           uploadedByEmployee: null,

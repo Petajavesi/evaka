@@ -7,14 +7,14 @@ import orderBy from 'lodash/orderBy'
 import sortBy from 'lodash/sortBy'
 import React, { Fragment, useMemo } from 'react'
 
-import { renderResult } from 'citizen-frontend/async-rendering'
 import { combine } from 'lib-common/api'
-import {
+import type { DecisionSummary } from 'lib-common/generated/api-types/application'
+import type {
   AssistanceNeedDecisionCitizenListItem,
   AssistanceNeedPreschoolDecisionCitizenListItem
 } from 'lib-common/generated/api-types/assistanceneed'
-import { ApplicationId } from 'lib-common/generated/api-types/shared'
-import LocalDate from 'lib-common/local-date'
+import type { ApplicationId } from 'lib-common/generated/api-types/shared'
+import type LocalDate from 'lib-common/local-date'
 import { useQueryResult } from 'lib-common/query'
 import HorizontalLine from 'lib-components/atoms/HorizontalLine'
 import Container, { ContentArea } from 'lib-components/layout/Container'
@@ -23,13 +23,13 @@ import { AlertBox } from 'lib-components/molecules/MessageBoxes'
 import { H1, H2 } from 'lib-components/typography'
 import { Gap } from 'lib-components/white-space'
 
+import { renderResult } from '../../async-rendering'
 import { childrenQuery } from '../../children/queries'
 import { useTranslation } from '../../localization'
 import useTitle from '../../useTitle'
 import { assistanceDecisionsQuery } from '../assistance-decision-page/queries'
 import { assistanceNeedPreschoolDecisionsQuery } from '../assistance-decision-page/queries-preschool'
 import { decisionsQuery, financeDecisionsQuery } from '../queries'
-import { applicationDecisionIsUnread } from '../shared'
 
 import ApplicationDecision from './ApplicationDecision'
 import AssistanceDecision from './AssistanceDecision'
@@ -254,3 +254,6 @@ export default React.memo(function Decisions() {
     </Container>
   )
 })
+
+const applicationDecisionIsUnread = (decision: DecisionSummary) =>
+  decision.status === 'PENDING'

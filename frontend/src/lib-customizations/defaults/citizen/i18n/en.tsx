@@ -2,19 +2,20 @@
 //
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
-import React, { ReactNode } from 'react'
+import type { ReactNode } from 'react'
+import React from 'react'
 
-import FiniteDateRange from 'lib-common/finite-date-range'
-import { EmailVerification } from 'lib-common/generated/api-types/pis'
-import LocalDate from 'lib-common/local-date'
+import type FiniteDateRange from 'lib-common/finite-date-range'
+import type { EmailVerification } from 'lib-common/generated/api-types/pis'
+import type LocalDate from 'lib-common/local-date'
 import { formatFirstName } from 'lib-common/names'
 import ExternalLink from 'lib-components/atoms/ExternalLink'
 import UnorderedList from 'lib-components/atoms/UnorderedList'
 import { Button } from 'lib-components/atoms/buttons/Button'
-import { Translations as ComponentTranslations } from 'lib-components/i18n'
+import type { Translations as ComponentTranslations } from 'lib-components/i18n'
 import { H1, H2, P } from 'lib-components/typography'
 import { Gap } from 'lib-components/white-space'
-import { Translations } from 'lib-customizations/citizen'
+import type { Translations } from 'lib-customizations/citizen'
 import colors from 'lib-customizations/common'
 
 import components from '../../components/i18n/en'
@@ -409,7 +410,7 @@ const en: Translations = {
       _reservationOpensOn: LocalDate
     ) =>
       `Reservations for holiday period ${period.format()} cannot be made yet`,
-    missingReservation: 'No attendance',
+    missingReservation: 'Registration missing',
     reservationNotRequired: 'Reservation not required',
     termBreak: 'No teaching today',
     reservation: 'Registered attendance',
@@ -508,7 +509,10 @@ const en: Translations = {
       attendanceAlreadyExistsErrorTitle:
         'There is already attendance record for the selected days',
       attendanceAlreadyExistsErrorDescription:
-        'It is not possible to add an absence for a child on a day that already has an attendance record.'
+        'It is not possible to add an absence for a child on a day that already has an attendance record.',
+      tooManyAbsencesErrorDescription:
+        'Yli viikon pituinen poissaolo esiopetuksesta on sallittu ainoastaan hyväksyttävästä syystä. (en)',
+      tooManyAbsencesErrorLink: 'Tee poissaolohakemus (en)'
     },
     holidayModal: {
       additionalInformation: 'Read more',
@@ -2665,7 +2669,10 @@ const en: Translations = {
       sentInfo:
         'Jos haluat muuttaa annettuja vastauksia, pyydä henkilökunnalta uusi lomake. (en)',
       // decision cannot be in English
-      decisionNumber: 'Päätösnumero'
+      decisionNumber: 'Päätösnumero',
+      sendingConfirmationTitle: 'Are you sure you want to send the document?',
+      sendingConfirmationText:
+        'Make sure to fill in all the fields. Answers cannot be changed after submission.'
     }
   },
   accessibilityStatement: (

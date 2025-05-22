@@ -8,14 +8,12 @@ import React, { useMemo } from 'react'
 import styled, { css } from 'styled-components'
 
 import { mapScheduleType } from 'lib-common/api-types/placement'
-import {
+import type {
   AbsenceInfo,
-  ReservableTimeRange,
-  Reservation,
   ReservationResponseDay,
   ReservationResponseDayChild
 } from 'lib-common/generated/api-types/reservations'
-import { ChildId } from 'lib-common/generated/api-types/shared'
+import type { ChildId } from 'lib-common/generated/api-types/shared'
 import {
   reservationHasTimes,
   reservationsAndAttendancesDiffer
@@ -29,9 +27,12 @@ import {
 import { Italic } from 'lib-components/typography'
 import { featureFlags } from 'lib-customizations/citizen'
 
-import { Translations, useTranslation } from '../localization'
+import type { Translations } from '../localization'
+import { useTranslation } from '../localization'
 
-import RoundChildImages, { ChildImageData } from './RoundChildImages'
+import type { ChildImageData } from './RoundChildImages'
+import RoundChildImages from './RoundChildImages'
+import { formatReservation } from './utils'
 
 export const Reservations = React.memo(function Reservations({
   data,
@@ -271,26 +272,3 @@ const groupChildren = ({
       key
     })
   )
-
-export const formatReservation = (
-  reservation: Reservation.Times,
-  reservableTimeRange: ReservableTimeRange,
-  i18n: Translations
-) => {
-  const timeOutput = reservation.range.format()
-
-  if (!featureFlags.intermittentShiftCare) {
-    return timeOutput
-  } else {
-    const showIntermittentShiftCareNotice =
-      reservableTimeRange.type === 'INTERMITTENT_SHIFT_CARE' &&
-      (reservableTimeRange.placementUnitOperationTime === null ||
-        !reservableTimeRange.placementUnitOperationTime.contains(
-          reservation.range
-        ))
-
-    return showIntermittentShiftCareNotice
-      ? `${timeOutput} ${i18n.calendar.intermittentShiftCareNotification}`
-      : timeOutput
-  }
-}

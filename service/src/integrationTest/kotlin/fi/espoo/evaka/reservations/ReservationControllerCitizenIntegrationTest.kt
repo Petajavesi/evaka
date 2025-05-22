@@ -4,9 +4,9 @@
 
 package fi.espoo.evaka.reservations
 
+import fi.espoo.evaka.CitizenCalendarEnv
 import fi.espoo.evaka.FullApplicationTest
 import fi.espoo.evaka.absence.AbsenceCategory
-import fi.espoo.evaka.absence.AbsencePushNotifications
 import fi.espoo.evaka.absence.AbsenceType
 import fi.espoo.evaka.absence.getAbsencesOfChildByDate
 import fi.espoo.evaka.absence.getAbsencesOfChildByRange
@@ -25,8 +25,6 @@ import fi.espoo.evaka.preschoolTerm2021
 import fi.espoo.evaka.serviceneed.ShiftCareType
 import fi.espoo.evaka.shared.ChildId
 import fi.espoo.evaka.shared.ServiceNeedOptionId
-import fi.espoo.evaka.shared.async.AsyncJob
-import fi.espoo.evaka.shared.async.AsyncJobRunner
 import fi.espoo.evaka.shared.auth.AuthenticatedUser
 import fi.espoo.evaka.shared.auth.CitizenAuthLevel
 import fi.espoo.evaka.shared.auth.UserRole
@@ -78,13 +76,12 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
+import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 
 class ReservationControllerCitizenIntegrationTest : FullApplicationTest(resetDbBeforeEach = true) {
-    @Autowired private lateinit var accessControl: AccessControl
-    @Autowired private lateinit var asyncJobRunner: AsyncJobRunner<AsyncJob>
-    @Autowired private lateinit var absencePushNotifications: AbsencePushNotifications
-    private lateinit var reservationControllerCitizen: ReservationControllerCitizen
+    @Autowired private lateinit var citizenCalendarEnv: CitizenCalendarEnv
+    @Autowired private lateinit var reservationControllerCitizen: ReservationControllerCitizen
 
     // Monday
     private val mockToday: LocalDate = LocalDate.of(2021, 11, 1)
@@ -109,14 +106,7 @@ class ReservationControllerCitizenIntegrationTest : FullApplicationTest(resetDbB
 
     @BeforeEach
     fun before() {
-        reservationControllerCitizen =
-            ReservationControllerCitizen(
-                accessControl,
-                featureConfig,
-                evakaEnv.copy(plannedAbsenceEnabledForHourBasedServiceNeeds = true),
-                asyncJobRunner,
-                absencePushNotifications,
-            )
+        whenever(evakaEnv.plannedAbsenceEnabledForHourBasedServiceNeeds).thenReturn(true)
         db.transaction { tx ->
             tx.insertServiceNeedOptions()
             tx.insertServiceNeedOption(snPreschoolDaycareContractDays13)
@@ -957,7 +947,8 @@ class ReservationControllerCitizenIntegrationTest : FullApplicationTest(resetDbB
         val employee = DevEmployee()
 
         val adult = DevPerson()
-        val child = DevPerson()
+        val child1 = DevPerson()
+        val child2 = DevPerson()
 
         db.transaction { tx ->
             tx.insert(area)
@@ -965,20 +956,22 @@ class ReservationControllerCitizenIntegrationTest : FullApplicationTest(resetDbB
             tx.insert(employee)
 
             tx.insert(adult, DevPersonType.ADULT)
-            tx.insert(child, DevPersonType.CHILD)
-            tx.insertGuardian(adult.id, child.id)
+            tx.insert(child1, DevPersonType.CHILD)
+            tx.insert(child2, DevPersonType.CHILD)
+            tx.insertGuardian(adult.id, child1.id)
+            tx.insertGuardian(adult.id, child2.id)
 
             tx.insert(
                     DevPlacement(
                         type = PlacementType.DAYCARE,
-                        childId = child.id,
+                        childId = child1.id,
                         unitId = daycare.id,
                         startDate = monday,
-                        endDate = thursday,
+                        endDate = friday,
                     )
                 )
                 .also { placementId ->
-                    val period = FiniteDateRange(monday, thursday)
+                    val period = FiniteDateRange(monday, friday)
                     tx.insert(
                         DevServiceNeed(
                             placementId = placementId,
@@ -990,10 +983,36 @@ class ReservationControllerCitizenIntegrationTest : FullApplicationTest(resetDbB
                         )
                     )
                 }
+            // child2 will not be present in response because placement is too far into the future
+            val calendarNotOpenDate =
+                friday.plusDays(citizenCalendarEnv.calendarOpenBeforePlacementDays.toLong() + 1)
+            tx.insert(
+                    DevPlacement(
+                        type = PlacementType.DAYCARE,
+                        childId = child2.id,
+                        unitId = daycare.id,
+                        startDate = calendarNotOpenDate,
+                        endDate = calendarNotOpenDate.plusMonths(1),
+                    )
+                )
+                .also {
+                    val period =
+                        FiniteDateRange(calendarNotOpenDate, calendarNotOpenDate.plusMonths(1))
+                    tx.insert(
+                        DevServiceNeed(
+                            placementId = it,
+                            startDate = period.start,
+                            endDate = period.end,
+                            optionId = snDaycareHours120.id,
+                            confirmedBy = employee.evakaUserId,
+                            confirmedAt = HelsinkiDateTime.now(),
+                        )
+                    )
+                }
 
             listOf(
                     DevReservation(
-                        childId = child.id,
+                        childId = child1.id,
                         date = monday,
                         startTime = LocalTime.of(9, 0),
                         endTime = LocalTime.of(16, 0),
@@ -1001,7 +1020,7 @@ class ReservationControllerCitizenIntegrationTest : FullApplicationTest(resetDbB
                         createdBy = adult.evakaUserId(),
                     ),
                     DevReservation(
-                        childId = child.id,
+                        childId = child1.id,
                         date = tuesday,
                         startTime = LocalTime.of(9, 0),
                         endTime = LocalTime.of(16, 0),
@@ -1014,21 +1033,21 @@ class ReservationControllerCitizenIntegrationTest : FullApplicationTest(resetDbB
                 .forEach { tx.insert(it) }
             listOf(
                     DevChildAttendance(
-                        childId = child.id,
+                        childId = child1.id,
                         unitId = daycare.id,
                         date = monday,
                         arrived = LocalTime.of(9, 15),
                         departed = LocalTime.of(15, 55),
                     ),
                     DevChildAttendance(
-                        childId = child.id,
+                        childId = child1.id,
                         unitId = daycare.id,
                         date = tuesday,
                         arrived = LocalTime.of(8, 45),
                         departed = LocalTime.of(16, 20),
                     ),
                     DevChildAttendance(
-                        childId = child.id,
+                        childId = child1.id,
                         unitId = daycare.id,
                         date = wednesday,
                         arrived = LocalTime.of(8, 0),
@@ -1053,7 +1072,7 @@ class ReservationControllerCitizenIntegrationTest : FullApplicationTest(resetDbB
                     children =
                         listOf(
                             dayChild(
-                                child.id,
+                                child1.id,
                                 reservations =
                                     listOf(
                                         ReservationResponse.Times(
@@ -1083,7 +1102,7 @@ class ReservationControllerCitizenIntegrationTest : FullApplicationTest(resetDbB
                     children =
                         listOf(
                             dayChild(
-                                child.id,
+                                child1.id,
                                 reservations =
                                     listOf(
                                         ReservationResponse.Times(
@@ -1110,7 +1129,7 @@ class ReservationControllerCitizenIntegrationTest : FullApplicationTest(resetDbB
                     children =
                         listOf(
                             dayChild(
-                                child.id,
+                                child1.id,
                                 reservations = listOf(),
                                 attendances =
                                     listOf(TimeInterval(LocalTime.of(8, 0), LocalTime.of(16, 0))),
@@ -1129,7 +1148,7 @@ class ReservationControllerCitizenIntegrationTest : FullApplicationTest(resetDbB
                     children =
                         listOf(
                             dayChild(
-                                child.id,
+                                child1.id,
                                 reservations = listOf(),
                                 attendances = listOf(),
                                 usedService =

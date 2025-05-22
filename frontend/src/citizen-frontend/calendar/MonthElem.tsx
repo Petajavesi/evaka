@@ -6,13 +6,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import React from 'react'
 import styled, { css } from 'styled-components'
 
-import { CitizenCalendarEvent } from 'lib-common/generated/api-types/calendarevent'
-import {
-  ReservationChild,
-  ReservationResponseDay
-} from 'lib-common/generated/api-types/reservations'
-import LocalDate from 'lib-common/local-date'
-import { formatPreferredName } from 'lib-common/names'
+import type { CitizenCalendarEvent } from 'lib-common/generated/api-types/calendarevent'
+import type { ReservationResponseDay } from 'lib-common/generated/api-types/reservations'
+import type LocalDate from 'lib-common/local-date'
 import { Button } from 'lib-components/atoms/buttons/Button'
 import {
   ExpandingInfoBox,
@@ -26,32 +22,10 @@ import { faArrowsRotate, fasExclamationTriangle } from 'lib-icons'
 import { useTranslation } from '../localization'
 
 import DayElem from './DayElem'
-import MonthlyHoursSummary, { MonthlyTimeSummary } from './MonthlyHoursSummary'
-import { ChildImageData } from './RoundChildImages'
+import type { MonthlyTimeSummary } from './MonthlyHoursSummary'
+import MonthlyHoursSummary from './MonthlyHoursSummary'
+import type { ChildImageData } from './RoundChildImages'
 import { useSummaryInfo } from './hooks'
-
-export function getSummaryForMonth(
-  childData: ReservationChild[],
-  year: number,
-  month: number
-): MonthlyTimeSummary[] {
-  return childData.flatMap(({ monthSummaries, firstName, preferredName }) => {
-    const summaryForMonth = monthSummaries?.find(
-      (monthSummary) =>
-        monthSummary.year === year && monthSummary.month === month
-    )
-    if (!summaryForMonth) {
-      return []
-    }
-    return {
-      name: formatPreferredName({
-        firstName,
-        preferredName
-      }),
-      ...summaryForMonth
-    }
-  })
-}
 
 interface MonthProps {
   calendarMonth: CalendarMonth
@@ -153,27 +127,6 @@ export interface CalendarMonth {
   year: number
   monthNumber: number
   calendarDays: ReservationResponseDay[]
-}
-
-export function groupByMonth(days: ReservationResponseDay[]): CalendarMonth[] {
-  const months: CalendarMonth[] = []
-  let currentMonth: CalendarMonth | undefined = undefined
-  days.forEach((d) => {
-    if (
-      !currentMonth ||
-      currentMonth.year !== d.date.year ||
-      currentMonth.monthNumber !== d.date.month
-    ) {
-      currentMonth = {
-        year: d.date.year,
-        monthNumber: d.date.month,
-        calendarDays: []
-      }
-      months.push(currentMonth)
-    }
-    currentMonth.calendarDays.push(d)
-  })
-  return months
 }
 
 const titleStyles = css`

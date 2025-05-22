@@ -6,11 +6,11 @@ import isEqual from 'lodash/isEqual'
 import React, { useCallback, useMemo, useState } from 'react'
 import styled from 'styled-components'
 
-import { Failure } from 'lib-common/api'
+import type { Failure } from 'lib-common/api'
 import { useForm, useFormFields } from 'lib-common/form/hooks'
 import { combine } from 'lib-common/form/types'
-import { HolidayPeriod } from 'lib-common/generated/api-types/holidayperiod'
-import { ReservationsResponse } from 'lib-common/generated/api-types/reservations'
+import type { HolidayPeriod } from 'lib-common/generated/api-types/holidayperiod'
+import type { ReservationsResponse } from 'lib-common/generated/api-types/reservations'
 import LocalDate from 'lib-common/local-date'
 import { scrollIntoViewSoftKeyboard } from 'lib-common/utils/scrolling'
 import HorizontalLine from 'lib-components/atoms/HorizontalLine'
@@ -109,6 +109,7 @@ export default React.memo(function ReservationModal({
 
         if (!next.isValid) return nextState
         const [repetition, selectedRange, selectedChildren] = next.value
+        const selectedChildIds = selectedChildren.map(({ id }) => id)
 
         if (!prev.isValid) {
           return {
@@ -116,7 +117,7 @@ export default React.memo(function ReservationModal({
             times: resetTimes(dayProperties, undefined, {
               repetition,
               selectedRange,
-              selectedChildren
+              selectedChildren: selectedChildIds
             })
           }
         }
@@ -140,7 +141,7 @@ export default React.memo(function ReservationModal({
               {
                 repetition,
                 selectedRange,
-                selectedChildren
+                selectedChildren: selectedChildIds
               }
             )
           }

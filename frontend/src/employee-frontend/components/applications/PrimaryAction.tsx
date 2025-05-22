@@ -5,15 +5,13 @@
 import React from 'react'
 import styled from 'styled-components'
 
-import { ApplicationId } from 'lib-common/generated/api-types/shared'
+import type { ApplicationId } from 'lib-common/generated/api-types/shared'
 import { Button } from 'lib-components/atoms/buttons/Button'
 import { MutateButton } from 'lib-components/atoms/buttons/MutateButton'
 
-import {
-  ApplicationAction,
-  isSimpleApplicationMutationAction
-} from './ApplicationActions'
+import type { ApplicationAction } from './ApplicationActions'
 import { simpleApplicationActionMutation } from './queries'
+import { isSimpleApplicationMutationAction } from './utils'
 
 type Props = {
   applicationId: ApplicationId

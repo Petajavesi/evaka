@@ -2,16 +2,17 @@
 //
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
-import DateRange from 'lib-common/date-range'
+import type DateRange from 'lib-common/date-range'
 
-import { DevEmployee } from '../../../generated/api-types'
+import type { DevEmployee } from '../../../generated/api-types'
+import type { Page, Element } from '../../../utils/page'
 import {
-  Page,
   TextInput,
-  Element,
   AsyncButton,
   Combobox,
-  DatePicker
+  DatePicker,
+  Modal,
+  Checkbox
 } from '../../../utils/page'
 
 export class ChildDocumentPage {
@@ -24,6 +25,7 @@ export class ChildDocumentPage {
   archiveButton: AsyncButton
   archiveTooltip: Element
   acceptDecisionButton: Element
+  sendingConfirmationModal: Modal
   constructor(private readonly page: Page) {
     this.status = page.findByDataQa('document-state-chip')
     this.savingIndicator = page.findByDataQa('saving-spinner')
@@ -34,6 +36,7 @@ export class ChildDocumentPage {
     this.archiveButton = new AsyncButton(page.findByDataQa('archive-button'))
     this.archiveTooltip = page.findByDataQa('archive-tooltip')
     this.acceptDecisionButton = page.findByDataQa('accept-decision-button')
+    this.sendingConfirmationModal = new Modal(page.findByDataQa('modal'))
   }
 
   getTextQuestion(sectionName: string, questionName: string) {
@@ -73,6 +76,14 @@ export class ChildDocumentPage {
 
   async goToNextStatus() {
     await this.page.findByDataQa('next-status-button').click()
+    await this.page.findByDataQa('modal-okBtn').click()
+  }
+
+  async goToCompletedStatus() {
+    await this.page.findByDataQa('next-status-button').click()
+    await new Checkbox(
+      this.page.findByDataQa('modal-extra-confirmation')
+    ).check()
     await this.page.findByDataQa('modal-okBtn').click()
   }
 

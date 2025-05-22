@@ -5,12 +5,12 @@
 import React, { useCallback, useImperativeHandle, useMemo, useRef } from 'react'
 import styled from 'styled-components'
 
-import { Result } from 'lib-common/api'
-import { IncomeStatementStatus } from 'lib-common/generated/api-types/incomestatement'
-import { IncomeStatementId } from 'lib-common/generated/api-types/shared'
+import type { Result } from 'lib-common/api'
+import type { IncomeStatementStatus } from 'lib-common/generated/api-types/incomestatement'
+import type { IncomeStatementId } from 'lib-common/generated/api-types/shared'
 import { numAttachments } from 'lib-common/income-statements/attachments'
-import * as Form from 'lib-common/income-statements/form'
-import LocalDate from 'lib-common/local-date'
+import type * as Form from 'lib-common/income-statements/form'
+import type LocalDate from 'lib-common/local-date'
 import { scrollToRef } from 'lib-common/utils/scrolling'
 import { AsyncButton } from 'lib-components/atoms/buttons/AsyncButton'
 import { Button } from 'lib-components/atoms/buttons/Button'
@@ -30,19 +30,16 @@ import { errorToInputInfo } from '../input-info-helper'
 import { useLang, useTranslation } from '../localization'
 
 import ChildIncomeStatementAttachments from './ChildIncomeStatementAttachments'
-import {
-  AttachmentSection,
-  useAttachmentHandler
-} from './IncomeStatementAttachments'
+import { AttachmentSection } from './IncomeStatementAttachments'
+import type { IncomeStatementFormAPI } from './IncomeStatementComponents'
 import {
   ActionContainer,
   AssureCheckbox,
-  IncomeStatementFormAPI,
-  LabelError,
-  SetStateCallback,
-  useFieldDispatch,
-  useFieldSetState
+  LabelError
 } from './IncomeStatementComponents'
+import { useAttachmentHandler } from './attachmentHandler'
+import type { SetStateCallback } from './hooks'
+import { useFieldDispatch, useFieldSetState } from './hooks'
 
 const OtherInfoContainer = styled.div`
   max-width: 716px;

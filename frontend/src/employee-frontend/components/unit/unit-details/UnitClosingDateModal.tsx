@@ -9,28 +9,21 @@ import styled from 'styled-components'
 import { localDate } from 'lib-common/form/fields'
 import { object, required, validated } from 'lib-common/form/form'
 import { useForm, useFormFields } from 'lib-common/form/hooks'
-import { Daycare } from 'lib-common/generated/api-types/daycare'
-import LocalDate from 'lib-common/local-date'
+import type { Daycare } from 'lib-common/generated/api-types/daycare'
+import type LocalDate from 'lib-common/local-date'
 import { DatePickerF } from 'lib-components/molecules/date-picker/DatePicker'
 import { MutateFormModal } from 'lib-components/molecules/modals/FormModal'
 
 import { useTranslation } from '../../../state/i18n'
 import { updateUnitClosingDateMutation } from '../queries'
 
+import { closingDateIsBeforeLastPlacementDate } from './utils'
+
 interface UnitClosingDateModalProps {
   unit: Daycare
   lastPlacementDate: LocalDate | null
   onClose: () => void
 }
-
-export const closingDateIsBeforeLastPlacementDate = (
-  closingDate: LocalDate | null,
-  lastPlacementDate: LocalDate | null | undefined
-) =>
-  closingDate !== null &&
-  lastPlacementDate !== null &&
-  lastPlacementDate !== undefined &&
-  closingDate.isBefore(lastPlacementDate)
 
 const form = validated(
   object({

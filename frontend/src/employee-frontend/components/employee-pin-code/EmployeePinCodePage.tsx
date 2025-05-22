@@ -9,7 +9,8 @@ import { unstable_usePrompt as usePrompt } from 'react-router'
 import { useQueryResult } from 'lib-common/query'
 import Title from 'lib-components/atoms/Title'
 import { MutateButton } from 'lib-components/atoms/buttons/MutateButton'
-import InputField, { InputInfo } from 'lib-components/atoms/form/InputField'
+import type { InputInfo } from 'lib-components/atoms/form/InputField'
+import InputField from 'lib-components/atoms/form/InputField'
 import { Container, ContentArea } from 'lib-components/layout/Container'
 import { FixedSpaceColumn } from 'lib-components/layout/flex-helpers'
 import { AlertBox } from 'lib-components/molecules/MessageBoxes'
@@ -21,24 +22,7 @@ import { useTranslation } from '../../state/i18n'
 import { useWarnOnUnsavedChanges } from '../../utils/useWarnOnUnsavedChanges'
 
 import { isPinLockedQuery, upsertPinCodeMutation } from './queries'
-
-const badPins = [
-  '1234',
-  '0000',
-  '1111',
-  '2222',
-  '3333',
-  '4444',
-  '5555',
-  '6666',
-  '7777',
-  '8888',
-  '9999'
-]
-
-export function isValidPinCode(pin: string) {
-  return !badPins.includes(pin) && /^\d{4}$/.test(pin)
-}
+import { isValidPinCode } from './utils'
 
 export default React.memo(function EmployeePinCodePage() {
   const { i18n } = useTranslation()

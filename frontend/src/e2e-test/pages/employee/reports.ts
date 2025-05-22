@@ -4,25 +4,23 @@
 
 import assert from 'assert'
 
-import { ApplicationStatus } from 'lib-common/generated/api-types/application'
-import { ProviderType } from 'lib-common/generated/api-types/daycare'
-import { PlacementType } from 'lib-common/generated/api-types/placement'
-import { DaycareId, GroupId } from 'lib-common/generated/api-types/shared'
-import LocalDate from 'lib-common/local-date'
+import type { ApplicationStatus } from 'lib-common/generated/api-types/application'
+import type { ProviderType } from 'lib-common/generated/api-types/daycare'
+import type { PlacementType } from 'lib-common/generated/api-types/placement'
+import type { DaycareId, GroupId } from 'lib-common/generated/api-types/shared'
+import type LocalDate from 'lib-common/local-date'
 
 import { captureTextualDownload } from '../../browser'
 import { waitUntilEqual } from '../../utils'
+import type { Page, Element, ElementCollection } from '../../utils/page'
 import {
   Checkbox,
   Combobox,
   DatePicker,
   MultiSelect,
-  Page,
   Select,
   StaticChip,
   TextInput,
-  Element,
-  ElementCollection,
   TreeDropdown
 } from '../../utils/page'
 
@@ -517,10 +515,12 @@ export class AssistanceNeedsAndActionsReport {
   needsAndActionsRows: ElementCollection
   childRows: ElementCollection
   careAreaSelect: Combobox
+  providerTypeSelect: Combobox
   unitSelect: Combobox
   typeSelect: Combobox
   daycareAssistanceLevelSelect: MultiSelect
   preschoolAssistanceLevelSelect: MultiSelect
+  placementTypeSelect: MultiSelect
 
   constructor(private page: Page) {
     this.needsAndActionsRows = page.findAllByDataQa(
@@ -530,11 +530,17 @@ export class AssistanceNeedsAndActionsReport {
     this.careAreaSelect = new Combobox(page.findByDataQa('care-area-filter'))
     this.unitSelect = new Combobox(page.findByDataQa('unit-filter'))
     this.typeSelect = new Combobox(this.page.findByDataQa(`type-filter`))
+    this.providerTypeSelect = new Combobox(
+      this.page.findByDataQa('provider-type-filter')
+    )
     this.daycareAssistanceLevelSelect = new MultiSelect(
       this.page.findByDataQa('daycare-assistance-level-filter')
     )
     this.preschoolAssistanceLevelSelect = new MultiSelect(
       this.page.findByDataQa('preschool-assistance-level-filter')
+    )
+    this.placementTypeSelect = new MultiSelect(
+      this.page.findByDataQa('placement-type-filter')
     )
   }
 

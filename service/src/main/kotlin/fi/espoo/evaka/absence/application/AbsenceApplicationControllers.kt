@@ -6,12 +6,14 @@ package fi.espoo.evaka.absence.application
 
 import fi.espoo.evaka.Audit
 import fi.espoo.evaka.AuditId
+import fi.espoo.evaka.absence.AbsenceService
 import fi.espoo.evaka.absence.AbsenceType
-import fi.espoo.evaka.absence.FullDayAbsenseUpsert
-import fi.espoo.evaka.absence.upsertFullDayAbsences
+import fi.espoo.evaka.reservations.AbsenceRequest
 import fi.espoo.evaka.shared.AbsenceApplicationId
 import fi.espoo.evaka.shared.ChildId
 import fi.espoo.evaka.shared.DaycareId
+import fi.espoo.evaka.shared.async.AsyncJob
+import fi.espoo.evaka.shared.async.AsyncJobRunner
 import fi.espoo.evaka.shared.auth.AuthenticatedUser
 import fi.espoo.evaka.shared.db.Database
 import fi.espoo.evaka.shared.domain.BadRequest
@@ -33,7 +35,11 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/employee/absence-application")
-class AbsenceApplicationControllerEmployee(private val accessControl: AccessControl) {
+class AbsenceApplicationControllerEmployee(
+    private val accessControl: AccessControl,
+    private val absenceService: AbsenceService,
+    private val asyncJobRunner: AsyncJobRunner<AsyncJob>,
+) {
     @GetMapping
     fun getAbsenceApplications(
         db: Database,
@@ -83,8 +89,10 @@ class AbsenceApplicationControllerEmployee(private val accessControl: AccessCont
                             clock,
                             applications.map { it.id },
                         )
-                    applications.map {
-                        AbsenceApplicationSummaryEmployee(it, actions[it.id] ?: emptySet())
+                    applications.mapNotNull { application ->
+                        actions[application.id]
+                            ?.takeIf { it.contains(Action.AbsenceApplication.READ) }
+                            ?.let { AbsenceApplicationSummaryEmployee(application, it) }
                     }
                 }
             }
@@ -129,27 +137,21 @@ class AbsenceApplicationControllerEmployee(private val accessControl: AccessCont
                         user.evakaUserId,
                         rejectedReason = null,
                     )
-                    if (!clock.today().isAfter(application.endDate)) {
-                        val range =
-                            if (clock.today().isAfter(application.startDate))
-                                FiniteDateRange(clock.today(), application.endDate)
-                            else FiniteDateRange(application.startDate, application.endDate)
-                        tx.upsertFullDayAbsences(
-                            user.evakaUserId,
-                            clock.now(),
-                            range
-                                .dates()
-                                .map { date ->
-                                    FullDayAbsenseUpsert(
-                                        childId = application.childId,
-                                        date = date,
-                                        absenceTypeBillable = AbsenceType.OTHER_ABSENCE,
-                                        absenceTypeNonbillable = AbsenceType.OTHER_ABSENCE,
-                                    )
-                                }
-                                .toList(),
-                        )
-                    }
+                    absenceService.createAbsences(
+                        tx,
+                        user,
+                        clock,
+                        AbsenceRequest(
+                            setOf(application.childId),
+                            FiniteDateRange(application.startDate, application.endDate),
+                            AbsenceType.OTHER_ABSENCE,
+                        ),
+                    )
+                    asyncJobRunner.plan(
+                        tx,
+                        listOf(AsyncJob.SendAbsenceApplicationDecidedEmail(application.id)),
+                        runAt = clock.now(),
+                    )
                     application
                 }
             }
@@ -191,6 +193,11 @@ class AbsenceApplicationControllerEmployee(private val accessControl: AccessCont
                         clock.now(),
                         user.evakaUserId,
                         body.reason,
+                    )
+                    asyncJobRunner.plan(
+                        tx,
+                        listOf(AsyncJob.SendAbsenceApplicationDecidedEmail(application.id)),
+                        runAt = clock.now(),
                     )
                     application
                 }

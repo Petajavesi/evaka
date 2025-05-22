@@ -2,39 +2,19 @@
 //
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
-import React, { useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react'
 
 import DateRange from 'lib-common/date-range'
-import {
-  boolean,
-  openEndedLocalDateRange,
-  string
-} from 'lib-common/form/fields'
-import {
-  array,
-  object,
-  oneOf,
-  required,
-  transformed,
-  validated,
-  value
-} from 'lib-common/form/form'
+import { openEndedLocalDateRange } from 'lib-common/form/fields'
 import { useForm, useFormFields } from 'lib-common/form/hooks'
-import { ValidationError, ValidationSuccess } from 'lib-common/form/types'
-import { nonBlank } from 'lib-common/form/validators'
-import {
-  DocumentTemplateBasicsRequest,
-  DocumentType,
-  documentTypes,
-  ExportedDocumentTemplate
+import type {
+  ExportedDocumentTemplate,
+  DocumentType
 } from 'lib-common/generated/api-types/document'
-import { PlacementType } from 'lib-common/generated/api-types/placement'
-import {
-  DocumentTemplateId,
-  UiLanguage,
-  uiLanguages
-} from 'lib-common/generated/api-types/shared'
-import { JsonOf } from 'lib-common/json'
+import { documentTypes } from 'lib-common/generated/api-types/document'
+import type { DocumentTemplateId } from 'lib-common/generated/api-types/shared'
+import { uiLanguages } from 'lib-common/generated/api-types/shared'
+import type { JsonOf } from 'lib-common/json'
 import { useMutationResult } from 'lib-common/query'
 import { SelectF } from 'lib-components/atoms/dropdowns/Select'
 import { CheckboxF } from 'lib-components/atoms/form/Checkbox'
@@ -51,100 +31,12 @@ import {
 } from 'lib-customizations/employee'
 
 import { useTranslation } from '../../../state/i18n'
+import { documentTemplateForm } from '../forms'
 import {
   createDocumentTemplateMutation,
   duplicateDocumentTemplateMutation,
   importDocumentTemplateMutation
 } from '../queries'
-
-export const documentTemplateForm = transformed(
-  object({
-    name: validated(string(), nonBlank),
-    type: required(oneOf<DocumentType>()),
-    placementTypes: validated(array(value<PlacementType>()), (arr) =>
-      arr.length === 0 ? 'required' : undefined
-    ),
-    language: required(oneOf<UiLanguage>()),
-    confidential: boolean(),
-    confidentialityDurationYears: required(value<string>()),
-    confidentialityBasis: required(value<string>()),
-    legalBasis: string(),
-    validity: required(openEndedLocalDateRange()),
-    processDefinitionNumber: required(value<string>()),
-    archiveDurationMonths: required(value<string>()),
-    archiveExternally: boolean()
-  }),
-  (value) => {
-    const archived = value.processDefinitionNumber.trim().length > 0
-    if (archived) {
-      const archiveDurationMonths = parseInt(value.archiveDurationMonths)
-      if (isNaN(archiveDurationMonths) || archiveDurationMonths < 1) {
-        return ValidationError.field('archiveDurationMonths', 'integerFormat')
-      }
-    }
-
-    if (value.archiveExternally) {
-      if (value.processDefinitionNumber.trim().length === 0) {
-        return ValidationError.field('processDefinitionNumber', 'required')
-      }
-
-      if (value.archiveDurationMonths.trim().length === 0) {
-        return ValidationError.field('archiveDurationMonths', 'required')
-      }
-
-      const archiveDurationMonths = parseInt(value.archiveDurationMonths)
-      if (isNaN(archiveDurationMonths) || archiveDurationMonths < 1) {
-        return ValidationError.field('archiveDurationMonths', 'integerFormat')
-      }
-    }
-
-    const confidential = value.confidential
-    if (confidential) {
-      const confidentialityDurationYears = parseInt(
-        value.confidentialityDurationYears
-      )
-      if (
-        isNaN(confidentialityDurationYears) ||
-        confidentialityDurationYears < 1
-      ) {
-        return ValidationError.field(
-          'confidentialityDurationYears',
-          'integerFormat'
-        )
-      }
-      if (value.confidentialityBasis.trim().length === 0) {
-        return ValidationError.field('confidentialityBasis', 'required')
-      }
-    }
-
-    const output: DocumentTemplateBasicsRequest = {
-      ...value,
-
-      confidentiality: confidential
-        ? {
-            durationYears: parseInt(value.confidentialityDurationYears),
-            basis: value.confidentialityBasis.trim()
-          }
-        : null,
-      ...(value.archiveExternally
-        ? {
-            templateType: 'ARCHIVED_EXTERNALLY',
-            processDefinitionNumber: value.processDefinitionNumber.trim(),
-            archiveDurationMonths: parseInt(value.archiveDurationMonths)
-          }
-        : {
-            templateType: 'REGULAR',
-            processDefinitionNumber: archived
-              ? value.processDefinitionNumber.trim()
-              : null,
-            archiveDurationMonths: archived
-              ? parseInt(value.archiveDurationMonths)
-              : null
-          })
-    }
-    return ValidationSuccess.of(output)
-  }
-)
 
 export type TemplateModalMode =
   | { type: 'new' }
@@ -190,13 +82,15 @@ export default React.memo(function TemplateModal({ onClose, mode }: Props) {
     [i18n.documentTemplates]
   )
 
-  const languageOptions = useMemo(
-    () =>
-      uiLanguages.map((option) => ({
-        domValue: option,
-        value: option,
-        label: i18n.documentTemplates.languages[option]
-      })),
+  const getLanguageOptions = useCallback(
+    (type: DocumentType) =>
+      uiLanguages
+        .filter((option) => type === 'CITIZEN_BASIC' || option !== 'EN')
+        .map((option) => ({
+          domValue: option,
+          value: option,
+          label: i18n.documentTemplates.languages[option]
+        })),
     [i18n.documentTemplates]
   )
 
@@ -213,7 +107,7 @@ export default React.memo(function TemplateModal({ onClose, mode }: Props) {
             placementTypes: mode.data.placementTypes,
             language: {
               domValue: mode.data.language,
-              options: languageOptions
+              options: getLanguageOptions(mode.data.type)
             },
             confidential: mode.data.confidentiality !== null,
             confidentialityDurationYears:
@@ -237,7 +131,7 @@ export default React.memo(function TemplateModal({ onClose, mode }: Props) {
             placementTypes: [],
             language: {
               domValue: 'FI',
-              options: languageOptions
+              options: getLanguageOptions('PEDAGOGICAL_ASSESSMENT')
             },
             confidential: true,
             confidentialityDurationYears: '100',
@@ -250,6 +144,28 @@ export default React.memo(function TemplateModal({ onClose, mode }: Props) {
           },
     {
       ...i18n.validationErrors
+    },
+    {
+      onUpdate: (_, next, form) => {
+        const shape = form.shape()
+        const type = shape.type.validate(next.type)
+        if (type.isValid) {
+          const options = getLanguageOptions(type.value)
+          return {
+            ...next,
+            language: {
+              options,
+              domValue: options.some(
+                (o) => o.domValue === next.language.domValue
+              )
+                ? next.language.domValue
+                : 'FI'
+            }
+          }
+        } else {
+          return next
+        }
+      }
     }
   )
 

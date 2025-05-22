@@ -4,37 +4,37 @@
 
 // GENERATED FILE: no manual modifications
 
+import type { Action } from '../action'
+import type { ApplicationId } from './shared'
+import type { ApplicationNoteId } from './shared'
+import type { AreaId } from './shared'
+import type { AttachmentId } from './shared'
+import type { CreatePersonBody } from './pis'
+import type { DaycareId } from './shared'
+import type { Decision } from './decision'
+import type { DecisionDraft } from './decision'
+import type { DecisionId } from './shared'
+import type { DecisionStatus } from './decision'
+import type { DecisionType } from './decision'
+import type { DecisionUnit } from './decision'
+import type { EmployeeId } from './shared'
+import type { EvakaUser } from './user'
+import type { EvakaUserId } from './shared'
+import type { FinanceDecisionType } from './invoicing'
 import FiniteDateRange from '../../finite-date-range'
 import HelsinkiDateTime from '../../helsinki-date-time'
+import type { JsonOf } from '../../json'
 import LocalDate from '../../local-date'
-import { Action } from '../action'
-import { ApplicationId } from './shared'
-import { ApplicationNoteId } from './shared'
-import { AreaId } from './shared'
-import { AttachmentId } from './shared'
-import { CreatePersonBody } from './pis'
-import { DaycareId } from './shared'
-import { Decision } from './decision'
-import { DecisionDraft } from './decision'
-import { DecisionId } from './shared'
-import { DecisionStatus } from './decision'
-import { DecisionType } from './decision'
-import { DecisionUnit } from './decision'
-import { EmployeeId } from './shared'
-import { EvakaUser } from './user'
-import { EvakaUserId } from './shared'
-import { FinanceDecisionType } from './invoicing'
-import { JsonOf } from '../../json'
-import { MessageContentId } from './shared'
-import { MessageThreadId } from './shared'
-import { PersonId } from './shared'
-import { PersonJSON } from './pis'
-import { PlacementPlanConfirmationStatus } from './placement'
-import { PlacementPlanDetails } from './placement'
-import { PlacementPlanRejectReason } from './placement'
-import { PlacementType } from './placement'
-import { ServiceNeedOptionId } from './shared'
-import { UUID } from '../../types'
+import type { MessageContentId } from './shared'
+import type { MessageThreadId } from './shared'
+import type { PersonId } from './shared'
+import type { PersonJSON } from './pis'
+import type { PlacementPlanConfirmationStatus } from './placement'
+import type { PlacementPlanDetails } from './placement'
+import type { PlacementPlanRejectReason } from './placement'
+import type { PlacementType } from './placement'
+import type { ServiceNeedOptionId } from './shared'
+import type { UUID } from '../../types'
 import { deserializeJsonCreatePersonBody } from './pis'
 import { deserializeJsonDecision } from './decision'
 import { deserializeJsonDecisionDraft } from './decision'
@@ -74,7 +74,6 @@ export interface ApplicationAttachment {
   name: string
   receivedAt: HelsinkiDateTime
   type: ApplicationAttachmentType
-  updated: HelsinkiDateTime
   uploadedByEmployee: EmployeeId | null
   uploadedByPerson: PersonId | null
 }
@@ -193,15 +192,15 @@ export interface ApplicationFormUpdate {
 export interface ApplicationNote {
   applicationId: ApplicationId
   content: string
-  created: HelsinkiDateTime
+  createdAt: HelsinkiDateTime
   createdBy: EvakaUserId
   createdByName: string
   id: ApplicationNoteId
   messageContentId: MessageContentId | null
   messageThreadId: MessageThreadId | null
-  updated: HelsinkiDateTime
-  updatedBy: EvakaUserId
-  updatedByName: string
+  modifiedAt: HelsinkiDateTime
+  modifiedBy: EvakaUserId
+  modifiedByName: string
 }
 
 /**
@@ -848,8 +847,7 @@ export function deserializeJsonAcceptDecisionRequest(json: JsonOf<AcceptDecision
 export function deserializeJsonApplicationAttachment(json: JsonOf<ApplicationAttachment>): ApplicationAttachment {
   return {
     ...json,
-    receivedAt: HelsinkiDateTime.parseIso(json.receivedAt),
-    updated: HelsinkiDateTime.parseIso(json.updated)
+    receivedAt: HelsinkiDateTime.parseIso(json.receivedAt)
   }
 }
 
@@ -900,8 +898,8 @@ export function deserializeJsonApplicationFormUpdate(json: JsonOf<ApplicationFor
 export function deserializeJsonApplicationNote(json: JsonOf<ApplicationNote>): ApplicationNote {
   return {
     ...json,
-    created: HelsinkiDateTime.parseIso(json.created),
-    updated: HelsinkiDateTime.parseIso(json.updated)
+    createdAt: HelsinkiDateTime.parseIso(json.createdAt),
+    modifiedAt: HelsinkiDateTime.parseIso(json.modifiedAt)
   }
 }
 

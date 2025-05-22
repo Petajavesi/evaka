@@ -3,22 +3,18 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import React, { useCallback, useMemo, useRef } from 'react'
+import React, { useCallback } from 'react'
 import styled from 'styled-components'
 
-import { Attachment } from 'lib-common/generated/api-types/attachment'
-import {
-  IncomeStatementAttachmentType,
-  incomeStatementAttachmentTypes
-} from 'lib-common/generated/api-types/incomestatement'
-import {
+import type { Attachment } from 'lib-common/generated/api-types/attachment'
+import type { IncomeStatementAttachmentType } from 'lib-common/generated/api-types/incomestatement'
+import { incomeStatementAttachmentTypes } from 'lib-common/generated/api-types/incomestatement'
+import type {
   AttachmentId,
   IncomeStatementId
 } from 'lib-common/generated/api-types/shared'
-import {
-  IncomeStatementAttachments,
-  numAttachments
-} from 'lib-common/income-statements/attachments'
+import type { IncomeStatementAttachments } from 'lib-common/income-statements/attachments'
+import { numAttachments } from 'lib-common/income-statements/attachments'
 import UnorderedList from 'lib-components/atoms/UnorderedList'
 import { Button } from 'lib-components/atoms/buttons/Button'
 import { ContentArea } from 'lib-components/layout/Container'
@@ -26,10 +22,7 @@ import { Table, Tbody, Td, Tr } from 'lib-components/layout/Table'
 import { FixedSpaceColumn } from 'lib-components/layout/flex-helpers'
 import ExpandingInfo from 'lib-components/molecules/ExpandingInfo'
 import FileDownloadButton from 'lib-components/molecules/FileDownloadButton'
-import FileUpload, {
-  fileIcon,
-  UploadHandler
-} from 'lib-components/molecules/FileUpload'
+import FileUpload, { fileIcon } from 'lib-components/molecules/FileUpload'
 import { H2, H3, P } from 'lib-components/typography'
 import { defaultMargins, Gap } from 'lib-components/white-space'
 import colors from 'lib-customizations/common'
@@ -38,123 +31,13 @@ import { faCheck } from 'lib-icons'
 import { getAttachmentUrl, incomeStatementAttachment } from '../attachments'
 import { useTranslation } from '../localization'
 
-import {
-  LabelWithError,
-  Row,
-  SetStateCallback
-} from './IncomeStatementComponents'
+import { LabelWithError, Row } from './IncomeStatementComponents'
+import type { AttachmentHandler } from './attachmentHandler'
+import { useAttachmentHandler } from './attachmentHandler'
+import type { SetStateCallback } from './hooks'
 
 function attachmentSectionDataQa(type: IncomeStatementAttachmentType): string {
   return `attachment-section-${type}`
-}
-
-export interface AttachmentHandler {
-  hasAttachment: (attachmentType: IncomeStatementAttachmentType) => boolean
-  fileUploadProps: (type: IncomeStatementAttachmentType) => {
-    files: Attachment[]
-    uploadHandler: UploadHandler
-    onUploaded: (attachment: Attachment) => void
-    onDeleted: (id: AttachmentId) => void
-    getDownloadUrl: (id: AttachmentId) => string
-  }
-  setElement: (
-    attachmentType: IncomeStatementAttachmentType,
-    el: HTMLElement | null
-  ) => void
-  focus: (attachmentType: IncomeStatementAttachmentType) => void
-}
-
-/** Returns `undefined` if the income statement contains old untyped attachments */
-export function useAttachmentHandler(
-  id: IncomeStatementId | undefined,
-  attachments: IncomeStatementAttachments,
-  onChange: SetStateCallback<IncomeStatementAttachments>
-): AttachmentHandler | undefined {
-  const refs = useRef<
-    Partial<Record<IncomeStatementAttachmentType, HTMLElement>>
-  >({})
-  return useMemo(() => {
-    if (!attachments.typed) {
-      // Has untyped attachments
-      return undefined
-    }
-    const { attachmentsByType } = attachments
-    return {
-      hasAttachment: (attachmentType: IncomeStatementAttachmentType) =>
-        !!attachmentsByType[attachmentType]?.length,
-      fileUploadProps: (attachmentType: IncomeStatementAttachmentType) => {
-        const files = attachmentsByType[attachmentType] ?? []
-        return {
-          files,
-          uploadHandler: incomeStatementAttachment(id, attachmentType),
-          onUploaded: (attachment: Attachment) => {
-            onChange((prev) => {
-              // Should not happen
-              if (!prev.typed) return prev
-
-              const { attachmentsByType } = prev
-              if (attachmentsByType[attachmentType]) {
-                return {
-                  ...prev,
-                  attachmentsByType: {
-                    ...attachmentsByType,
-                    [attachmentType]: [
-                      ...attachmentsByType[attachmentType],
-                      attachment
-                    ]
-                  }
-                }
-              } else {
-                return {
-                  ...prev,
-                  attachmentsByType: {
-                    ...attachmentsByType,
-                    [attachmentType]: [attachment]
-                  }
-                }
-              }
-            })
-          },
-          onDeleted: (id: AttachmentId) => {
-            onChange((prev) => {
-              // Should not happen
-              if (!prev.typed) return prev
-
-              const { attachmentsByType } = prev
-              if (attachmentsByType[attachmentType]) {
-                return {
-                  ...prev,
-                  attachmentsByType: {
-                    ...attachmentsByType,
-                    [attachmentType]: attachmentsByType[attachmentType].filter(
-                      (a) => a.id !== id
-                    )
-                  }
-                }
-              } else {
-                return prev
-              }
-            })
-          },
-          getDownloadUrl: () => ''
-        }
-      },
-      setElement: (
-        attachmentType: IncomeStatementAttachmentType,
-        el: HTMLElement | null
-      ) => {
-        if (el) {
-          refs.current[attachmentType] = el
-        } else {
-          delete refs.current[attachmentType]
-        }
-      },
-      focus: (attachmentType: IncomeStatementAttachmentType) => {
-        const element = refs.current[attachmentType]
-        if (element) element.focus()
-      }
-    }
-  }, [attachments, id, onChange])
 }
 
 export const AttachmentSection = React.memo(function AttachmentSection({

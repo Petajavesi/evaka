@@ -6,7 +6,7 @@ import FiniteDateRange from 'lib-common/finite-date-range'
 import { HolidayQuestionnaire } from 'lib-common/generated/api-types/holidayperiod'
 import LocalDate from 'lib-common/local-date'
 import LocalTime from 'lib-common/local-time'
-import { UUID } from 'lib-common/types'
+import type { UUID } from 'lib-common/types'
 
 import { vtjDependants } from '../../dev-api'
 import {
@@ -22,7 +22,11 @@ import {
   resetServiceState,
   upsertVtjDataset
 } from '../../generated/api-clients'
-import { DevDaycare, DevPerson, DevPlacement } from '../../generated/api-types'
+import type {
+  DevDaycare,
+  DevPerson,
+  DevPlacement
+} from '../../generated/api-types'
 import CitizenCalendarPage from '../../pages/citizen/citizen-calendar'
 import CitizenHeader from '../../pages/citizen/citizen-header'
 import { Page } from '../../utils/page'
@@ -465,8 +469,8 @@ describe('Holiday periods and questionnaires', () => {
     await setupFirstChildPlacement()
     await holidayQuestionnaireFixture().save()
     const child2 = await setupAnotherChild(
-      LocalDate.of(2035, 12, 19),
-      LocalDate.of(2036, 1, 1)
+      LocalDate.of(2035, 12, 14),
+      LocalDate.of(2035, 12, 27)
     )
 
     await enduserLogin(page, guardian)
@@ -482,7 +486,7 @@ describe('Holiday periods and questionnaires', () => {
     ])
     await holidayModal.assertOptions(child2, [
       'Ei maksutonta poissaoloa',
-      '26.12.2035 - 01.01.2036'
+      '18.12.2035 - 25.12.2035'
     ])
     await holidayModal.markHolidays([
       {
@@ -491,11 +495,11 @@ describe('Holiday periods and questionnaires', () => {
       },
       {
         child: child2,
-        option: '26.12.2035 - 01.01.2036'
+        option: '18.12.2035 - 25.12.2035'
       }
     ])
 
-    await calendar.assertDay(LocalDate.of(2035, 12, 27), [
+    await calendar.assertDay(LocalDate.of(2035, 12, 19), [
       { childIds: [child.id], text: 'Ilmoitus puuttuu' },
       { childIds: [child2.id], text: 'Maksuton poissaolo' }
     ])
@@ -503,7 +507,7 @@ describe('Holiday periods and questionnaires', () => {
       { childIds: [child.id], text: 'Maksuton poissaolo' }
     ])
 
-    const dayView1 = await calendar.openDayView(LocalDate.of(2035, 12, 27))
+    const dayView1 = await calendar.openDayView(LocalDate.of(2035, 12, 19))
     await dayView1.assertNoReservation(child.id)
     await dayView1.assertAbsence(
       child2.id,

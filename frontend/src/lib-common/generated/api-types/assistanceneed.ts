@@ -4,22 +4,22 @@
 
 // GENERATED FILE: no manual modifications
 
+import type { Action } from '../action'
+import type { AssistanceNeedDecisionGuardianId } from './shared'
+import type { AssistanceNeedDecisionId } from './shared'
+import type { AssistanceNeedPreschoolDecisionGuardianId } from './shared'
+import type { AssistanceNeedPreschoolDecisionId } from './shared'
+import type { AssistanceNeedVoucherCoefficientId } from './shared'
 import DateRange from '../../date-range'
+import type { DaycareId } from './shared'
+import type { EmployeeId } from './shared'
+import type { EvakaUser } from './user'
 import FiniteDateRange from '../../finite-date-range'
 import HelsinkiDateTime from '../../helsinki-date-time'
+import type { JsonOf } from '../../json'
 import LocalDate from '../../local-date'
-import { Action } from '../action'
-import { AssistanceNeedDecisionGuardianId } from './shared'
-import { AssistanceNeedDecisionId } from './shared'
-import { AssistanceNeedPreschoolDecisionGuardianId } from './shared'
-import { AssistanceNeedPreschoolDecisionId } from './shared'
-import { AssistanceNeedVoucherCoefficientId } from './shared'
-import { DaycareId } from './shared'
-import { EmployeeId } from './shared'
-import { EvakaUser } from './user'
-import { JsonOf } from '../../json'
-import { OfficialLanguage } from './shared'
-import { PersonId } from './shared'
+import type { OfficialLanguage } from './shared'
+import type { PersonId } from './shared'
 
 /**
 * Generated from fi.espoo.evaka.assistanceneed.decision.AssistanceNeedDecisionController.AnnulAssistanceNeedDecisionRequest
@@ -83,7 +83,7 @@ export interface AssistanceNeedDecision {
 * Generated from fi.espoo.evaka.assistanceneed.decision.AssistanceNeedDecisionBasics
 */
 export interface AssistanceNeedDecisionBasics {
-  created: HelsinkiDateTime
+  createdAt: HelsinkiDateTime
   decisionMade: LocalDate | null
   id: AssistanceNeedDecisionId
   selectedUnit: UnitInfoBasics | null
@@ -261,7 +261,7 @@ export interface AssistanceNeedPreschoolDecision {
 export interface AssistanceNeedPreschoolDecisionBasics {
   annulmentReason: string
   childId: PersonId
-  created: HelsinkiDateTime
+  createdAt: HelsinkiDateTime
   decisionMade: LocalDate | null
   id: AssistanceNeedPreschoolDecisionId
   selectedUnit: UnitInfoBasics | null
@@ -383,7 +383,7 @@ export interface AssistanceNeedVoucherCoefficient {
   coefficient: number
   id: AssistanceNeedVoucherCoefficientId
   modifiedAt: HelsinkiDateTime
-  modifiedBy: EvakaUser | null
+  modifiedBy: EvakaUser
   validityPeriod: FiniteDateRange
 }
 
@@ -497,7 +497,7 @@ export function deserializeJsonAssistanceNeedDecision(json: JsonOf<AssistanceNee
 export function deserializeJsonAssistanceNeedDecisionBasics(json: JsonOf<AssistanceNeedDecisionBasics>): AssistanceNeedDecisionBasics {
   return {
     ...json,
-    created: HelsinkiDateTime.parseIso(json.created),
+    createdAt: HelsinkiDateTime.parseIso(json.createdAt),
     decisionMade: (json.decisionMade != null) ? LocalDate.parseIso(json.decisionMade) : null,
     sentForDecision: (json.sentForDecision != null) ? LocalDate.parseIso(json.sentForDecision) : null,
     validityPeriod: DateRange.parseJson(json.validityPeriod)
@@ -571,7 +571,7 @@ export function deserializeJsonAssistanceNeedPreschoolDecision(json: JsonOf<Assi
 export function deserializeJsonAssistanceNeedPreschoolDecisionBasics(json: JsonOf<AssistanceNeedPreschoolDecisionBasics>): AssistanceNeedPreschoolDecisionBasics {
   return {
     ...json,
-    created: HelsinkiDateTime.parseIso(json.created),
+    createdAt: HelsinkiDateTime.parseIso(json.createdAt),
     decisionMade: (json.decisionMade != null) ? LocalDate.parseIso(json.decisionMade) : null,
     sentForDecision: (json.sentForDecision != null) ? LocalDate.parseIso(json.sentForDecision) : null,
     validFrom: (json.validFrom != null) ? LocalDate.parseIso(json.validFrom) : null,

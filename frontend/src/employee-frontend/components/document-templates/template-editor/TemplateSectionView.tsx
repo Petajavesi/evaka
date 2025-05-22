@@ -6,7 +6,8 @@ import React, { useState } from 'react'
 import styled from 'styled-components'
 
 import { swapElements } from 'lib-common/array'
-import { BoundForm, useFormElems, useFormFields } from 'lib-common/form/hooks'
+import type { BoundForm } from 'lib-common/form/hooks'
+import { useFormElems, useFormFields } from 'lib-common/form/hooks'
 import { IconOnlyButton } from 'lib-components/atoms/buttons/IconOnlyButton'
 import {
   FixedSpaceColumn,
@@ -19,7 +20,7 @@ import colors from 'lib-customizations/common'
 import { faArrowDown, faArrowUp, faPen, faPlus, faTrash } from 'lib-icons'
 
 import { useTranslation } from '../../../state/i18n'
-import { type templateSectionForm } from '../templates'
+import type { templateSectionForm } from '../forms'
 
 import TemplateQuestionModal from './TemplateQuestionModal'
 import TemplateQuestionView from './TemplateQuestionView'
