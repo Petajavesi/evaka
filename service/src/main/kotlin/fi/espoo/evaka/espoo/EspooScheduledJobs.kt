@@ -35,19 +35,15 @@ enum class EspooScheduledJob(
     ),
     PlanBiJobs(
         EspooScheduledJobs::planBiJobs,
-        ScheduledJobSettings(enabled = true, schedule = JobSchedule.daily(LocalTime.of(1, 0))),
+        ScheduledJobSettings(enabled = true, schedule = JobSchedule.nightly()),
     ),
     PlanStaffAttendancePlanJobs(
         EspooScheduledJobs::planStaffAttendancePlanJobs,
-        ScheduledJobSettings(
-            enabled = true,
-            schedule = JobSchedule.daily(LocalTime.of(1, 30)),
-            retryCount = 1,
-        ),
+        ScheduledJobSettings(enabled = true, schedule = JobSchedule.nightly(), retryCount = 1),
     ),
     SendStaffAttendancesToLinkity(
         EspooScheduledJobs::sendStaffAttendancesToLinkity,
-        ScheduledJobSettings(enabled = true, schedule = JobSchedule.daily(LocalTime.of(2, 30))),
+        ScheduledJobSettings(enabled = true, schedule = JobSchedule.nightly()),
     ),
 }
 
