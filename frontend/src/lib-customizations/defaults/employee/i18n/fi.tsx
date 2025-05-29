@@ -634,9 +634,9 @@ export const fi = {
       languageAtHome: 'Kotikieli, jos muu kuin VTJ:ssä mainittu',
       specialDiet: 'Ruokatilausintegraatiossa käytettävä erityisruokavalio',
       mealTexture: 'Ruokatilausintegraatiossa käytettävä ruoan rakenne',
-      nekkuEatsBreakfast: 'Syö aamiaista',
-      nekkuEatsBreakfastYes: 'Kyllä',
-      nekkuEatsBreakfastNo: 'Ei',
+      participatesInBreakfast: 'Syö aamiaista',
+      participatesInBreakfastYes: 'Kyllä',
+      participatesInBreakfastNo: 'Ei',
       nekkuDiet: 'Nekku-ruokatilauksen ruokavalio',
       nekkuSpecialDiet: 'Nekku-erityisruokavalio',
       placeholder: {
@@ -5432,6 +5432,14 @@ export const fi = {
       label: 'Saapumistapa',
       PAPER: 'Paperilla',
       ELECTRONIC: 'Sähköisesti'
+    },
+    sfiDelivery: {
+      label: 'Suomi.fi -toimitukset',
+      method: {
+        ELECTRONIC: 'Sähköisesti',
+        PAPER_MAIL: 'Postitse',
+        PENDING: 'Odottaa toimitusta'
+      }
     },
     history: 'Prosessin historia',
     downloadPdf: 'Lataa PDF',
