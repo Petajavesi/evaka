@@ -3566,6 +3566,8 @@ export const fi = {
       NO_ABSENCE: 'Ei poissaoloa'
     },
     missingHolidayReservation: 'Huoltaja ei ole vahvistanut loma-ajan varausta',
+    missingHolidayQuestionnaireAnswer:
+      'Huoltaja ei ole vastannut poissaolokyselyyn',
     shiftCare: 'Ilta-/vuorohoito',
     requiresBackupCare: 'Odottaa varasijoitusta',
     additionalLegendItems: {
@@ -4571,6 +4573,28 @@ export const fi = {
       description: 'Yksikön läsnäolojen päivätason seuranta lomakyselyn aikana',
       periodFilter: 'Lomakysely',
       periodFilterPlaceholder: 'Valitse lomakysely',
+      unitFilter: 'Yksikkö',
+      groupFilter: 'Ryhmävalinta',
+      groupFilterPlaceholder: 'Koko yksikkö',
+      fetchButton: 'Hae',
+      dateColumn: 'Päivä',
+      presentColumn: 'Paikalla',
+      assistanceColumn: 'Paikallaolevista tukitoimelliset',
+      occupancyColumn: 'Paikalla yhteensä (kerroin)',
+      occupancyColumnInfo:
+        'Kertoimeen lasketaan kaikkien paikallaolevien lasten kerroin yhteensä. Kertoimeen vaikuttaa esimerkiksi lapsen ikä ja tuen tarve.',
+      staffColumn: 'Hlö. kunnan tarve',
+      absentColumn: 'Poissa',
+      noResponseColumn: 'Ei vastannut',
+      moreText: 'lisää',
+      showMoreButton: 'Näytä lisää'
+    },
+    holidayQuestionnaire: {
+      title: 'Poissaolokyselyraportti',
+      description:
+        'Yksikön läsnäolojen päivätason seuranta poissaolokyselyn aikana',
+      questionnaireFilter: 'Poissaolokysely',
+      questionnaireFilterPlaceholder: 'Valitse poissaolokysely',
       unitFilter: 'Yksikkö',
       groupFilter: 'Ryhmävalinta',
       groupFilterPlaceholder: 'Koko yksikkö',
