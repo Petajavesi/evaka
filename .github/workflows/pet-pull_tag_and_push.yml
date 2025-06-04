@@ -1,5 +1,14 @@
 name: Pet - Push release images to ECR
 
+# Required GitHub Actions Environment Variables:
+# - AWS_REGION, e.g. eu-north-1
+
+# Required GitHub Actions Secrets:
+# - ECR_ROLE_ARN_DEV, e.g. arn:aws:iam::123456789012:role/evaka-github-actions-role-dev
+# - ECR_HOST_DEV, e.g. 123456789012.dkr.ecr.eu-north-1.amazonaws.com
+# - ECR_ROLE_ARN_TEST
+# - ECR_HOST_TEST
+
 on:
   workflow_dispatch:
     inputs:
@@ -40,7 +49,7 @@ jobs:
             commit_sha=$(gh api graphql -f query='{repository(owner:"espoon-voltti", name:"evaka"){latestRelease{tagCommit {oid}}}}' | jq -r '.data.repository.latestRelease.tagCommit.oid')
           else
             echo "Resolving commit SHA for the specific release: \"${{ inputs.sourceRelease }}\".."
-            commit_sha=$(gh api graphql -f query='{repository(owner:"espoon-voltti", name:"evaka"){release(tagName: "v20250418"){tagCommit{oid}}}}' | jq -r '.data.repository.release.tagCommit.oid')
+            commit_sha=$(gh api graphql -f query='{repository(owner:"espoon-voltti", name:"evaka"){release(tagName: "'${{ inputs.sourceRelease }}'"){tagCommit{oid}}}}' | jq -r '.data.repository.release.tagCommit.oid')
           fi
           echo "Commit SHA: \"$commit_sha\""
           echo "COMMIT_SHA=$commit_sha" >> $GITHUB_OUTPUT
