@@ -127,7 +127,7 @@ class ArchiveChildDocumentServiceTest {
                     DocumentTemplate(
                         id = DocumentTemplateId(templateId),
                         name = "VASU 2022-2023",
-                        type = DocumentType.VASU,
+                        type = ChildDocumentType.VASU,
                         placementTypes = setOf(PlacementType.PRESCHOOL),
                         language = UiLanguage.FI,
                         confidentiality =
@@ -188,6 +188,7 @@ class ArchiveChildDocumentServiceTest {
                 number = 1,
                 organization = "Espoon kaupungin esiopetus ja varhaiskasvatus",
                 archiveDurationMonths = 1320,
+                migrated = false,
                 history =
                     listOf(
                         ArchivedProcessHistoryRow(

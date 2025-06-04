@@ -7,9 +7,9 @@ package fi.espoo.evaka.document.childdocument
 import fi.espoo.evaka.Audit
 import fi.espoo.evaka.AuditId
 import fi.espoo.evaka.EvakaEnv
+import fi.espoo.evaka.document.ChildDocumentType
 import fi.espoo.evaka.document.DocumentTemplate
 import fi.espoo.evaka.document.DocumentTemplateContent
-import fi.espoo.evaka.document.DocumentType
 import fi.espoo.evaka.document.getTemplate
 import fi.espoo.evaka.pis.Employee
 import fi.espoo.evaka.pis.listPersonByDuplicateOf
@@ -151,7 +151,7 @@ class ChildDocumentController(
                     val template =
                         tx.getTemplate(body.templateId)
                             ?: throw NotFound("Template ${body.templateId} not found")
-                    if (template.type != DocumentType.CITIZEN_BASIC)
+                    if (template.type != ChildDocumentType.CITIZEN_BASIC)
                         throw BadRequest("Template ${body.templateId} not supported")
                     if (!template.validity.includes(clock.today()))
                         throw BadRequest("Template ${body.templateId} not active")
@@ -467,7 +467,7 @@ class ChildDocumentController(
                 clock.now(),
                 answeredBy =
                     user.evakaUserId.takeIf {
-                        document.template.type == DocumentType.CITIZEN_BASIC &&
+                        document.template.type == ChildDocumentType.CITIZEN_BASIC &&
                             statusTransition.newStatus == DocumentStatus.COMPLETED
                     },
             )
@@ -507,6 +507,12 @@ class ChildDocumentController(
                     val document =
                         tx.getChildDocument(documentId)
                             ?: throw NotFound("Document $documentId not found")
+
+                    if (document.template.validity.end?.isBefore(clock.today()) == true) {
+                        throw BadRequest(
+                            "Cannot change status of document as template validity period has ended"
+                        )
+                    }
 
                     val statusTransition =
                         validateStatusTransition(
@@ -592,6 +598,9 @@ class ChildDocumentController(
 
                     if (!document.template.archiveExternally) {
                         throw BadRequest("Document template is not marked for external archiving")
+                    }
+                    if (document.status != DocumentStatus.COMPLETED) {
+                        throw BadRequest("Document must be in COMPLETED status to be archived")
                     }
 
                     asyncJobRunner.plan(
