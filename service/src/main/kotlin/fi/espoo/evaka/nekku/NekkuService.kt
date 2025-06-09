@@ -22,6 +22,7 @@ import fi.espoo.evaka.emailclient.EmailClient
 import fi.espoo.evaka.emailclient.EmailContent
 import fi.espoo.evaka.placement.PlacementType
 import fi.espoo.evaka.placement.ScheduleType
+import fi.espoo.evaka.shared.ChildId
 import fi.espoo.evaka.shared.DaycareId
 import fi.espoo.evaka.shared.FeatureConfig
 import fi.espoo.evaka.shared.GroupId
@@ -70,6 +71,7 @@ class NekkuService(
         asyncJobRunner.registerHandler(::sendNekkuOrder)
         asyncJobRunner.registerHandler(::sendNekkuDailyOrder)
         asyncJobRunner.registerHandler(::sendNekkuCustomerNumberNullificationWarningEmail)
+        asyncJobRunner.registerHandler(::sendNekkuSpecialDietRemovalWarningEmail)
     }
 
     fun syncNekkuCustomers(
@@ -99,7 +101,7 @@ class NekkuService(
         job: AsyncJob.SyncNekkuSpecialDiets,
     ) {
         if (client == null) error("Cannot sync Nekku special diets: NekkuEnv is not configured")
-        fetchAndUpdateNekkuSpecialDiets(client, db)
+        fetchAndUpdateNekkuSpecialDiets(client, db, asyncJobRunner, clock.now())
     }
 
     fun planNekkuSpecialDietsSync(db: Database.Connection, clock: EvakaClock) {
@@ -160,20 +162,13 @@ class NekkuService(
     fun sendNekkuOrder(dbc: Database.Connection, clock: EvakaClock, job: AsyncJob.SendNekkuOrder) {
         if (client == null) error("Cannot send Nekku order: NekkuEnv is not configured")
 
-        try {
-            createAndSendNekkuOrder(
-                client,
-                dbc,
-                groupId = job.customerGroupId,
-                date = job.date,
-                featureConfig.nekkuMealDeductionFactor,
-            )
-        } catch (e: Exception) {
-            logger.warn(e) {
-                "Failed to send meal order to Nekku: date=${job.date}, groupId=${job.customerGroupId},error=${e.localizedMessage}"
-            }
-            throw e
-        }
+        createAndSendNekkuOrder(
+            client,
+            dbc,
+            groupId = job.customerGroupId,
+            date = job.date,
+            featureConfig.nekkuMealDeductionFactor,
+        )
     }
 
     fun sendNekkuDailyOrder(
@@ -182,20 +177,13 @@ class NekkuService(
         job: AsyncJob.SendNekkuDailyOrder,
     ) {
         if (client == null) error("Cannot send Nekku order: NekkuEnv is not configured")
-        try {
-            createAndSendNekkuOrder(
-                client,
-                dbc,
-                groupId = job.customerGroupId,
-                date = job.date,
-                featureConfig.nekkuMealDeductionFactor,
-            )
-        } catch (e: Exception) {
-            logger.warn(e) {
-                "Failed to send meal order to Nekku: date=${job.date}, groupId=${job.customerGroupId},error=${e.localizedMessage}"
-            }
-            throw e
-        }
+        createAndSendNekkuOrder(
+            client,
+            dbc,
+            groupId = job.customerGroupId,
+            date = job.date,
+            featureConfig.nekkuMealDeductionFactor,
+        )
     }
 
     fun sendNekkuCustomerNumberNullificationWarningEmail(
@@ -209,6 +197,42 @@ class NekkuService(
                 html =
                     "<p>Seuraavien ryhmien asiakasnumerot on poistettu johtuen asiakasnumeron poistumisesta Nekusta:</p>\n" +
                         job.groupNames.joinToString("\n", transform = { "<p>- $it</p>" }),
+            )
+
+        Email.createForEmployee(
+                dbc,
+                job.employeeId,
+                content = content,
+                traceId = "${job.unitId}:${job.employeeId}",
+                emailEnv.sender(Language.fi),
+            )
+            ?.let { emailClient.send(it) }
+    }
+
+    fun sendNekkuSpecialDietRemovalWarningEmail(
+        dbc: Database.Connection,
+        clock: EvakaClock,
+        job: AsyncJob.SendNekkuSpecialDietRemovalWarningEmail,
+    ) {
+        val groupInfo =
+            job.childrenByGroup
+                .toSortedMap()
+                .map { (group, children) ->
+                    "<p>$group</p>" +
+                        children
+                            .map { (childId, diets) ->
+                                "Lapsen tunniste: $childId, lapsen ruokavaliot: " +
+                                    diets.map { it.value }.sortedBy { it }.joinToString(", ")
+                            }
+                            .joinToString("<br/>")
+                }
+                .joinToString("<br/>")
+        val content =
+            EmailContent.fromHtml(
+                subject = "Muutoksia Nekku-allergiatietoihin",
+                html =
+                    "<p>Seuraavilta lapsilta on poistunut allergiatietoja koska kyseinen kenttä on poistunut Nekusta. Tässä viestissä on lasten alkuperäiset allergiatiedot. Varmista että lasten tiedot päivitetään uusien Nekku-kenttien mukaisiksi.</p>" +
+                        groupInfo,
             )
 
         Email.createForEmployee(
@@ -421,56 +445,78 @@ fun createAndSendNekkuOrder(
     date: LocalDate,
     nekkuMealDeductionFactor: Double,
 ) {
-    val (preschoolTerms, children) =
-        dbc.read { tx ->
-            val preschoolTerms = tx.getPreschoolTerms()
-            val children = getNekkuChildInfos(tx, groupId, date)
-            preschoolTerms to children
-        }
-    val nekkuWeekday = getNekkuWeekday(date)
+    try {
 
-    val nekkuDaycareCustomerMapping =
-        dbc.read { tx -> tx.getNekkuDaycareCustomerMapping(groupId, nekkuWeekday) }
-
-    val nekkuProducts = dbc.read { tx -> tx.getNekkuProducts() }
-
-    if (nekkuDaycareCustomerMapping != null) {
-        val order =
-            NekkuClient.NekkuOrders(
-                listOf(
-                    NekkuClient.NekkuOrder(
-                        deliveryDate = date.toString(),
-                        customerNumber = nekkuDaycareCustomerMapping.customerNumber,
-                        groupId = groupId.toString(),
-                        items =
-                            nekkuMealReportData(
-                                children,
-                                date,
-                                preschoolTerms,
-                                nekkuProducts,
-                                nekkuDaycareCustomerMapping.customerType,
-                                nekkuMealDeductionFactor,
-                            ),
-                        description = nekkuDaycareCustomerMapping.groupName,
-                    )
-                ),
-                dryRun = false,
-            )
-
-        if (order.orders.isNotEmpty()) {
-            val nekkuOrderResult = client.createNekkuMealOrder(order)
-            logger.info {
-                "Sent Nekku order for date $date for customerNumber=${nekkuDaycareCustomerMapping.customerNumber} groupId=$groupId and Nekku orders created: ${nekkuOrderResult.created}"
+        val (preschoolTerms, children) =
+            dbc.read { tx ->
+                val preschoolTerms = tx.getPreschoolTerms()
+                val children = getNekkuChildInfos(tx, groupId, date)
+                preschoolTerms to children
             }
-            dbc.transaction { tx -> tx.setNekkuReportOrderReport(order, groupId, nekkuProducts) }
+        val nekkuWeekday = getNekkuWeekday(date)
+
+        val nekkuDaycareCustomerMapping =
+            dbc.read { tx -> tx.getNekkuGroupCustomerMapping(groupId, nekkuWeekday) }
+
+        val nekkuProducts = dbc.read { tx -> tx.getNekkuProducts() }
+
+        if (nekkuDaycareCustomerMapping != null) {
+            val order =
+                NekkuClient.NekkuOrders(
+                    listOf(
+                        NekkuClient.NekkuOrder(
+                            deliveryDate = date.toString(),
+                            customerNumber = nekkuDaycareCustomerMapping.customerNumber,
+                            groupId = groupId.toString(),
+                            items =
+                                nekkuMealReportData(
+                                    children,
+                                    date,
+                                    preschoolTerms,
+                                    nekkuProducts,
+                                    nekkuDaycareCustomerMapping.customerType,
+                                    nekkuMealDeductionFactor,
+                                ),
+                            description = nekkuDaycareCustomerMapping.groupName,
+                        )
+                    ),
+                    dryRun = false,
+                )
+
+            if (order.orders.isNotEmpty()) {
+                val nekkuOrderResult = client.createNekkuMealOrder(order)
+                logger.info {
+                    "Sent Nekku order for date $date for customerNumber=${nekkuDaycareCustomerMapping.customerNumber} groupId=$groupId and Nekku orders created: ${nekkuOrderResult.created}"
+                }
+
+                val parts =
+                    listOfNotNull(
+                        nekkuOrderResult.created?.let { "Luotu: $it" },
+                        nekkuOrderResult.cancelled?.let { "Peruttu: $it" },
+                    )
+                val orderString = parts.joinToString(", ")
+
+                dbc.transaction { tx ->
+                    tx.setNekkuReportOrderReport(order, groupId, nekkuProducts, orderString)
+                }
+            } else {
+                logger.info {
+                    "Skipped Nekku order with no rows for date $date for customerNumber=${nekkuDaycareCustomerMapping.customerNumber} groupId=$groupId"
+                }
+            }
         } else {
             logger.info {
-                "Skipped Nekku order with no rows for date $date for customerNumber=${nekkuDaycareCustomerMapping.customerNumber} groupId=$groupId"
+                "Could not find any customer with given date: ${date.dayOfWeek} groupId=$groupId"
             }
+            error("Could not find any customer with given date: ${date.dayOfWeek} groupId=$groupId")
         }
-    } else {
-        logger.info {
-            "Could not find any customer with given date: ${date.dayOfWeek} groupId=$groupId"
+    } catch (e: Exception) {
+        logger.warn(e) {
+            "Failed to send meal order to Nekku: date=$date, groupId=$groupId,error=${e.localizedMessage}"
+        }
+
+        dbc.transaction { tx ->
+            tx.setNekkuReportOrderErrorReport(groupId, date, e.localizedMessage)
         }
     }
 }
@@ -958,6 +1004,13 @@ data class NekkuOrderResult(
 
 data class NekkuSpecialDietChoices(val dietId: String, val fieldId: String, val value: String)
 
+data class NekkuSpecialDietChoicesWithChild(
+    val childId: ChildId,
+    val dietId: String,
+    val fieldId: String,
+    val value: String,
+)
+
 data class NekkuOrdersReport(
     val deliveryDate: LocalDate,
     val daycareId: DaycareId,
@@ -967,4 +1020,5 @@ data class NekkuOrdersReport(
     val mealTime: List<NekkuProductMealTime>?,
     val mealType: NekkuProductMealType?,
     val mealsBySpecialDiet: List<String>?,
+    val nekkuOrderInfo: String,
 )
