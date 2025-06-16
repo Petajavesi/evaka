@@ -685,11 +685,21 @@ UPDATE placement SET end_date = ${bind(req.endDate)}, termination_requested_date
                             DevMessageThreadFolder(owner = serviceWorkerAccount, name = "Kansio 2")
                         )
                     }
-                tx.execute {
-                    sql(
-                        "INSERT INTO message_account (daycare_group_id, employee_id, person_id, type) VALUES (NULL, NULL, NULL, 'FINANCE') ON CONFLICT DO NOTHING RETURNING id"
-                    )
-                }
+                tx.createUpdate {
+                        sql(
+                            "INSERT INTO message_account (daycare_group_id, employee_id, person_id, type) VALUES (NULL, NULL, NULL, 'FINANCE') ON CONFLICT DO NOTHING RETURNING id"
+                        )
+                    }
+                    .executeAndReturnGeneratedKeys()
+                    .exactlyOneOrNull<MessageAccountId>()
+                    ?.also { financeAccount ->
+                        tx.insert(
+                            DevMessageThreadFolder(owner = financeAccount, name = "Talouskansio 1")
+                        )
+                        tx.insert(
+                            DevMessageThreadFolder(owner = financeAccount, name = "Talouskansio 2")
+                        )
+                    }
             }
         }
     }
@@ -1560,7 +1570,7 @@ VALUES (${bind(body.id)}, ${bind(body.guardianId)})
                 "<div style=\"font-family: monospace; white-space: pre-wrap\">${emailContent.text}</div>"
 
         val options =
-            EmailMessageFilter.values().joinToString("") {
+            EmailMessageFilter.entries.joinToString("") {
                 "<option value=\"$it\" ${if (it == message) "selected" else ""}>$it</option>"
             }
         val form =

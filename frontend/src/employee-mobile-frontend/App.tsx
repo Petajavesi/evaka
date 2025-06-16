@@ -242,9 +242,6 @@ function ChildAttendanceRouter({ unitOrGroup }: { unitOrGroup: UnitOrGroup }) {
         <Route path="/daylist">
           <ConfimedReservationDaysWrapper unitOrGroup={unitOrGroup} />
         </Route>
-        <Route path="/list">
-          <Redirect replace to="/" />
-        </Route>
         <Route>
           <Redirect replace to="/list/coming" />
         </Route>
@@ -309,6 +306,9 @@ function StaffAttendanceRouter({ unitOrGroup }: { unitOrGroup: UnitOrGroup }) {
           unitOrGroup={unitOrGroup}
         />
       </Route>
+      <Route path="/today">
+        <Redirect replace to="/today/absent" />
+      </Route>
       <Route path="/planned">
         <StaffAttendancesPage primaryTab="planned" unitOrGroup={unitOrGroup} />
       </Route>
@@ -337,7 +337,7 @@ function StaffAttendanceRouter({ unitOrGroup }: { unitOrGroup: UnitOrGroup }) {
         <StaffMarkDepartedPage unitOrGroup={unitOrGroup} />
       </Route>
       <Route>
-        <Redirect replace to="today/absent" />
+        <Redirect replace to="/today/absent" />
       </Route>
     </Switch>
   )
