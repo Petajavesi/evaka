@@ -2,18 +2,14 @@
 //
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import sortBy from 'lodash/sortBy'
 import React, { Fragment } from 'react'
-import styled from 'styled-components'
-import { Link } from 'wouter'
 
 import { isLoading } from 'lib-common/api'
 import { useQueryResult } from 'lib-common/query'
 import Container, { ContentArea } from 'lib-components/layout/Container'
-import { fontWeights, H1, H2, P } from 'lib-components/typography'
+import { H1 } from 'lib-components/typography'
 import { Gap } from 'lib-components/white-space'
-import { farMap } from 'lib-icons'
 
 import { renderResult } from '../async-rendering'
 import { useTranslation } from '../localization'
@@ -36,13 +32,6 @@ export default React.memo(function Applications() {
       <ContentArea opaque paddingVertical="L">
         <H1 noMargin>{t.applicationsList.title}</H1>
         {t.applicationsList.summary}
-        <P noMargin>{t.loginPage.applying.mapText}</P>
-        <Gap size="xs" />
-        <MapLink to="/map">
-          <FontAwesomeIcon icon={farMap} />
-          <Gap size="xs" horizontal />
-          {t.loginPage.applying.mapLink}
-        </MapLink>
       </ContentArea>
       <Gap size="s" />
 
@@ -57,18 +46,8 @@ export default React.memo(function Applications() {
                 </Fragment>
               )
           )}
-          {guardianApplications.length === 0 && (
-            <ContentArea opaque paddingVertical="L">
-              <H2 noMargin>{t.applicationsList.noCustodians}</H2>
-              <div>{t.applicationsList.noCustodiansInfo}</div>
-            </ContentArea>
-          )}
         </>
       ))}
     </Container>
   )
 })
-
-const MapLink = styled(Link)`
-  font-weight: ${fontWeights.semibold};
-`
