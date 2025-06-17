@@ -265,9 +265,9 @@ export const fi = {
     logout: 'Kirjaudu ulos'
   },
   footer: {
-    cityLabel: 'Espoon kaupunki',
-    linkLabel: 'Espoon varhaiskasvatus',
-    linkHref: 'https://www.espoo.fi/fi/kasvatus-ja-opetus/varhaiskasvatus'
+    cityLabel: 'Petäjäveden kunta',
+    linkLabel: 'Petäjäveden varhaiskasvatus',
+    linkHref: 'https://www.petajavesi.fi/lapset-ja-nuoret/varhaiskasvatus'
   },
   language: {
     fi: 'Suomi',
@@ -298,11 +298,11 @@ export const fi = {
     startDateNotOnTerm: 'Aloituspäivän pitää kohdistua jollekin kaudelle'
   },
   login: {
-    title: 'Varhaiskasvatus',
-    subtitle: 'Asiakastiedot ja yksiköt',
+    title: 'Petäjäveden kunnan varhaiskasvatus',
+    subtitle: 'Henkilökunnan kirjautuminen',
     systemNotification: 'Tärkeä tiedote',
     login: 'Kirjaudu sisään',
-    loginAD: 'Espoo AD',
+    loginAD: 'Kirjaudu sisään',
     loginEvaka: 'Palveluntuottaja',
     error: {
       noRole: 'Sinulla ei ole tarvittavaa roolia',
@@ -2699,9 +2699,6 @@ export const fi = {
         nekkuUnitTitle: 'Nekku-ruokatilausten yksikkö',
         nekkuCustomerNumberTitle: 'Nekku-ruokatilausten asiakasnumero'
       },
-      nekkuOrderModal: {
-        title: 'Nekku-ruokatilaus'
-      },
       startDate: 'Perustettu',
       endDate: 'Viimeinen toimintapäivä',
       caretakers: 'Henkilökuntaa',
@@ -2730,7 +2727,6 @@ export const fi = {
       diaryButton: 'Avaa päiväkirja',
       deleteGroup: 'Poista ryhmä',
       update: 'Muokkaa tietoja',
-      nekkuOrder: 'Nekku-tilaus',
       daycareDailyNote: {
         dailyNote: 'Päivän muistiinpanot',
         header: 'Tänään koettua ja opittua',

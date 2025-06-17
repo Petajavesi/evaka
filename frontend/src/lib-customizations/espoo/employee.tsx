@@ -11,7 +11,7 @@ import {
 import type { EmployeeCustomizations } from 'lib-customizations/types'
 
 import { appConfig } from './appConfigs'
-import Logo from './assets/EspooLogoPrimary.svg'
+import PetajavesiLogo from './assets/eVakaPetajavesi1_web.svg'
 import featureFlags from './featureFlags'
 
 const customizations: EmployeeCustomizations = {
@@ -57,7 +57,10 @@ const customizations: EmployeeCustomizations = {
       }
     }
   },
-  cityLogo: <img src={Logo} alt="Espoo Logo" data-qa="footer-city-logo" />,
+  cityLogo: {
+    src: PetajavesiLogo,
+    alt: 'Petajavesi Logo'
+  },
   featureFlags,
   placementTypes: [
     'PRESCHOOL',
