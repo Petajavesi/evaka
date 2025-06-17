@@ -21,16 +21,22 @@ const appConfigs: AppConfigs = {
       enabled: false
     }
   },
-  staging: {
+  dev: {
     sentry: {
       dsn: sentryDsn,
-      enabled: true
+      enabled: false
+    }
+  },
+  test: {
+    sentry: {
+      dsn: sentryDsn,
+      enabled: false
     }
   },
   prod: {
     sentry: {
       dsn: sentryDsn,
-      enabled: true
+      enabled: false
     }
   }
 }
