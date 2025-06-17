@@ -940,6 +940,7 @@ class InvoiceIntegrationTest : FullApplicationTest(resetDbBeforeEach = true) {
                         description = row.description,
                         correctionId = row.correctionId,
                         note = null,
+                        serviceNeed = "Satunnainen palveluntarve",
                     )
                 },
             number = invoice.number,
