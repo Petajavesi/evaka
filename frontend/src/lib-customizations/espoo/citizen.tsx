@@ -10,7 +10,7 @@ import { P } from 'lib-components/typography'
 import type { CitizenCustomizations } from 'lib-customizations/types'
 
 import { appConfig } from './appConfigs'
-import EspooLogo from './assets/EspooLogoPrimary.svg'
+import PetajavesiLogo from './assets/eVakaPetajavesi1_web.svg'
 import featureFlags from './featureFlags'
 import mapConfig from './mapConfig'
 
@@ -25,6 +25,33 @@ const customizations: CitizenCustomizations = {
   langs: ['fi', 'sv', 'en'],
   translations: {
     fi: {
+      footer: {
+        cityLabel: '© Petäjäveden kunta',
+        privacyPolicyLink: (
+          <a
+            href="https://www.petajavesi.fi/asiointi/tietopalvelu/tietosuojaselosteet"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Tietosuojaseloste
+          </a>
+        ),
+        sendFeedbackLink: (
+          <a
+            href="https://www.petajavesi.fi/asiointi/palaute"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Anna palautetta
+          </a>
+        ),
+      },
+      loginPage: {
+        title: 'Petäjäveden kunnan varhaiskasvatus',
+        applying: {
+          title: 'Kuntalaisen kirjautuminen'
+        }
+      },
       applications: {
         editor: {
           heading: {
@@ -1631,8 +1658,8 @@ const customizations: CitizenCustomizations = {
     }
   },
   cityLogo: {
-    src: EspooLogo,
-    alt: 'Espoo Logo'
+    src: PetajavesiLogo,
+    alt: 'Petajavesi Logo'
   },
   routeLinkRootUrl: 'https://reittiopas.hsl.fi/reitti/',
   mapConfig,
