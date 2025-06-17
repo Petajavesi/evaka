@@ -139,7 +139,7 @@ interface InvoiceIntegrationClient {
             val product = PetajavesiInvoiceProducts.findProduct(row.product)
             val formattedUnitPrice = formatNumber(row.unitPrice, 12, 4)
             val formattedUnitAmount = formatNumber(row.amount, 12, 4)
-            val unitAmountPrefix = if (formattedUnitAmount > 0) "+" else "-"
+            val unitAmountPrefix = if (row.amount > 0) "+" else "-"
             val creditPosting = if (row.unitName == "Kintauden päiväkoti") "32950552013021" else "32950552023021" //TODO: handle with unit ID
 
             setField(line, 0, 11, ssn) // R1
