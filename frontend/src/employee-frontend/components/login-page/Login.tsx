@@ -17,6 +17,7 @@ import { useTranslation } from '../../state/i18n'
 
 import ErrorMessage from './login/ErrorMessage'
 import { currentSystemNotificationQuery } from './queries'
+import { H1, H2 } from 'lib-components/typography'
 
 interface Props {
   error?: string
@@ -37,12 +38,15 @@ function Login({ error }: Props) {
   return (
     <Container>
       <ContentArea opaque>
-        <Title size={1} centered>
+        <H1 noMargin>
           {i18n.login.title}
-        </Title>
-        <Title size={2} centered>
+        </H1>
+      </ContentArea>
+      <Gap size="s" />
+      <ContentArea opaque>
+        <H2 noMargin>
           {i18n.login.subtitle}
-        </Title>
+        </H2>
         <Gap size="L" />
         {systemNotification.isSuccess &&
           systemNotification.value.notification && (
@@ -54,15 +58,9 @@ function Login({ error }: Props) {
               data-qa="system-notification"
             />
           )}
-        <Center>
-          <LinkButton data-qa="login-btn" href={getLoginUrl('ad')}>
-            <span>{i18n.login.loginAD}</span>
-          </LinkButton>
-          <Gap horizontal />
-          <LinkButton data-qa="login-btn" href={getLoginUrl('sfi')}>
-            <span>{i18n.login.loginEvaka}</span>
-          </LinkButton>
-        </Center>
+        <LinkButton data-qa="login-btn" href={getLoginUrl('ad')}>
+          <span>{i18n.login.loginAD}</span>
+        </LinkButton>
         <ErrorMessage error={error} />
       </ContentArea>
     </Container>

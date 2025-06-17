@@ -12,6 +12,7 @@ import { Link } from 'wouter'
 import { combine } from 'lib-common/api'
 import { EvakaLogo } from 'lib-components/atoms/EvakaLogo'
 import NavLink, { useIsRouteActive } from 'lib-components/atoms/NavLink'
+import { CityLogo } from 'lib-components/atoms/CityLogo'
 import { Button } from 'lib-components/atoms/buttons/Button'
 import { desktopMin } from 'lib-components/breakpoints'
 import { FixedSpaceColumn } from 'lib-components/layout/flex-helpers'
@@ -87,6 +88,7 @@ function HeaderContainer({
   return (
     <HeaderWrapper data-qa={dataQa} className={className}>
       <NavbarContainer>
+        <CityLogo />
         <LogoLink to="/">
           <EvakaLogo color={theme.colors.main.m1} />
         </LogoLink>

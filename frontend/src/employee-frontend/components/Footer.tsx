@@ -5,15 +5,12 @@
 import React from 'react'
 import styled from 'styled-components'
 
-import { EvakaLogo } from 'lib-components/atoms/EvakaLogo'
 import Container from 'lib-components/layout/Container'
 import { defaultMargins } from 'lib-components/white-space'
-import { colors } from 'lib-customizations/common'
-import { cityLogo } from 'lib-customizations/employee'
 
 import { useTranslation } from '../state/i18n'
 
-export const footerHeight = '120px'
+export const footerHeight = '72px'
 
 const FooterContainer = styled.div`
   display: flex;
@@ -35,25 +32,12 @@ const Content = styled.div`
   gap: ${defaultMargins.XL};
 `
 
-const EvakaLogoWrapper = styled.div`
-  margin: 0 ${defaultMargins.L};
-`
-
 export const Footer = React.memo(function Footer() {
   const { i18n } = useTranslation()
   return (
     <footer>
       <Container>
         <FooterContainer>
-          {'src' in cityLogo ? (
-            <img
-              src={cityLogo.src}
-              alt={cityLogo.alt}
-              data-qa="footer-city-logo"
-            />
-          ) : (
-            cityLogo
-          )}
           <Content>
             <span data-qa="footer-city-label">
               &copy; {i18n.footer.cityLabel}
@@ -62,9 +46,6 @@ export const Footer = React.memo(function Footer() {
               {i18n.footer.linkLabel}
             </a>
           </Content>
-          <EvakaLogoWrapper>
-            <EvakaLogo color={colors.main.m1} />
-          </EvakaLogoWrapper>
         </FooterContainer>
       </Container>
     </footer>

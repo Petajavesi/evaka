@@ -7,5 +7,5 @@
     "outDir": "../../dist/lib-components",
     "types": ["jest"],
   },
-  "references": [{ "path": "../lib-common" }, { "path": "../lib-icons" }]
+  "references": [{ "path": "../lib-common" }, { "path": "../lib-icons" }, { "path": "../lib-customizations"}]
 }
