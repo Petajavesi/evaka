@@ -2,10 +2,9 @@
 //
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import React, { Fragment, useState } from 'react'
 import styled from 'styled-components'
-import { Link, Redirect, useLocation, useSearchParams } from 'wouter'
+import { Redirect, useSearchParams } from 'wouter'
 
 import { useQueryResult } from 'lib-common/query'
 import Main from 'lib-components/atoms/Main'
@@ -21,14 +20,13 @@ import {
   InfoButton
 } from 'lib-components/molecules/ExpandingInfo'
 import { AlertBox } from 'lib-components/molecules/MessageBoxes'
-import { fontWeights, H1, H2, P } from 'lib-components/typography'
+import { H1, H2, P } from 'lib-components/typography'
 import { defaultMargins, Gap } from 'lib-components/white-space'
-import { farMap } from 'lib-icons'
 
 import Footer from '../Footer'
 import { useUser } from '../auth/state'
 import { useLang, useTranslation } from '../localization'
-import { getStrongLoginUri, getWeakLoginUri } from '../navigation/const'
+import { getStrongLoginUri } from '../navigation/const'
 
 import { systemNotificationsQuery } from './queries'
 
@@ -43,9 +41,7 @@ export default React.memo(function LoginPage() {
 
   const [searchParams] = useSearchParams()
   const unvalidatedNextPath = searchParams.get('next')
-  const [, navigate] = useLocation()
 
-  const [showInfoBoxText1, setShowInfoBoxText1] = useState(false)
   const [showInfoBoxText2, setShowInfoBoxText2] = useState(false)
 
   const systemNotifications = useQueryResult(systemNotificationsQuery())
@@ -96,35 +92,6 @@ export default React.memo(function LoginPage() {
               </ContentArea>
             )}
           <ContentArea opaque>
-            <H2 noMargin>{i18n.loginPage.login.title}</H2>
-            <Gap size="m" />
-            <P noMargin>
-              {i18n.loginPage.login.paragraph}
-              <ParagraphInfoButton
-                aria-label={i18n.common.openExpandingInfo}
-                onClick={() => setShowInfoBoxText1(!showInfoBoxText1)}
-                open={showInfoBoxText1}
-              />
-            </P>
-            {showInfoBoxText1 && (
-              <ExpandingInfoBox
-                info={i18n.loginPage.login.infoBoxText}
-                close={() => setShowInfoBoxText1(false)}
-              />
-            )}
-            <Gap size="s" />
-            <LinkButton
-              href={getWeakLoginUri(unvalidatedNextPath ?? '/')}
-              onClick={(e) => {
-                e.preventDefault()
-                navigate(getWeakLoginUri(unvalidatedNextPath ?? '/'))
-              }}
-              data-qa="weak-login"
-            >
-              {i18n.loginPage.login.link}
-            </LinkButton>
-          </ContentArea>
-          <ContentArea opaque>
             <H2 noMargin>{i18n.loginPage.applying.title}</H2>
             <Gap size="m" />
             <P noMargin>
@@ -153,14 +120,6 @@ export default React.memo(function LoginPage() {
             >
               {i18n.loginPage.applying.link}
             </LinkButton>
-            <Gap size="m" />
-            <P noMargin>{i18n.loginPage.applying.mapText}</P>
-            <Gap size="xs" />
-            <MapLink to="/map">
-              <FontAwesomeIcon icon={farMap} />
-              <Gap size="xs" horizontal />
-              {i18n.loginPage.applying.mapLink}
-            </MapLink>
           </ContentArea>
         </FixedSpaceColumn>
       </Container>
@@ -168,9 +127,3 @@ export default React.memo(function LoginPage() {
     </Main>
   )
 })
-
-const MapLink = styled(Link)`
-  text-decoration: none;
-  display: inline-block;
-  font-weight: ${fontWeights.semibold};
-`
