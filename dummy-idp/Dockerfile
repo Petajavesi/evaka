@@ -12,6 +12,7 @@ ENV LANGUAGE=C.UTF-8
 RUN apt-get update \
  && apt-get -y dist-upgrade \
  && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      curl \
       tzdata \
       ca-certificates \
  && ln -fs /usr/share/zoneinfo/Europe/Helsinki /etc/localtime \

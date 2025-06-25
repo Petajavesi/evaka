@@ -77,6 +77,11 @@ services:
     restart: on-failure
     ports:
       - "9090:9090"
+    healthcheck:
+      test: ["CMD", "curl", "--silent", "--fail", "http://localhost:9090/health"]
+      interval: 1s
+      timeout: 5s
+      retries: 5
 
 volumes:
   db-data:

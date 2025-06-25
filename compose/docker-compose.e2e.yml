@@ -33,6 +33,12 @@ services:
       - api-gw
       - evaka-srv
       - s3-mock
+    healthcheck:
+      test: ["CMD-SHELL", "curl --silent --fail --show-error http://localhost:8080/health"]
+      interval: 5s
+      timeout: 4s
+      retries: 5
+      start_period: 5s
 
   api-gw:
     image: ghcr.io/espoon-voltti/evaka/api-gateway:${TAG:-master}
@@ -61,6 +67,12 @@ services:
       JWT_PRIVATE_KEY: /home/evaka/test-cert/jwt_private_key.pem
       ENABLE_DEV_API: "true"
       PRETTY_LOGS: "false"
+    healthcheck:
+      test: ["CMD-SHELL", "curl --silent --fail --show-error http://localhost:3000/health"]
+      interval: 5s
+      timeout: 4s
+      retries: 5
+      start_period: 10s
 
   evaka-srv:
     image: ghcr.io/espoon-voltti/evaka/service:${TAG:-master}
@@ -100,6 +112,12 @@ services:
       EVAKA_INTEGRATION_VARDA_URL: "http://localhost:8888/mock-integration/varda/api"
       EVAKA_INTEGRATION_BASIC_AUTH: ""
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl --silent --fail --show-error http://localhost:8888/health"]
+      interval: 5s
+      timeout: 4s
+      retries: 5
+      start_period: 30s
 
 volumes:
   db-data:
