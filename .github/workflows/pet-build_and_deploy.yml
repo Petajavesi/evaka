@@ -91,6 +91,10 @@ jobs:
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           push: true
+
+      - name: Update SSM Parameter Store
+        id: update-ssm-parameter-store
+        run: aws ssm put-parameter --name evaka_frontend_image --value ${{ fromJSON(steps.metadata.outputs.json).tags[1] }} --overwrite
       
       - name: Update Amazon ECS task definition
         id: render-container
@@ -163,6 +167,10 @@ jobs:
           labels: ${{ steps.metadata.outputs.labels }}
           push: true
 
+      - name: Update SSM Parameter Store
+        id: update-ssm-parameter-store
+        run: aws ssm put-parameter --name evaka_apigw_image --value ${{ fromJSON(steps.metadata.outputs.json).tags[1] }} --overwrite
+
       - name: Update Amazon ECS task definition
         id: render-container
         uses: aws-actions/amazon-ecs-render-task-definition@v1
@@ -233,6 +241,10 @@ jobs:
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           push: true
+
+      - name: Update SSM Parameter Store
+        id: update-ssm-parameter-store
+        run: aws ssm put-parameter --name evaka_service_image --value ${{ fromJSON(steps.metadata.outputs.json).tags[1] }} --overwrite
 
       - name: Update Amazon ECS task definition
         id: render-container
@@ -305,6 +317,10 @@ jobs:
           labels: ${{ steps.metadata.outputs.labels }}
           push: true
 
+      # - name: Update SSM Parameter Store
+      #   id: update-ssm-parameter-store
+      #   run: aws ssm put-parameter --name evaka_test_db_image --value ${{ fromJSON(steps.metadata.outputs.json).tags[1] }} --overwrite
+
       # - name: Update Amazon ECS task definition
       #   id: render-container
       #   uses: aws-actions/amazon-ecs-render-task-definition@v1
@@ -375,6 +391,10 @@ jobs:
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           push: true
+
+      - name: Update SSM Parameter Store
+        id: update-ssm-parameter-store
+        run: aws ssm put-parameter --name dummy_idp_image --value ${{ fromJSON(steps.metadata.outputs.json).tags[1] }} --overwrite
 
       - name: Update Amazon ECS task definition
         id: render-container
