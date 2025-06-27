@@ -137,7 +137,7 @@ interface InvoiceIntegrationClient {
             // Create a fixed-width line
             val line = StringBuilder(" ".repeat(265))
             val product = PetajavesiInvoiceProducts.findProduct(row.product)
-            val formattedUnitPrice = formatNumber(row.unitPrice, 12, 4)
+            val formattedUnitPrice = formatNumber(row.unitPrice, 12, 2)
             val formattedUnitAmount = formatNumber(row.amount, 12, 4)
             val unitAmountPrefix = if (row.amount > 0) "+" else "-"
             val creditPosting = if (row.unitName == "Kintauden päiväkoti") "32950552013021" else "32950552023021" //TODO: handle with unit ID
@@ -198,7 +198,7 @@ interface InvoiceIntegrationClient {
             }
         }
 
-        private fun formatNumber(number: Int, totalDigits: Int = 12, decimalPlaces: Int = 4): String {
+        private fun formatNumber(number: Int, totalDigits: Int = 12, decimalPlaces: Int = 2): String {
             // Multiply by 10^decimalPlaces to shift decimal positions
             val multiplier = 10.0.pow(decimalPlaces).toInt()
             val priceWithDecimals = number * multiplier
