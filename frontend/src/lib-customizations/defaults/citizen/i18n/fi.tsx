@@ -711,8 +711,8 @@ export default {
         <P>
           Hakemukseen voi tehdä muutoksia niin kauan kuin hakemusta ei ole
           otettu käsittelyyn. Tämän jälkeen muutokset hakemukseen tehdään
-          ottamalla yhteyttä varhaiskasvatuksen palveluohjaukseen (puh. 09 816
-          31000). Voit perua jo tehdyn hakemuksen ilmoittamalla siitä
+          ottamalla yhteyttä varhaiskasvatuksen palveluohjaukseen (puh. 040 700
+          1879). Voit perua jo tehdyn hakemuksen ilmoittamalla siitä
           sähköpostilla varhaiskasvatuksen palveluohjaukseen{' '}
           <a href="mailto:vaka.palveluohjaus@espoo.fi">
             vaka.palveluohjaus@espoo.fi
