@@ -714,8 +714,8 @@ export default {
           ottamalla yhteyttä varhaiskasvatuksen palveluohjaukseen (puh. 040 700
           1879). Voit perua jo tehdyn hakemuksen ilmoittamalla siitä
           sähköpostilla varhaiskasvatuksen palveluohjaukseen{' '}
-          <a href="mailto:vaka.palveluohjaus@espoo.fi">
-            vaka.palveluohjaus@espoo.fi
+          <a href="mailto:varhaiskasvatus@petajavesi.fi">
+            varhaiskasvatus@petajavesi.fi
           </a>
           .
         </P>
@@ -1056,7 +1056,7 @@ export default {
                 Toivottua aloituspäivää on mahdollista muuttaa myöhemmäksi niin
                 kauan kuin hakemusta ei ole otettu käsittelyyn. Tämän jälkeen
                 toivotun aloituspäivän muutokset tehdään ottamalla yhteyttä
-                varhaiskasvatuksen palveluohjaukseen (puh. 09 816 31000).
+                varhaiskasvatuksen palveluohjaukseen (puh. 040 700 1879).
               </>
             ),
             PRESCHOOL: (
@@ -1064,7 +1064,7 @@ export default {
                 Toivottua aloituspäivää on mahdollista muuttaa myöhemmäksi niin
                 kauan kuin hakemusta ei ole otettu käsittelyyn. Tämän jälkeen
                 toivotun aloituspäivän muutokset tehdään ottamalla yhteyttä
-                varhaiskasvatuksen palveluohjaukseen (puh. 09 816 31000).
+                varhaiskasvatuksen palveluohjaukseen (puh. 040 700 1879).
               </>
             ),
             CLUB: null
@@ -1101,8 +1101,8 @@ export default {
                 kahden viikon käsittelyaika alkaa siitä, kun olemme
                 vastaanottaneet hakemuksen tarvittavine liitteineen. Jos et voi
                 lisätä liitteitä hakemukselle sähköisesti, lähetä ne postilla
-                osoitteeseen Varhaiskasvatuksen palveluohjaus, PL 3125, 02070
-                Espoon kaupunki.
+                osoitteeseen Varhaiskasvatuksen palveluohjaus, Suutarintie 4, 41900
+                Petäjävesi.
               </P>
             ),
             subtitle:
@@ -1193,7 +1193,7 @@ export default {
                 vuorotyöstä tai opiskelusta johtuvasta ilta- tai vuorohoidon
                 tarpeesta. Jos et voi lisätä liitteitä hakemukselle sähköisesti,
                 lähetä ne postilla osoitteeseen Varhaiskasvatuksen
-                palveluohjaus, PL 3125, 02070 Espoon kaupunki.
+                palveluohjaus, Suutarintie 4, 41900, Petäjävesi.
               </P>
             ),
             PRESCHOOL: (
@@ -1213,8 +1213,8 @@ export default {
                   vuorotyöstä tai opiskelusta johtuvasta ilta- tai vuorohoidon
                   tarpeesta. Jos et voi lisätä liitteitä hakemukselle
                   sähköisesti, lähetä ne postilla osoitteeseen
-                  Varhaiskasvatuksen palveluohjaus, PL 3125, 02070 Espoon
-                  kaupunki.
+                  Varhaiskasvatuksen palveluohjaus, Suutarintie 4, 41900,
+                  Petäjävesi.
                 </P>
               </>
             )
@@ -3072,7 +3072,7 @@ export default {
           text="verkkolomakkeella"
         />{' '}
         tai sähköpostitse{' '}
-        <a href="mailto:evakatuki@espoo.fi">evakatuki@espoo.fi</a>.
+        <a href="mailto:varhaiskasvatus@petajavesi.fi">varhaiskasvatus@petajavesi.fi</a>.
       </P>
       <H2>Valvontaviranomainen</H2>
       <P>

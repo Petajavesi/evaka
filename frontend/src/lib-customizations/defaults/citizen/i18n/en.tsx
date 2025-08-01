@@ -709,11 +709,11 @@ const en: Translations = {
         <P>
           You can make changes to your application until its processing starts.
           After this, you can make changes to your application by contacting
-          early childhood education service counselling (tel. 09 816 31000). If
+          early childhood education service counselling (tel. 040 700 1879). If
           you wish to cancel an application you have submitted, please send an
           email to early childhood education service counselling (
-          <a href="mailto:vaka.palveluohjaus@espoo.fi">
-            vaka.palveluohjaus@espoo.fi
+          <a href="mailto:varhaiskasvatus@petajavesi.fi">
+            varhaiskasvatus@petajavesi.fi
           </a>
           ).
         </P>
@@ -1092,7 +1092,7 @@ const en: Translations = {
                 You can postpone your desired start date until the processing of
                 your application starts. After this, you can make changes to
                 your desired start date by contacting early childhood education
-                service counselling (tel. 09 816 31000).
+                service counselling (tel. 040 700 1879).
               </>
             ),
             PRESCHOOL: (
@@ -1100,7 +1100,7 @@ const en: Translations = {
                 You can postpone your desired start date until the processing of
                 your application starts. After this, you can make changes to
                 your desired start date by contacting early childhood education
-                service counselling (tel. 09 816 31000).
+                service counselling (tel. 040 700 1879).
               </>
             ),
             CLUB: null
