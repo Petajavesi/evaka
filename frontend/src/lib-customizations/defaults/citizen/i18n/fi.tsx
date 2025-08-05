@@ -326,13 +326,13 @@ export default {
   map: {
     title: 'Yksiköt kartalla',
     mainInfo:
-      'Tässä näkymässä voit hakea kartalta Espoon varhaiskasvatus-, esiopetus- ja kerhopaikkoja.',
+      'Tässä näkymässä voit hakea kartalta Petäjäveden varhaiskasvatus- ja esiopetuspaikkoja.',
     privateUnitInfo: (
       <span>
         Tietoa yksityisistä päiväkodeista löydät{' '}
         <ExternalLink
           text="täältä."
-          href="https://www.espoo.fi/fi/kasvatus-ja-opetus/varhaiskasvatus/yksityiseen-varhaiskasvatukseen-hakeminen"
+          href="https://www.petajavesi.fi/lapset-ja-nuoret/varhaiskasvatus/varhaiskasvatuspalveluihin-hakeminen"
           newTab
         />
       </span>
@@ -711,7 +711,7 @@ export default {
         'Lapsella on jo samantyyppinen, keskeneräinen hakemus. Palaa Hakemukset-näkymään ja muokkaa olemassa olevaa hakemusta tai ota yhteyttä palveluohjaukseen.',
       transferApplicationInfo: {
         DAYCARE:
-          'Lapsella on jo paikka Espoon varhaiskasvatuksessa. Tällä hakemuksella voit hakea siirtoa toiseen varhaiskasvatusta tarjoavaan yksikköön Espoossa.',
+          'Lapsella on jo paikka Petäjäveden varhaiskasvatuksessa. Tällä hakemuksella voit hakea siirtoa toiseen varhaiskasvatusta tarjoavaan yksikköön Petäjävedellä.',
         PRESCHOOL: (
           <span>
             Lapsella on jo esiopetuspaikka. Tällä hakemuksella voit hakea{' '}
@@ -766,19 +766,18 @@ export default {
                 -palvelua käyttöön.
               </P>
               <P>
-                Kunnallisen varhaiskasvatuksen asiakasmaksut ja palvelusetelin
-                omavastuuosuus määräytyvät prosenttiosuutena perheen
+                Kunnallisen varhaiskasvatuksen asiakasmaksut
+                määräytyvät prosenttiosuutena perheen
                 bruttotuloista. Tulojen lisäksi maksuihin vaikuttaa perheen koko
-                ja sovittu varhaiskasvatusaika. Palveluseteliyksiköissä voidaan
-                periä lisämaksu, tiedot mahdollisesta lisämaksusta löytyy
-                yksikön nettisivuilta. Perhe toimittaa tuloselvityksen
+                ja sovittu varhaiskasvatusaika.
+                Perhe toimittaa tuloselvityksen
                 bruttotuloistaan viimeistään kahden viikon kuluessa siitä, kun
                 lapsi on aloittanut varhaiskasvatuksessa.
               </P>
               <P>
                 Lisätietoa varhaiskasvatuksen maksuista, tuloselvityksen
-                toimittamisesta ja palvelusetelin lisämaksusta löydät täältä:{' '}
-                <a href="https://www.espoo.fi/fi/kasvatus-ja-opetus/varhaiskasvatus/maksut-varhaiskasvatuksessa">
+                toimittamisesta löydät täältä:{' '}
+                <a href="https://www.petajavesi.fi/lapset-ja-nuoret/varhaiskasvatus/asiakasmaksut">
                   Maksut varhaiskasvatuksessa
                 </a>
                 .
@@ -790,9 +789,7 @@ export default {
             <>
               <P>
                 Esiopetukseen osallistutaan oppivelvollisuuden alkamista
-                edeltävänä vuonna. Esiopetus on maksutonta. Lukuvuoden 2024–2025
-                esiopetukseen ilmoittaudutaan 9.–19.1.2024. Suomen- ja
-                ruotsinkielinen esiopetus alkaa 8.8.2024.
+                edeltävänä vuonna. Esiopetus on maksutonta.
               </P>
               <P>
                 Päätökset tulevat{' '}
@@ -853,9 +850,9 @@ export default {
           <span>
             Ymmärrän, että tieto hakemuksesta menee myös lapsen toiselle
             huoltajalle. Jos tieto ei saa mennä toiselle huoltajalle, ole
-            yhteydessä palveluohjaukseen. Palveluohjauksen yhteystiedot löydät{' '}
+            yhteydessä päiväkodin johtajaan. Palveluohjauksen yhteystiedot löydät{' '}
             <a
-              href="https://www.espoo.fi/fi/kasvatus-ja-opetus/varhaiskasvatus/varhaiskasvatukseen-hakeminen-ja-palveluohjaus#section-38795"
+              href="https://www.petajavesi.fi/lapset-ja-nuoret/varhaiskasvatus/varhaiskasvatuspalveluihin-hakeminen"
               target="_blank"
               rel="noreferrer"
             >
@@ -1071,7 +1068,7 @@ export default {
                 Toivottua aloituspäivää on mahdollista muuttaa myöhemmäksi niin
                 kauan kuin hakemusta ei ole otettu käsittelyyn. Tämän jälkeen
                 toivotun aloituspäivän muutokset tehdään ottamalla yhteyttä
-                varhaiskasvatuksen palveluohjaukseen (puh. 040 700 1879).
+                päiväkodin johtajaan (puh. 040 700 1879).
               </>
             ),
             PRESCHOOL: (
@@ -1079,7 +1076,7 @@ export default {
                 Toivottua aloituspäivää on mahdollista muuttaa myöhemmäksi niin
                 kauan kuin hakemusta ei ole otettu käsittelyyn. Tämän jälkeen
                 toivotun aloituspäivän muutokset tehdään ottamalla yhteyttä
-                varhaiskasvatuksen palveluohjaukseen (puh. 040 700 1879).
+                päiväkodin johtajaan (puh. 040 700 1879).
               </>
             ),
             CLUB: null
@@ -1112,12 +1109,6 @@ export default {
                 alkaa. Hakemuksen{' '}
                 <strong>liitteenä tulee olla työ- tai opiskelutodistus</strong>{' '}
                 molemmilta samassa taloudessa asuvilta huoltajilta.
-                Suosittelemme toimittamaan liitteen sähköisesti tässä, sillä
-                kahden viikon käsittelyaika alkaa siitä, kun olemme
-                vastaanottaneet hakemuksen tarvittavine liitteineen. Jos et voi
-                lisätä liitteitä hakemukselle sähköisesti, lähetä ne postilla
-                osoitteeseen Varhaiskasvatuksen palveluohjaus, Suutarintie 4, 41900
-                Petäjävesi.
               </P>
             ),
             subtitle:
@@ -1146,7 +1137,7 @@ export default {
                 aukioloaikojen mukaisesti.
               </P>
               <P>
-                Jos tarvitset varhaiskasvatusta 1.8.2024 lähtien ennen
+                Jos tarvitset varhaiskasvatusta 1.8.2025 lähtien ennen
                 esiopetuksen alkua huomioi tämä toivotun aloituspäivämäärän
                 valinnassa.
               </P>
@@ -1206,9 +1197,7 @@ export default {
                 iltaisin ja/tai viikonloppuisin. Hakemuksen liitteeksi
                 toimitetaan molempien vanhempien osalta työnantajan todistus
                 vuorotyöstä tai opiskelusta johtuvasta ilta- tai vuorohoidon
-                tarpeesta. Jos et voi lisätä liitteitä hakemukselle sähköisesti,
-                lähetä ne postilla osoitteeseen Varhaiskasvatuksen
-                palveluohjaus, Suutarintie 4, 41900, Petäjävesi.
+                tarpeesta.
               </P>
             ),
             PRESCHOOL: (
@@ -1226,10 +1215,7 @@ export default {
                   iltaisin ja/tai viikonloppuisin. Hakemuksen liitteeksi
                   toimitetaan molempien vanhempien osalta työnantajan todistus
                   vuorotyöstä tai opiskelusta johtuvasta ilta- tai vuorohoidon
-                  tarpeesta. Jos et voi lisätä liitteitä hakemukselle
-                  sähköisesti, lähetä ne postilla osoitteeseen
-                  Varhaiskasvatuksen palveluohjaus, Suutarintie 4, 41900,
-                  Petäjävesi.
+                  tarpeesta.
                 </P>
               </>
             )
@@ -1274,10 +1260,7 @@ export default {
                   Lapsella on sisarusperuste samaan varhaiskasvatuspaikkaan,
                   jossa hänen sisaruksensa on varhaiskasvatuksen
                   aloitushetkellä. Sisarukseksi katsotaan kaikki samassa
-                  osoitteessa asuvat lapset. Tavoitteena on sijoittaa sisarukset
-                  samaan varhaiskasvatuspaikkaan perheen niin toivoessa. Jos
-                  haet paikkaa sisaruksille, jotka eivät vielä ole
-                  varhaiskasvatuksessa, kirjoita tieto lisätietokenttään.
+                  osoitteessa asuvat lapset.
                 </P>
                 <P>
                   Täytä nämä tiedot vain, jos käytät sisarusperustetta, sekä
@@ -1295,16 +1278,7 @@ export default {
                     sisarus, jolla on päätöksentekohetkellä ja tulevana
                     esiopetusvuonna paikka esiopetuspäiväkodissa.
                   </li>
-                  <li>
-                    Kunnan osoittamaan lähikouluun, jota esioppilaan sisarus käy
-                    tulevana lukuvuonna.
-                  </li>
                 </ol>
-                <P>
-                  Huoltaja voi valita, käyttääkö hän sisarusperustetta kohdan a
-                  vai b mukaisesti, jos esioppilaalla on sisarusperuste
-                  molempien kohtien mukaan. Valinta ilmoitetaan alla.
-                </P>
                 <P>
                   Täytä nämä tiedot vain, jos käytät sisarusperustetta, sekä
                   valitse alla olevissa hakutoiveissa ensisijaiseksi toiveeksi
@@ -1361,39 +1335,23 @@ export default {
             DAYCARE: (
               <>
                 <P>
-                  Voit hakea 1-3 paikkaa toivomassasi järjestyksessä.
-                  Hakutoiveet eivät takaa paikkaa toivotussa yksikössä, mutta
-                  mahdollisuus toivotun paikan saamiseen kasvaa antamalla
-                  useamman vaihtoehdon.
+                  Voit hakea 1-2 paikkaa toivomassasi järjestyksessä.
+                  Hakutoiveet eivät takaa paikkaa toivotussa yksikössä.
                 </P>
                 <P>
                   Näet eri varhaiskasvatusyksiköiden sijainnin valitsemalla
                   ‘Yksiköt kartalla’.
-                </P>
-                <P>
-                  Palveluseteliä haetaan valitsemalla hakutoiveeksi se
-                  palveluseteliyksikkö, johon halutaan hakea.
-                  Palveluseteliyksikköön haettaessa myös yksikön esimies saa
-                  tiedon hakemuksesta.
                 </P>
               </>
             ),
             PRESCHOOL: (
               <>
                 <P>
-                  Voit hakea 1-3 eri yksikköön toivomassasi järjestyksessä.
-                  Hakutoiveet eivät takaa paikkaa toivotusta yksiköstä, mutta
-                  mahdollisuus toivotun paikan saamiseen kasvaa antamalla
-                  useamman vaitoehdon.
+                  Voit hakea 1-2 eri yksikköön toivomassasi järjestyksessä.
+                  Hakutoiveet eivät takaa paikkaa toivotusta yksiköstä.
                 </P>
                 <P>
                   Näet eri yksiköiden sijainnin valitsemalla ‘Yksiköt kartalla’.
-                </P>
-                <P>
-                  Palveluseteliä haetaan valitsemalla hakutoiveeksi se
-                  palveluseteliyksikkö, johon halutaan hakea.
-                  Palveluseteliyksikköön haettaessa myös yksikön esimies saa
-                  tiedon hakemuksesta.
                 </P>
               </>
             ),
@@ -1467,13 +1425,11 @@ export default {
         info: {
           DAYCARE: (
             <P>
-              Kunnallisen varhaiskasvatuksen asiakasmaksut ja palvelusetelin
-              omavastuuosuus määräytyvät prosenttiosuutena perheen
+              Kunnallisen varhaiskasvatuksen asiakasmaksut määräytyvät prosenttiosuutena perheen
               bruttotuloista. Maksut vaihtelevat perheen koon ja tulojen sekä
               varhaiskasvatusajan mukaan maksuttomasta varhaiskasvatuksesta
-              enintään 288 euron kuukausimaksuun lasta kohden.
-              Palveluseteliyksiköissä voidaan kuitenkin periä 0-50€/kk/lapsi
-              lisämaksu. Perhe toimittaa tuloselvityksen bruttotuloistaan
+              enintään 311 euron kuukausimaksuun lasta kohden.
+              Perhe toimittaa tuloselvityksen bruttotuloistaan
               tuloselvityslomakkeella, viimeistään kahden viikon kuluessa siitä,
               kun lapsi on aloittanut varhaiskasvatuksessa.
             </P>
@@ -1498,11 +1454,11 @@ export default {
           'Annan suostumuksen korkeimpaan maksuun. Suostumus on voimassa toistaiseksi, kunnes toisin ilmoitan.',
         links: (
           <P>
-            Lisätietoa varhaiskasvatuksen maksuista, palvelusetelin lisämaksusta
-            ja tuloselvityslomakkeen löydät täältä:
+            Lisätietoa varhaiskasvatuksen maksuista
+            löydät täältä:
             <br />
             <a
-              href="https://www.espoo.fi/fi/kasvatus-ja-opetus/varhaiskasvatus/maksut-varhaiskasvatuksessa"
+              href="https://www.petajavesi.fi/lapset-ja-nuoret/varhaiskasvatus/asiakasmaksut"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -1611,7 +1567,7 @@ export default {
         hasFutureAddress:
           'Väestörekisterissä oleva osoite on muuttunut tai muuttumassa',
         futureAddressInfo:
-          'Espoon varhaiskasvatuksessa virallisena osoitteena pidetään väestötiedoista saatavaa osoitetta. Osoite väestötiedoissa muuttuu hakijan tehdessä muuttoilmoituksen postiin tai maistraattiin.',
+          'Petäjäveden varhaiskasvatuksessa virallisena osoitteena pidetään väestötiedoista saatavaa osoitetta. Osoite väestötiedoissa muuttuu hakijan tehdessä muuttoilmoituksen postiin tai maistraattiin.',
         guardianFutureAddressEqualsChildFutureAddress:
           'Muutan samaan osoitteeseen kuin lapsi',
         firstNamePlaceholder: 'Etunimet',
@@ -1656,7 +1612,7 @@ export default {
     summary: (
       <P width="800px">
         Tälle sivulle saapuvat lapsen varhaiskasvatukseen, esiopetukseen,
-        kerhoon ja maksuihin liittyvät päätökset.
+        ja maksuihin liittyvät päätökset.
         <br aria-hidden="true" />
         <br aria-hidden="true" />
         Jos päätös koskee uutta lapselle haettua paikkaa,{' '}
@@ -1835,8 +1791,8 @@ export default {
             tiedoksisaannista.
           </P>
           <P>
-            Oikaisuvaatimus on toimitettava Etelä-Suomen aluehallintovirastolle
-            viimeistään määräajan viimeisenä päivänä ennen Etelä-Suomen
+            Oikaisuvaatimus on toimitettava Länsi- ja Sisä-Suomen aluehallintovirastolle
+            viimeistään määräajan viimeisenä päivänä ennen Länsi- ja Sisä-Suomen
             aluehallintoviraston aukioloajan päättymistä.
           </P>
           <P>
@@ -1858,19 +1814,17 @@ export default {
 
           <H3>Oikaisuviranomainen</H3>
           <P>
-            Viranomainen, jolle oikaisuvaatimus tehdään, on Etelä-Suomen
+            Viranomainen, jolle oikaisuvaatimus tehdään, on Länsi- ja Sisä-Suomen
             aluehallintovirasto
           </P>
           <P>
-            Postiosoite: PL 1, 13035 AVI
+            Postiosoite: PL 5, 13035 AVI
             <br />
-            Helsingin toimipaikan käyntiosoite: Ratapihantie 9, 00521 Helsinki
+            Jyväskylä toimipaikan käyntiosoite: Vapaudenkatu 58, 40100 Jyväskylä
             <br />
-            Sähköpostiosoite: kirjaamo.etela@avi.fi
+            Sähköpostiosoite: kirjaamo.lansi@avi.fi
             <br />
             Puhelinvaihde: 0295 016 000
-            <br />
-            Faksinumero: 0295 016 661
             <br />
             Virastoaika: ma-pe 8.00–16.15
           </P>
@@ -2029,19 +1983,17 @@ export default {
               ensimmäisenä arkipäivänä sen jälkeen.
             </P>
             <H3>Oikaisuviranomainen</H3>
-            <P>Oikaisu tehdään Etelä-Suomen aluehallintovirastolle.</P>
+            <P>Oikaisu tehdään Länsi- ja Sisä-Suomen aluehallintovirastolle.</P>
             <P>
-              Etelä-Suomen aluehallintovirasto
+              Länsi- ja Sisä-Suomen aluehallintovirasto
               <br />
-              Käyntiosoite: Ratapihantie 9, 00521 Helsinki
+              Käyntiosoite: Vapaudenkatu 58, 40100 Jyväskylä
               <br />
               Virastoaika: ma-pe 8.00–16.15
               <br />
-              Postiosoite: PL 1, 13035 AVI
+              Postiosoite: PL 5, 13035 AVI
               <br />
-              Sähköposti: kirjaamo.etela@avi.fi
-              <br />
-              Fax: 0295 016 661
+              Sähköposti: kirjaamo.lansi@avi.fi
               <br />
               Puhelin: 0295 016 000
             </P>
@@ -2108,9 +2060,8 @@ export default {
     summary: (
       <P width="800px">
         Lapsen huoltaja voi tehdä lapselle hakemuksen varhaiskasvatukseen ja
-        kerhoon tai ilmoittaa lapsen esiopetukseen. Samalla hakemuksella voi
-        hakea myös varhaiskasvatuksen palveluseteliä, hakemalla
-        varhaiskasvatuspaikkaa palveluseteliyksiköstä. Huoltajan lasten tiedot
+        kerhoon tai ilmoittaa lapsen esiopetukseen.
+        Huoltajan lasten tiedot
         haetaan tähän näkymään automaattisesti Väestötietojärjestelmästä.
       </P>
     ),
@@ -2333,7 +2284,7 @@ export default {
           <a
             target="_blank"
             rel="noreferrer"
-            href="https://www.espoo.fi/fi/kasvatus-ja-opetus/varhaiskasvatus/maksut-varhaiskasvatuksessa"
+            href="https://www.petajavesi.fi/lapset-ja-nuoret/varhaiskasvatus/asiakasmaksut"
           >
             täältä
           </a>
@@ -2342,7 +2293,7 @@ export default {
         </P>
         <P>
           Lisätietoja maksuista:{' '}
-          <a href="https://www.espoo.fi/fi/kasvatus-ja-opetus/varhaiskasvatus/maksut-varhaiskasvatuksessa">
+          <a href="https://www.petajavesi.fi/lapset-ja-nuoret/varhaiskasvatus/asiakasmaksut">
             Maksut varhaiskasvatuksessa
           </a>
         </P>
@@ -2385,7 +2336,7 @@ export default {
             Maksu voidaan tarkistaa kesken toimintavuotta, mikäli perheen
             tilanteessa, tuloissa tai lapsen palveluntarpeessa tapahtuu muutos.
             Maksua voidaan muuttaa myös lainsäädännön muutosten tai
-            kaupunginhallituksen päätösten mukaisesti.
+            hyvinvointilautakunnan päätösten mukaisesti.
           </li>
           <li>
             Jos perheen tuloissa tapahtuu olennaisia (+/-10 %) muutoksia, on
@@ -2397,7 +2348,7 @@ export default {
           <a
             target="_blank"
             rel="noreferrer"
-            href="https://www.espoo.fi/fi/kasvatus-ja-opetus/varhaiskasvatus/varhaiskasvatuksen-asiakasmaksut#section-59617"
+            href="https://www.petajavesi.fi/lapset-ja-nuoret/varhaiskasvatus/asiakasmaksut"
           >
             tästä
           </a>
