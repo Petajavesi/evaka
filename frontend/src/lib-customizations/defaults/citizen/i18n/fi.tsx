@@ -276,7 +276,7 @@ export default {
       infoBoxText:
         'Tunnistautumisen yhteydessä väestötietojärjestelmästä haetaan kirjautujan, toisen huoltajan sekä alaikäisten huollettavien henkilö- ja osoitetiedot.  ',
       infoBullets: [
-        'hakea lapsellesi varhaiskasvatus-, esiopetus- tai kerhopaikkaa tai tarkastella aiemmin tekemääsi hakemusta',
+        'hakea lapsellesi varhaiskasvatus- tai esiopetuspaikkaa tai tarkastella aiemmin tekemääsi hakemusta',
         'tarkastella lapsesi varhaiskasvatukseen tai esiopetukseen liittyviä kuvia ja muita dokumentteja',
         'ilmoittaa omat tai lapsesi tulotiedot',
         'hyväksyä tai hylätä päätöksen, jos olet hakemuksen tekijä'
@@ -328,7 +328,7 @@ export default {
       'Tässä näkymässä voit hakea kartalta Petäjäveden varhaiskasvatus- ja esiopetuspaikkoja.',
     privateUnitInfo: (
       <span>
-        Tietoa yksityisistä päiväkodeista löydät{' '}
+        Tietoa päiväkodeista löydät{' '}
         <ExternalLink
           text="täältä."
           href="https://www.petajavesi.fi/lapset-ja-nuoret/varhaiskasvatus/varhaiskasvatuspalveluihin-hakeminen"
@@ -1127,19 +1127,6 @@ export default {
                 valinnassa.
               </P>
               <P>
-                Palveluseteliyksiköhin haettaessa, liittyvän varhaiskasvatuksen
-                palveluseteliä haetaan valitsemalla hakutoiveeksi se
-                palveluseteliyksikkö, johon halutaan hakea.
-              </P>
-              <P>
-                Yksityisiin esiopetusyksiköihin haettaessa, liittyvä
-                varhaiskasvatus haetaan suoraan yksiköstä (pois lukien
-                palveluseteliyksiköt), yksiköt informoivat asiakkaita
-                hakutavasta. Jos esiopetushakemuksessa on haettu liityvää
-                varhaiskasvatusta yksityisestä yksiköstä, palveluohjaus muuttaa
-                hakemuksen vain esiopetushakemukseksi.
-              </P>
-              <P>
                 Saat varhaiskasvatuspaikasta erillisen kirjallisen päätöksen.
                 Päätös tulee{' '}
                 <a
@@ -1582,7 +1569,7 @@ export default {
   decisions: {
     title: 'Päätökset',
     childhoodEducationTitle:
-      'Varhaiskasvatukseen, esiopetukseen ja kerhoon liittyvät päätökset',
+      'Varhaiskasvatukseen ja esiopetukseen liittyvät päätökset',
     summary: (
       <P width="800px">
         Tälle sivulle saapuvat lapsen varhaiskasvatukseen, esiopetukseen,
@@ -2033,8 +2020,8 @@ export default {
     title: 'Hakeminen varhaiskasvatukseen ja ilmoittautuminen esiopetukseen',
     summary: (
       <P width="800px">
-        Lapsen huoltaja voi tehdä lapselle hakemuksen varhaiskasvatukseen ja
-        kerhoon tai ilmoittaa lapsen esiopetukseen.
+        Lapsen huoltaja voi tehdä lapselle hakemuksen varhaiskasvatukseen
+        tai ilmoittaa lapsen esiopetukseen.
         Huoltajan lasten tiedot
         haetaan tähän näkymään automaattisesti Väestötietojärjestelmästä.
       </P>
