@@ -5,7 +5,7 @@
 import type { MapConfig } from 'lib-customizations/types'
 
 const mapConfig: MapConfig = {
-  center: [60.184147, 24.704897],
+  center: [62.261552, 25.257697],
   initialZoom: 12,
   addressZoom: 14,
   searchAreaRect: {
