@@ -2306,7 +2306,7 @@ export default {
         </P>
         <P>
           Asiakkaan on viipymättä ilmoitettava tulojen ja perhekoon muutoksista
-          varhaiskasvatuksen asiakasmaksuyksikköön. Viranomainen on tarvittaessa
+          varhaiskasvatuksen laskentasihteerille. Viranomainen on tarvittaessa
           oikeutettu perimään varhaiskasvatusmaksuja myös takautuvasti.
         </P>
         <P>
