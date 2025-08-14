@@ -177,10 +177,10 @@ export default {
     requiresStrongAuth: 'vaatii vahvan tunnistautumisen'
   },
   footer: {
-    cityLabel: '© Espoon kaupunki',
+    cityLabel: '© Petäjäveden kunta',
     privacyPolicyLink: (
       <a
-        href="https://www.espoo.fi/fi/espoon-kaupunki/tietosuoja"
+        href="https://www.petajavesi.fi/images/stories/asiointi/tietosuojaselosteet/"
         data-qa="footer-policy-link"
         style={{ color: colors.main.m2 }}
       >
@@ -199,7 +199,7 @@ export default {
     )
   },
   loginPage: {
-    title: 'Espoon kaupungin varhaiskasvatus',
+    title: 'Petäjäveden kunnan varhaiskasvatus',
     systemNotification: 'Tärkeä tiedote',
     addToHomeScreen: {
       title: 'Haluatko löytää tälle sivulle helpommin?',
@@ -250,11 +250,11 @@ export default {
           <P>
             Mikäli kirjautuminen tästä ei onnistu, katso ohjeet{' '}
             <a
-              href="https://www.espoo.fi/fi/palvelut/evaka"
+              href="https://www.petajavesi.fi/lapset-ja-nuoret/varhaiskasvatus/evaka"
               target="_blank"
               rel="noreferrer"
             >
-              eVaka | Espoon kaupunki
+              eVaka | Petäjäveden kunta
             </a>
             . Voit kirjautua myös käyttämällä vahvaa tunnistautumista.
           </P>
@@ -379,7 +379,7 @@ export default {
       list: 'Yksiköt'
     },
     serviceVoucherLink:
-      'https://www.espoo.fi/fi/kasvatus-ja-opetus/varhaiskasvatus/yksityiseen-varhaiskasvatukseen-hakeminen#section-55369',
+      'https://www.petajavesi.fi/lapset-ja-nuoret/varhaiskasvatus/varhaiskasvatuspalveluihin-hakeminen',
     noApplying: 'Ei hakua eVakan kautta, ota yhteys yksikköön',
     backToSearch: 'Takaisin hakuun'
   },
@@ -696,15 +696,15 @@ export default {
     creation: {
       title: 'Hakemustyyppi',
       selectApplicationType: 'Valitse hakemustyyppi',
-      daycareLabel: 'Varhaiskasvatus- ja palvelusetelihakemus',
+      daycareLabel: 'Varhaiskasvatushakemus',
       daycareInfo:
-        'Varhaiskasvatushakemuksella haetaan kunnallista varhaiskasvatuspaikkaa päiväkotiin, perhepäivähoitoon tai ryhmäperhepäiväkotiin. Samalla hakemuksella voi hakea myös varhaiskasvatuksen palveluseteliä, valitsemalla Hakutoiveet-kohtaan palveluseteliyksikkö, johon halutaan hakea.',
+        'Varhaiskasvatushakemuksella haetaan kunnallista varhaiskasvatuspaikkaa päiväkotiin.',
       preschoolLabel:
-        'Ilmoittautuminen esiopetukseen ja / tai valmistavaan opetukseen',
+        'Ilmoittautuminen esiopetukseen',
       preschoolInfo:
-        'Maksutonta esiopetusta on neljä tuntia päivässä. Tämän lisäksi lapselle voidaan hakea maksullista liittyvää varhaiskasvatusta, jota tarjotaan esiopetuspaikoissa aamulla ennen esiopetuksen alkua ja iltapäivisin esiopetuksen jälkeen. Liittyvään varhaiskasvatukseen voi hakea myös palveluseteliä, valitsemalla Hakutoiveet -kohtaan palveluseteliyksikön, johon halutaan hakea. Hakemuksen liittyvään varhaiskasvatukseen voi tehdä esiopetukseen ilmoittautumisen yhteydessä tai erillisenä hakemuksena opetuksen jo alettua. Samalla hakemuksella voit hakea myös maksuttomaan valmistavaan opetukseen sekä valmistavaan opetukseen liittyvään varhaiskasvatukseen.',
+        'Maksutonta esiopetusta on neljä tuntia päivässä. Tämän lisäksi lapselle voidaan hakea maksullista liittyvää varhaiskasvatusta, jota tarjotaan esiopetuspaikoissa aamulla ennen esiopetuksen alkua ja iltapäivisin esiopetuksen jälkeen. Hakemuksen liittyvään varhaiskasvatukseen voi tehdä esiopetukseen ilmoittautumisen yhteydessä tai erillisenä hakemuksena opetuksen jo alettua.',
       preschoolDaycareInfo:
-        'Tällä lomakkeella voit myös hakea liittyvää varhaiskasvatusta lapsille, jotka ilmoitetaan / on ilmoitettu esiopetukseen tai valmistavaan opetukseen.',
+        'Tällä lomakkeella voit myös hakea liittyvää varhaiskasvatusta lapsille, jotka ilmoitetaan / on ilmoitettu esiopetukseen.',
       clubLabel: 'Kerhohakemus',
       clubInfo: 'Kerhohakemuskella haetaan kunnallisiin kerhoihin',
       duplicateWarning:
@@ -726,7 +726,7 @@ export default {
         <P>
           Hakemukseen voi tehdä muutoksia niin kauan kuin hakemusta ei ole
           otettu käsittelyyn. Tämän jälkeen muutokset hakemukseen tehdään
-          ottamalla yhteyttä varhaiskasvatuksen palveluohjaukseen (puh. 040 700
+          ottamalla yhteyttä päiväkodin johtajaan (puh. 040 700
           1879). Voit perua jo tehdyn hakemuksen ilmoittamalla siitä
           sähköpostilla varhaiskasvatuksen palveluohjaukseen{' '}
           <a href="mailto:varhaiskasvatus@petajavesi.fi">
@@ -739,7 +739,7 @@ export default {
     editor: {
       heading: {
         title: {
-          DAYCARE: 'Varhaiskasvatus- ja palvelusetelihakemus',
+          DAYCARE: 'Varhaiskasvatushakemus',
           PRESCHOOL: 'Ilmoittautuminen esiopetukseen',
           CLUB: 'Kerhohakemus'
         },
@@ -1358,7 +1358,7 @@ export default {
           },
           mapLink: 'Yksiköt kartalla',
           serviceVoucherLink:
-            'https://www.espoo.fi/fi/kasvatus-ja-opetus/varhaiskasvatus/yksityiseen-varhaiskasvatukseen-hakeminen#section-55369',
+            'https://www.petajavesi.fi/lapset-ja-nuoret/varhaiskasvatus/toimintayksikot',
           languageFilter: {
             label: 'Yksikön kieli',
             fi: 'suomi',
@@ -1650,7 +1650,7 @@ export default {
       },
       confirmationInfo: {
         preschool:
-          'Esiopetuksen, valmistavan opetuksen ja/tai liittyvän varhaiskasvatuksen hyväksymis- tai hylkäämisilmoitus on toimitettava välittömästi, viimeistään kahden viikon kuluessa tämän ilmoituksen saamisesta. Jos olet hakenut useampaa palvelua, saat jokaisesta oman päätöksen erikseen vahvistettavaksi',
+          'Esiopetuksen ja/tai liittyvän varhaiskasvatuksen hyväksymis- tai hylkäämisilmoitus on toimitettava välittömästi, viimeistään kahden viikon kuluessa tämän ilmoituksen saamisesta. Jos olet hakenut useampaa palvelua, saat jokaisesta oman päätöksen erikseen vahvistettavaksi',
         default:
           'Päätöksessä ilmoitetun paikan hyväksymis- tai hylkäämisilmoitus on toimitettava välittömästi, viimeistään kahden viikon kuluessa tämän ilmoituksen saamisesta.'
       },
@@ -1665,7 +1665,7 @@ export default {
         cancel: 'Palaa takaisin vastaamatta',
         submit: 'Lähetä vastaus päätökseen',
         disabledInfo:
-          'HUOM! Pääset hyväksymään/hylkäämään liittyvää varhaiskasvatusta koskevan päätöksen mikäli hyväksyt ensin esiopetusta / valmistavaa opetusta koskevan päätöksen.'
+          'HUOM! Pääset hyväksymään/hylkäämään liittyvää varhaiskasvatusta koskevan päätöksen mikäli hyväksyt ensin esiopetusta koskevan päätöksen.'
       },
       openPdf: 'Näytä päätös',
       warnings: {
@@ -1677,7 +1677,7 @@ export default {
         },
         doubleRejectWarning: {
           title: 'Haluatko hylätä paikan?',
-          text: 'Olet hylkäämässä tarjotun esiopetus / valmistavan paikan. Liittyvän varhaiskasvatuksen paikka merkitään samalla hylätyksi.',
+          text: 'Olet hylkäämässä tarjotun esiopetus paikan. Liittyvän varhaiskasvatuksen paikka merkitään samalla hylätyksi.',
           resolveLabel: 'Hylkää molemmat',
           rejectLabel: 'Palaa takaisin'
         }
@@ -2949,16 +2949,12 @@ export default {
     <>
       <H1>Saavutettavuusseloste</H1>
       <P>
-        Tämä saavutettavuusseloste koskee Espoon kaupungin varhaiskasvatuksen
+        Tämä saavutettavuusseloste koskee Petäjäveden kunnan varhaiskasvatuksen
         eVaka-verkkopalvelua osoitteessa{' '}
-        <a href="https://espoonvarhaiskasvatus.fi">espoonvarhaiskasvatus.fi</a>.
-        Espoon kaupunki pyrkii takaamaan verkkopalvelun saavutettavuuden,
+        <a href="https://www.petajavesi.fi/">petäjävesi.fi</a>.
+        Petäjäveden kunta pyrkii takaamaan verkkopalvelun saavutettavuuden,
         parantamaan käyttäjäkokemusta jatkuvasti ja soveltamaan asianmukaisia
         saavutettavuusstandardeja.
-      </P>
-      <P>
-        Palvelun saavutettavuuden on arvioinut palvelun kehitystiimi, ja seloste
-        on laadittu 12.4.2022.
       </P>
       <H2>Palvelun vaatimustenmukaisuus</H2>
       <P>
@@ -3023,8 +3019,8 @@ export default {
       <H2>Vaihtoehtoiset asiointitavat</H2>
       <P>
         <ExternalLink
-          href="https://www.espoo.fi/fi/espoon-kaupunki/asiakaspalvelu/asiointipisteet-ja-espoo-info/asiointipisteet"
-          text="Espoon kaupungin asiointipisteistä"
+          href="https://www.petajavesi.fi/asiointi/yhteispalvelupiste"
+          text="Petäjäveden kunnan asiointipisteistä"
         />{' '}
         saa apua sähköiseen asiointiin. Asiointipisteiden palveluneuvojat
         auttavat käyttäjiä, joille digipalvelut eivät ole saavutettavissa.
@@ -3034,7 +3030,7 @@ export default {
         Jos huomaat saavutettavuuspuutteen verkkopalvelussamme, kerro siitä
         meille. Voit antaa palautetta{' '}
         <ExternalLink
-          href="https://easiointi.espoo.fi/eFeedback/fi/Feedback/20-S%C3%A4hk%C3%B6iset%20asiointipalvelut"
+          href="https://www.petajavesi.fi/suojattu-viestipalvelu"
           text="verkkolomakkeella"
         />{' '}
         tai sähköpostitse{' '}
@@ -3054,7 +3050,7 @@ export default {
       <P>
         <strong>Valvontaviranomaisen yhteystiedot </strong>
         <br />
-        Etelä-Suomen aluehallintovirasto <br />
+        Länsi- ja Sisä-Suomen aluehallintovirasto <br />
         Saavutettavuuden valvonnan yksikkö
         <br />
         <ExternalLink
