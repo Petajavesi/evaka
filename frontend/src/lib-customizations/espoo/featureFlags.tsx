@@ -18,11 +18,11 @@ const features: Features = {
     assistanceActionOther: true,
     daycareApplication: {
       dailyTimes: true,
-      serviceNeedOption: false
+      serviceNeedOption: true
     },
     preschoolApplication: {
       connectedDaycarePreferredStartDate: true,
-      serviceNeedOption: false
+      serviceNeedOption: true
     },
     decisionDraftMultipleUnits: false,
     preschool: true,
@@ -63,11 +63,11 @@ const features: Features = {
     assistanceActionOther: true,
     daycareApplication: {
       dailyTimes: true,
-      serviceNeedOption: false
+      serviceNeedOption: true
     },
     preschoolApplication: {
       connectedDaycarePreferredStartDate: true,
-      serviceNeedOption: false
+      serviceNeedOption: true
     },
     decisionDraftMultipleUnits: false,
     preschool: true,
@@ -108,11 +108,11 @@ const features: Features = {
     assistanceActionOther: true,
     daycareApplication: {
       dailyTimes: true,
-      serviceNeedOption: false
+      serviceNeedOption: true
     },
     preschoolApplication: {
       connectedDaycarePreferredStartDate: true,
-      serviceNeedOption: false
+      serviceNeedOption: true
     },
     decisionDraftMultipleUnits: false,
     preschool: true,
@@ -154,11 +154,11 @@ const features: Features = {
     assistanceActionOther: true,
     daycareApplication: {
       dailyTimes: true,
-      serviceNeedOption: false
+      serviceNeedOption: true
     },
     preschoolApplication: {
       connectedDaycarePreferredStartDate: true,
-      serviceNeedOption: false
+      serviceNeedOption: true
     },
     decisionDraftMultipleUnits: false,
     preschool: true,
