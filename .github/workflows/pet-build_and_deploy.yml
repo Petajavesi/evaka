@@ -11,7 +11,6 @@ name: Pet - Build and deploy
 on:
   push:
     branches:
-      - dev
       - test
       - prod
 
@@ -264,7 +263,7 @@ jobs:
 
   test-db:
     runs-on: ubuntu-latest
-    if: ${{ github.ref_name == 'dev' || github.ref_name == 'test' }}
+    if: ${{ github.ref_name == 'test' }}
     environment:
       name: ${{ github.ref_name }}
     permissions:
@@ -339,7 +338,7 @@ jobs:
 
   dummy-idp:
     runs-on: ubuntu-latest
-    if: ${{ github.ref_name == 'dev' || github.ref_name == 'test' }}
+    if: ${{ github.ref_name == 'test' }}
     environment:
       name: ${{ github.ref_name }}
     permissions:
