@@ -204,7 +204,7 @@ class EspooConfig {
                 "Varhaiskasvatuksen asiakasmaksut - Småbarnspedagogikens avgifter - Early childhood education fees",
             applyPlacementUnitFromDecision = false,
             preferredStartRelativeApplicationDueDate = false,
-            fiveYearsOldDaycareEnabled = true,
+            fiveYearsOldDaycareEnabled = false,
             freeJulyStartOnSeptember = true,
             archiveMetadataOrganization = "Espoon kaupungin esiopetus ja varhaiskasvatus",
             archiveMetadataConfigs = { type: ArchiveProcessType, year: Int ->
