@@ -182,7 +182,7 @@ const features: Features = {
     nekkuIntegration: false,
     forceUnpublishDocumentTemplate: false,
     invoiceDisplayAccountNumber: true,
-    serviceApplications: false,
+    serviceApplications: true,
     multiSelectDeparture: true,
     archiveIntegrationEnabled: true,
     aromiIntegration: false,
