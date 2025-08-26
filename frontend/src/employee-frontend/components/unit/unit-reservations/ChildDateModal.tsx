@@ -130,10 +130,7 @@ const form = transformed(
 )
 
 const excludedAbsenceTypes: AbsenceType[] = [
-  'FREE_ABSENCE',
-  'PARENTLEAVE',
-  'PLANNED_ABSENCE',
-  'FORCE_MAJEURE'
+
 ]
 const basicAbsenceTypes = absenceTypes.filter(
   (t) => !excludedAbsenceTypes.includes(t)
