@@ -33,7 +33,7 @@ import { farMap } from 'lib-icons'
 import Footer from '../Footer'
 import { useUser } from '../auth/state'
 import { useLang, useTranslation } from '../localization'
-import { getStrongLoginUri } from '../navigation/const'
+import { getStrongLoginUri, getWeakLoginUri } from '../navigation/const'
 import useTitle from '../useTitle'
 
 import { systemNotificationsQuery } from './queries'
@@ -50,7 +50,9 @@ export default React.memo(function LoginPage() {
 
   const [searchParams] = useSearchParams()
   const unvalidatedNextPath = searchParams.get('next')
+  const [, navigate] = useLocation()
 
+  const [showInfoBoxText1, setShowInfoBoxText1] = useState(false)
   const [showInfoBoxText2, setShowInfoBoxText2] = useState(false)
 
   const systemNotifications = useQueryResult(systemNotificationsQuery())
@@ -104,6 +106,35 @@ export default React.memo(function LoginPage() {
               <Gap size="m" />
               <AddToHomeScreenInstructions />
             </MobileOnly>
+          </ContentArea>
+          <ContentArea opaque>
+            <H2 noMargin>{i18n.loginPage.login.title}</H2>
+            <Gap size="m" />
+            <P noMargin>
+              {i18n.loginPage.login.paragraph}
+              <ParagraphInfoButton
+                aria-label={i18n.common.openExpandingInfo}
+                onClick={() => setShowInfoBoxText1(!showInfoBoxText1)}
+                open={showInfoBoxText1}
+              />
+            </P>
+            {showInfoBoxText1 && (
+              <ExpandingInfoBox
+                info={i18n.loginPage.login.infoBoxText}
+                close={() => setShowInfoBoxText1(false)}
+              />
+            )}
+            <Gap size="s" />
+            <LinkButton
+              href={getWeakLoginUri(unvalidatedNextPath ?? '/')}
+              onClick={(e) => {
+                e.preventDefault()
+                navigate(getWeakLoginUri(unvalidatedNextPath ?? '/'))
+              }}
+              data-qa="weak-login"
+            >
+              {i18n.loginPage.login.link}
+            </LinkButton>
           </ContentArea>
           <ContentArea opaque>
             <H2 noMargin>{i18n.loginPage.applying.title}</H2>
