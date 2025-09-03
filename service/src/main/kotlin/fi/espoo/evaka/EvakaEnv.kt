@@ -560,7 +560,7 @@ data class CitizenCalendarEnv(val calendarOpenBeforePlacementDays: Int) {
         fun fromEnvironment(env: Environment): CitizenCalendarEnv {
             return CitizenCalendarEnv(
                 calendarOpenBeforePlacementDays =
-                    env.lookup("evaka.citizen.calendar.calendar_open_before_placement_days") ?: 14
+                    env.lookup("evaka.citizen.calendar.calendar_open_before_placement_days") ?: 1
             )
         }
     }
