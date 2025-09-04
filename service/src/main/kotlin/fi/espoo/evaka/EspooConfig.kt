@@ -202,16 +202,16 @@ class EspooConfig {
             preschoolAssistanceDecisionMakerRoles = null,
             requestedStartUpperLimit = 14,
             postOffice = "ESPOO",
-            municipalMessageAccountName = "Espoon kaupunki - Esbo stad - City of Espoo",
+            municipalMessageAccountName = "Petäjäveden kunta",
             serviceWorkerMessageAccountName =
-                "Varhaiskasvatuksen palveluohjaus - Småbarnspedagogikens servicehandledning - Early childhood education service guidance",
+                "Petäjäveden varhaiskasvatus",
             financeMessageAccountName =
-                "Varhaiskasvatuksen asiakasmaksut - Småbarnspedagogikens avgifter - Early childhood education fees",
+                "Varhaiskasvatuksen asiakasmaksut",
             applyPlacementUnitFromDecision = false,
             preferredStartRelativeApplicationDueDate = false,
             fiveYearsOldDaycareEnabled = false,
             freeJulyStartOnSeptember = true,
-            archiveMetadataOrganization = "Espoon kaupungin esiopetus ja varhaiskasvatus",
+            archiveMetadataOrganization = "Petäjäveden esiopetus ja varhaiskasvatus",
             archiveMetadataConfigs = { type: ArchiveProcessType, year: Int ->
                 when (type) {
                     ArchiveProcessType.APPLICATION_DAYCARE -> {
