@@ -184,7 +184,7 @@ class EspooConfig {
     fun featureConfig(): FeatureConfig =
         FeatureConfig(
             valueDecisionCapacityFactorEnabled = false,
-            citizenReservationThresholdHours = 2,
+            citizenReservationThresholdHours = 144,
             dailyFeeDivisorOperationalDaysOverride = null,
             freeSickLeaveOnContractDays = false, // Doesn't affect Espoo
             freeAbsenceGivesADailyRefund = true,
