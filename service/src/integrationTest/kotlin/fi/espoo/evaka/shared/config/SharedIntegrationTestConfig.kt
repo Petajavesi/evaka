@@ -266,7 +266,7 @@ val testFeatureConfig =
         applyPlacementUnitFromDecision = false,
         preferredStartRelativeApplicationDueDate = false,
         fiveYearsOldDaycareEnabled = true,
-        archiveMetadataOrganization = "Espoon kaupungin esiopetus ja varhaiskasvatus",
+        archiveMetadataOrganization = "Petäjäveden esiopetus ja varhaiskasvatus",
         archiveMetadataConfigs = { type: ArchiveProcessType, _: Int ->
             when (type) {
                 ArchiveProcessType.APPLICATION_DAYCARE ->

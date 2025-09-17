@@ -145,7 +145,7 @@ class DocumentMetadataUtilsTest {
             processDefinitionNumber = "1234",
             year = 2023,
             number = 1,
-            organization = "Espoon kaupungin esiopetus ja varhaiskasvatus",
+            organization = "Petäjäveden esiopetus ja varhaiskasvatus",
             archiveDurationMonths = 1320,
             history = completeHistory,
             migrated = false,
@@ -239,7 +239,7 @@ class DocumentMetadataUtilsTest {
         assertEquals(1, result.agents.agent.size)
         assertEquals("Testi Testaaja", result.agents.agent[0].name)
         assertEquals(
-            "Espoon kaupungin esiopetus ja varhaiskasvatus",
+            "Petäjäveden esiopetus ja varhaiskasvatus",
             result.agents.agent[0].corporateName,
         )
         assertEquals("Henkilökunta", result.agents.agent[0].role)

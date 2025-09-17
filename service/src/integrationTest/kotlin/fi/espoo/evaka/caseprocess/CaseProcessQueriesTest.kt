@@ -22,7 +22,7 @@ class CaseProcessQueriesTest : PureJdbiTest(resetDbBeforeEach = true) {
         val definition2 = "987.654.321"
         val year1 = 2022
         val year2 = 2023
-        val organization = "Espoon kaupungin esiopetus ja varhaiskasvatus"
+        val organization = "Petäjäveden esiopetus ja varhaiskasvatus"
         val archiveMonths = 120
         assertEquals(
             1,
@@ -66,7 +66,7 @@ class CaseProcessQueriesTest : PureJdbiTest(resetDbBeforeEach = true) {
                     it.insertCaseProcess(
                         processDefinitionNumber = "123.456.789",
                         year = 2022,
-                        organization = "Espoon kaupungin esiopetus ja varhaiskasvatus",
+                        organization = "Petäjäveden esiopetus ja varhaiskasvatus",
                         archiveDurationMonths = 120,
                     )
                 }

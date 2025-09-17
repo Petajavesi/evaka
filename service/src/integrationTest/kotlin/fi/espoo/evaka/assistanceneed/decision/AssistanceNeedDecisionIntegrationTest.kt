@@ -691,7 +691,7 @@ class AssistanceNeedDecisionIntegrationTest : FullApplicationTest(resetDbBeforeE
         assertNotNull(metadata)
         assertEquals("1/123.456.a/2024", metadata.process.caseIdentifier)
         assertEquals(1440, metadata.process.archiveDurationMonths)
-        assertEquals("Espoon kaupungin esiopetus ja varhaiskasvatus", metadata.process.organization)
+        assertEquals("Petäjäveden esiopetus ja varhaiskasvatus", metadata.process.organization)
         assertEquals(4, metadata.process.history.size)
         assertEquals(CaseProcessState.INITIAL, metadata.process.history[0].state)
         assertEquals(assistanceWorker.evakaUserId, metadata.process.history[0].enteredBy.id)
