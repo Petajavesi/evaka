@@ -21,7 +21,7 @@ const customizations: EmployeeCustomizations = {
       common: {
         retroactiveConfirmation: {
           checkboxLabel:
-            'Ymmärrän, olen asiasta yhteydessä laskutustiimiin vaka.maksut@espoo.fi *'
+            'Ymmärrän, olen asiasta yhteydessä laskutustiimiin sari.salonen@petajavesi.fi *'
         }
       },
       childInformation: {
