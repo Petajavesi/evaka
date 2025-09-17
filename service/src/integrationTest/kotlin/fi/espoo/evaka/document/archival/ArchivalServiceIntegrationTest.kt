@@ -227,7 +227,7 @@ class ArchivalServiceIntegrationTest : FullApplicationTest(resetDbBeforeEach = t
                 tx.insertCaseProcess(
                     processDefinitionNumber = "12.06.01.SL1.RT34",
                     year = 2023,
-                    organization = "Espoon kaupungin esiopetus ja varhaiskasvatus",
+                    organization = "Petäjäveden esiopetus ja varhaiskasvatus",
                     archiveDurationMonths = 120,
                 )
 

@@ -191,7 +191,7 @@ class ArchiveChildDocumentServiceTest {
                 processDefinitionNumber = "1234",
                 year = 2023,
                 number = 1,
-                organization = "Espoon kaupungin esiopetus ja varhaiskasvatus",
+                organization = "Petäjäveden esiopetus ja varhaiskasvatus",
                 archiveDurationMonths = 1320,
                 migrated = false,
                 history =
