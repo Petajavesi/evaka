@@ -117,7 +117,7 @@ enum class ScheduledJob(
     ),
     GenerateFinanceDecisions(
         ScheduledJobs::generateFinanceDecisions,
-        ScheduledJobSettings(enabled = true, schedule = JobSchedule.nightly()),
+        ScheduledJobSettings(enabled = false, schedule = JobSchedule.nightly()),
     ),
     KoskiUpdate(
         ScheduledJobs::koskiUpdate,
