@@ -269,7 +269,7 @@ class ChildDocumentService(
             tx,
             payloads = ids.map { AsyncJob.CreateChildDocumentPdf(it) },
             runAt = now,
-            retryCount = 10,
+            retryCount = 15,
         )
     }
 
