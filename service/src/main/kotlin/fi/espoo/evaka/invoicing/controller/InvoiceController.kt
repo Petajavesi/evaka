@@ -123,7 +123,13 @@ class InvoiceController(
     )
 
     @PostMapping("/create-drafts")
-    fun createDraftInvoices(db: Database, user: AuthenticatedUser.Employee, clock: EvakaClock) {
+    fun createDraftInvoices(
+        db: Database,
+        user: AuthenticatedUser.Employee,
+        clock: EvakaClock,
+        @RequestParam(required = false) year: Int?,
+        @RequestParam(required = false) month: Int?
+    ) {
         db.connect { dbc ->
             dbc.transaction {
                 accessControl.requirePermissionFor(
@@ -132,11 +138,13 @@ class InvoiceController(
                     clock,
                     Action.Global.CREATE_DRAFT_INVOICES,
                 )
-                val firstOfLastMonth = clock.today().withDayOfMonth(1).minusMonths(1)
-                generator.generateAllDraftInvoices(
-                    it,
-                    YearMonth.of(firstOfLastMonth.year, firstOfLastMonth.month),
-                )
+                val targetMonth = if (year != null && month != null) {
+                    YearMonth.of(year, month)
+                } else {
+                    val firstOfLastMonth = clock.today().withDayOfMonth(1).minusMonths(1)
+                    YearMonth.of(firstOfLastMonth.year, firstOfLastMonth.month)
+                }
+                generator.generateAllDraftInvoices(it, targetMonth)
             }
         }
         Audit.InvoicesCreate.log()
