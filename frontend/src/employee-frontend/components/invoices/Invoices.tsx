@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import React, { useContext } from 'react'
+import React, { useContext, useState } from 'react'
 import styled from 'styled-components'
 import { useLocation } from 'wouter'
 
@@ -96,6 +96,9 @@ export default React.memo(function Invoices({
     { on: setDraftCreationError, off: clearDraftCreationError }
   ] = useBoolean(false)
 
+  const previousMonth = YearMonth.todayInHelsinkiTz().subMonths(1)
+  const [selectedMonth, setSelectedMonth] = useState<YearMonth>(previousMonth)
+
   return (
     <div className="invoices" data-isloading={isLoading}>
       {user?.accessibleFeatures.createDraftInvoices && (
@@ -103,11 +106,26 @@ export default React.memo(function Invoices({
           {draftCreationError && (
             <RefreshError>{i18n.common.error.unknown}</RefreshError>
           )}
+          <MonthSelector>
+            <label htmlFor="invoice-month">{i18n.invoices.buttons.selectMonth}:</label>
+            <select
+              id="invoice-month"
+              value={selectedMonth.formatIso()}
+              onChange={(e) => setSelectedMonth(YearMonth.parseIso(e.target.value))}
+              data-qa="invoice-month-selector"
+            >
+              {Array.from({ length: 12 }, (_, i) => previousMonth.subMonths(i)).map((month) => (
+                <option key={month.formatIso()} value={month.formatIso()}>
+                  {month.format()}
+                </option>
+              ))}
+            </select>
+          </MonthSelector>
           <MutateButton
             appearance="inline"
             icon={faSync}
             mutation={createDraftInvoicesMutation}
-            onClick={() => undefined}
+            onClick={() => ({ year: selectedMonth.year, month: selectedMonth.month })}
             onSuccess={clearDraftCreationError}
             onFailure={setDraftCreationError}
             text={i18n.invoices.buttons.createInvoices}
@@ -179,6 +197,27 @@ const RefreshInvoices = styled.div`
   position: absolute;
   top: -30px;
   right: 60px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`
+
+const MonthSelector = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+
+  label {
+    font-weight: 600;
+  }
+
+  select {
+    padding: 4px 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+  }
 `
 
 const RefreshError = styled.span`
