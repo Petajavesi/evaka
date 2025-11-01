@@ -3086,6 +3086,7 @@ export const fi = {
           ? 'Lähetä valittu lasku uudelleen'
           : 'Lähetä valitut laskut uudelleen',
       createInvoices: 'Luo laskuluonnokset',
+      selectMonth: 'Valitse kuukausi',
       deleteInvoice: (count: number) =>
         count === 1 ? 'Poista valittu lasku' : 'Poista valitut laskut',
       checkAreaInvoices: (customRange: boolean) =>
