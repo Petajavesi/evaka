@@ -182,8 +182,8 @@ class SharedIntegrationTestConfig {
     }
 
     @Bean
-    fun invoiceIntegrationClient(jsonMapper: JsonMapper): InvoiceIntegrationClient =
-        InvoiceIntegrationClient.MockClient(jsonMapper)
+    fun invoiceIntegrationClient(s3Client: S3Client, jsonMapper: JsonMapper, bucketEnv: BucketEnv): InvoiceIntegrationClient =
+        InvoiceIntegrationClient.MockClient(s3Client, jsonMapper, bucketEnv)
 
     @Bean
     fun patuIntegrationClient(jsonMapper: JsonMapper): PatuIntegrationClient =
