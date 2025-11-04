@@ -34,9 +34,7 @@ class AsyncJobConfig {
                     emailThrottleInterval(maxEmailsPerSecondRate = 14)
                 ),
                 AsyncJob.urgent,
-                AsyncJob.varda.withThrottleInterval(
-                    Duration.ofSeconds(3)
-                ),
+                AsyncJob.varda.withThrottleInterval(Duration.ofSeconds(3)),
                 AsyncJob.suomiFi.withThrottleInterval(
                     Duration.ofSeconds(1).takeIf { env.activeProfiles.contains("production") }
                 ),
