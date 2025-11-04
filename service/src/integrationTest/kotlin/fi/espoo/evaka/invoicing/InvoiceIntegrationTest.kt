@@ -851,7 +851,7 @@ class InvoiceIntegrationTest : FullApplicationTest(resetDbBeforeEach = true) {
         }
 
     private fun createDraftInvoices() {
-        invoiceController.createDraftInvoices(dbInstance(), testUser, RealEvakaClock())
+        invoiceController.createDraftInvoices(dbInstance(), testUser, RealEvakaClock(), null, null)
     }
 
     private fun sendInvoices(invoiceIds: List<InvoiceId>) {
