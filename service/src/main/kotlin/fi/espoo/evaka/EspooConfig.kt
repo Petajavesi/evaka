@@ -200,10 +200,8 @@ class EspooConfig {
             requestedStartUpperLimit = 14,
             postOffice = "ESPOO",
             municipalMessageAccountName = "Petäjäveden kunta",
-            serviceWorkerMessageAccountName =
-                "Petäjäveden varhaiskasvatus",
-            financeMessageAccountName =
-                "Varhaiskasvatuksen asiakasmaksut",
+            serviceWorkerMessageAccountName = "Petäjäveden varhaiskasvatus",
+            financeMessageAccountName = "Varhaiskasvatuksen asiakasmaksut",
             applyPlacementUnitFromDecision = false,
             preferredStartRelativeApplicationDueDate = false,
             fiveYearsOldDaycareEnabled = false,

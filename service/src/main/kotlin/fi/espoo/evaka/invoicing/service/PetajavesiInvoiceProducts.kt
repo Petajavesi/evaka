@@ -9,13 +9,13 @@ import fi.espoo.evaka.placement.PlacementType
 
 object PetajavesiInvoiceProducts {
     enum class Product(
-        val nameFi: String,
+        val nameFi: String
         // val nameSv: String, // Uncomment if Swedish names are needed
     ) {
         DAYCARE(
-            "Varhaiskasvatusmaksu",
+            "Varhaiskasvatusmaksu"
             // "Avgift för småbarnspedagogik" // Uncomment if Swedish names are needed
-            ),
+        ),
         DAYCARE_DISCOUNT("Varhaiskasvatusmaksun alennus"),
         DAYCARE_INCREASE("Varhaiskasvatusmaksun korotus"),
         PRESCHOOL_WITH_DAYCARE("Täydentävän varhaiskasvatuksen maksu"),

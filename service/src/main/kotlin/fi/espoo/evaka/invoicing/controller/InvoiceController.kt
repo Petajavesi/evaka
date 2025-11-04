@@ -128,7 +128,7 @@ class InvoiceController(
         user: AuthenticatedUser.Employee,
         clock: EvakaClock,
         @RequestParam(required = false) year: Int?,
-        @RequestParam(required = false) month: Int?
+        @RequestParam(required = false) month: Int?,
     ) {
         db.connect { dbc ->
             dbc.transaction {
@@ -138,12 +138,13 @@ class InvoiceController(
                     clock,
                     Action.Global.CREATE_DRAFT_INVOICES,
                 )
-                val targetMonth = if (year != null && month != null) {
-                    YearMonth.of(year, month)
-                } else {
-                    val firstOfLastMonth = clock.today().withDayOfMonth(1).minusMonths(1)
-                    YearMonth.of(firstOfLastMonth.year, firstOfLastMonth.month)
-                }
+                val targetMonth =
+                    if (year != null && month != null) {
+                        YearMonth.of(year, month)
+                    } else {
+                        val firstOfLastMonth = clock.today().withDayOfMonth(1).minusMonths(1)
+                        YearMonth.of(firstOfLastMonth.year, firstOfLastMonth.month)
+                    }
                 generator.generateAllDraftInvoices(it, targetMonth)
             }
         }
