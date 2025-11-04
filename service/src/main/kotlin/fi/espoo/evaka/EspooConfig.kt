@@ -75,10 +75,12 @@ class EspooConfig {
         env: EspooEnv,
         invoiceEnv: ObjectProvider<EspooInvoiceIntegrationEnv>,
         jsonMapper: JsonMapper,
+        s3Client: software.amazon.awssdk.services.s3.S3Client,
+        bucketEnv: BucketEnv,
     ): InvoiceIntegrationClient =
         when (env.invoiceIntegrationEnabled) {
             true -> EspooInvoiceIntegrationClient(invoiceEnv.getObject(), jsonMapper)
-            false -> InvoiceIntegrationClient.MockClient(jsonMapper)
+            false -> InvoiceIntegrationClient.MockClient(s3Client, jsonMapper, bucketEnv)
         }
 
     @Bean
