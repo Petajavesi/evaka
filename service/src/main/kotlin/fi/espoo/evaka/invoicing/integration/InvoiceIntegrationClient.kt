@@ -16,8 +16,6 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest
 
 private val logger = KotlinLogging.logger {}
 
-private val s3Client: S3Client = S3Client.builder().build()
-
 interface InvoiceIntegrationClient {
     data class SendResult(
         val succeeded: List<InvoiceDetailed> = listOf(),
@@ -28,10 +26,13 @@ interface InvoiceIntegrationClient {
     fun send(invoices: List<InvoiceDetailed>): SendResult
 
     class MockClient(
+        s3Client: S3Client,
         private val jsonMapper: JsonMapper,
+        private val bucketEnv: fi.espoo.evaka.BucketEnv,
         private val outputDirectory: String = "invoices",
         private val filenamePrefix: String = "invoice_batch"
     ) : InvoiceIntegrationClient {
+        private val s3Client = s3Client
         
         override fun send(invoices: List<InvoiceDetailed>): SendResult {
             logger.info { "Invoice integration client processing ${invoices.size} invoices" }
@@ -61,7 +62,7 @@ interface InvoiceIntegrationClient {
                     // Generate S3 key (path) with timestamp
                     val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
                     val filename = "${filenamePrefix}_${type}_${timestamp}.txt"
-                    val bucketName = System.getenv("EVAKA_BUCKET_INVOICES")
+                    val bucketName = bucketEnv.data
                     val s3Key = "invoices/$filename"
                     
                     // Create content in memory
