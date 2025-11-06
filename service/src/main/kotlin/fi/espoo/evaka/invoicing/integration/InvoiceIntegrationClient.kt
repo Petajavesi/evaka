@@ -62,7 +62,7 @@ interface InvoiceIntegrationClient {
                     // Generate S3 key (path) with timestamp
                     val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
                     val filename = "${filenamePrefix}_${type}_${timestamp}.txt"
-                    val bucketName = bucketEnv.data
+                    val bucketName = System.getenv("EVAKA_BUCKET_INVOICES")
                     val s3Key = "invoices/$filename"
                     
                     // Create content in memory
