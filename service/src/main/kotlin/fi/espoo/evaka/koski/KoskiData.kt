@@ -322,7 +322,7 @@ data class KoskiActivePreschoolDataRaw(
 
         // Koski only accepts one range of old pidennetty oppivelvollisuus
         val supportWithOldEce = level1.addAll(level2).addAll(childSupportWithOldEce)
-        val longestEce = supportWithOldEce.ranges().maxByOrNull { it.durationInDays () }
+        val longestEce = supportWithOldEce.ranges().maxByOrNull { it.durationInDays() }
 
         // these replacements are introduced around 1.8.2026
         val childSupportWithoutEce = childSupport.intersection(listOf(placementSpan))
