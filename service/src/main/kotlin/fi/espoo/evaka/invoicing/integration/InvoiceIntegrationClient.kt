@@ -113,15 +113,16 @@ interface InvoiceIntegrationClient {
             // Create a fixed-width line
             val line = StringBuilder(" ".repeat(600))
 
-            val fullName = "${invoice.headOfFamily.firstName} ${invoice.headOfFamily.lastName}"
-            val postalArea = "${invoice.headOfFamily.postalCode} ${invoice.headOfFamily.postOffice.uppercase()}"
-            val formattedDate = formatDate(invoice.invoiceDate.toString()) ?: "00000000" // Default to 0 if date is invalid
-            
-            // Example field positions - adjust these based on your requirements
+            val fullName = "${invoice.headOfFamily.lastName} ${invoice.headOfFamily.firstName}"
+            val postalArea =
+                "${invoice.headOfFamily.postalCode} ${invoice.headOfFamily.postOffice.uppercase()}"
+            val formattedDate =
+                formatDate(invoice.invoiceDate.toString())
+                    ?: "00000000" // Default to 0 if date is invalid
+
             setField(line, 0, 11, invoice.headOfFamily.ssn.toString()) // L1
             setField(line, 11, 12, "L") // L2
             setField(line, 14, 64, fullName) // L4
-            //setField(line, 64, 104, "${invoice.headOfFamily.firstName} ${invoice.headOfFamily.lastName}") // L5
             setField(line, 114, 144, invoice.headOfFamily.streetAddress) // L6
             setField(line, 144, 174, postalArea) // L7
             setField(line, 279, 280, "0") // L13
