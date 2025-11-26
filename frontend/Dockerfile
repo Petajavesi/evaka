@@ -1,11 +1,11 @@
-# syntax=docker/dockerfile:1.19.0
+# syntax=docker/dockerfile:1.20.0
 # SPDX-FileCopyrightText: 2017-2023 City of Espoo
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 ARG NGINX_VERSION=1.29.2
 
-FROM node:24.11.0-trixie-slim AS builder
+FROM node:24.11.1-trixie-slim AS builder
 ARG CACHE_BUST
 
 USER root
@@ -72,23 +72,6 @@ RUN apt-get update \
  && echo "${S3_DOWNLOADER_SHA256}  /bin/s3download" | sha256sum -c - \
  && apt-get remove --auto-remove -y curl \
  && rm -rf /var/lib/apt/lists/*
-
-
-# https://docs.datadoghq.com/tracing/setup_overview/proxy_setup/?tab=nginx # update version using get_latest_release
-ARG OPENTRACING_NGINX_VERSION=v0.40.0
-ARG OPENTRACING_NGINX_SHA256="62fe4230fba540d3a63451bbd6e706b465f65579bd8e32e199bb3fa23e6fe6db"
-ARG DD_OPENTRACING_CPP_VERSION=v1.3.7
-ARG DD_OPENTRACING_CPP_SHA256="df9a8097c3d6f6e5a96f96db0f3919b5b7b35df3d10c5fcc530707a878e2dd00"
-
-RUN cd /tmp \
- && curl -sSfLO "https://github.com/opentracing-contrib/nginx-opentracing/releases/download/${OPENTRACING_NGINX_VERSION}/linux-amd64-nginx-${NGINX_VERSION}-ngx_http_module.so.tgz" \
- && echo "${OPENTRACING_NGINX_SHA256}  linux-amd64-nginx-${NGINX_VERSION}-ngx_http_module.so.tgz" | sha256sum -c - \
- && tar zxf "linux-amd64-nginx-${NGINX_VERSION}-ngx_http_module.so.tgz" -C /usr/lib/nginx/modules \
- && rm "linux-amd64-nginx-${NGINX_VERSION}-ngx_http_module.so.tgz" \
- && curl -sSfLO https://github.com/DataDog/dd-opentracing-cpp/releases/download/${DD_OPENTRACING_CPP_VERSION}/linux-amd64-libdd_opentracing_plugin.so.gz \
- && echo "${DD_OPENTRACING_CPP_SHA256}  linux-amd64-libdd_opentracing_plugin.so.gz" | sha256sum -c - \
- && gunzip linux-amd64-libdd_opentracing_plugin.so.gz -c > /usr/local/lib/libdd_opentracing_plugin.so \
- && rm linux-amd64-libdd_opentracing_plugin.so.gz
 
 COPY ./proxy/files/bin/ /bin/
 COPY ./proxy/files/internal/ /internal/
