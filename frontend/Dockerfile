@@ -70,7 +70,6 @@ RUN apt-get update \
        -o /bin/s3download \
  && chmod +x /bin/s3download \
  && echo "${S3_DOWNLOADER_SHA256}  /bin/s3download" | sha256sum -c - \
- && apt-get remove --auto-remove -y curl \
  && rm -rf /var/lib/apt/lists/*
 
 COPY ./proxy/files/bin/ /bin/
