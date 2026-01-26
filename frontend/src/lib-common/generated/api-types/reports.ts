@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2017-2025 City of Espoo
+// SPDX-FileCopyrightText: 2017-2026 City of Espoo
 //
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
@@ -8,7 +8,6 @@ import type { AbsenceType } from './absence'
 import type { ApplicationId } from './shared'
 import type { ApplicationStatus } from './application'
 import type { AreaId } from './shared'
-import type { AssistanceNeedDecisionStatus } from './assistanceneed'
 import type { ChildDocumentType } from './document'
 import type { DaycareAssistanceLevel } from './assistance'
 import type { DaycareId } from './shared'
@@ -34,7 +33,6 @@ import type { ServiceNeedOption } from './application'
 import TimeInterval from '../../time-interval'
 import TimeRange from '../../time-range'
 import type { TitaniaErrorsId } from './shared'
-import type { UUID } from '../../types'
 import type { VoucherValueDecisionId } from './shared'
 import { deserializeJsonDocumentContent } from './document'
 
@@ -72,23 +70,6 @@ export interface ApplicationsReportRow {
 }
 
 /**
-* Generated from fi.espoo.evaka.reports.AssistanceNeedDecisionsReportRow
-*/
-export interface AssistanceNeedDecisionsReportRow {
-  careAreaName: string
-  childName: string
-  decisionMade: LocalDate | null
-  decisionNumber: number
-  expired: boolean
-  id: UUID
-  isOpened: boolean | null
-  preschool: boolean
-  sentForDecision: LocalDate
-  status: AssistanceNeedDecisionStatus
-  unitName: string
-}
-
-/**
 * Generated from fi.espoo.evaka.reports.AssistanceNeedsAndActionsReportController.AssistanceNeedsAndActionsReport
 */
 export interface AssistanceNeedsAndActionsReport {
@@ -112,14 +93,13 @@ export interface AssistanceNeedsAndActionsReportRow {
   assistanceNeedVoucherCoefficientCount: number
   careAreaName: string
   daycareAssistanceCounts: Partial<Record<DaycareAssistanceLevel, number>>
-  daycareAssistanceNeedDecisionCount: number
+  documentDecisionCounts: Partial<Record<string, number>>
   groupId: GroupId
   groupName: string
   noActionCount: number
   otherActionCount: number
   otherAssistanceMeasureCounts: Partial<Record<OtherAssistanceMeasureType, number>>
   preschoolAssistanceCounts: Partial<Record<PreschoolAssistanceLevel, number>>
-  preschoolAssistanceNeedDecisionCount: number
   unitId: DaycareId
   unitName: string
   unitProviderType: ProviderType
@@ -137,13 +117,12 @@ export interface AssistanceNeedsAndActionsReportRowByChild {
   childId: PersonId
   childLastName: string
   daycareAssistanceCounts: Partial<Record<DaycareAssistanceLevel, number>>
-  daycareAssistanceNeedDecisionCount: number
+  documentDecisionCounts: Partial<Record<string, number>>
   groupId: GroupId
   groupName: string
   otherAction: string
   otherAssistanceMeasureCounts: Partial<Record<OtherAssistanceMeasureType, number>>
   preschoolAssistanceCounts: Partial<Record<PreschoolAssistanceLevel, number>>
-  preschoolAssistanceNeedDecisionCount: number
   unitId: DaycareId
   unitName: string
   unitProviderType: ProviderType
@@ -437,7 +416,6 @@ export interface FamilyContactReportRow {
   lastName: string
   postOffice: string
   postalCode: string
-  ssn: string | null
   streetAddress: string
 }
 
@@ -808,17 +786,6 @@ export interface PreschoolUnitsReportRow {
 }
 
 /**
-* Generated from fi.espoo.evaka.reports.PresenceReportRow
-*/
-export interface PresenceReportRow {
-  date: LocalDate
-  daycareGroupName: string | null
-  daycareId: DaycareId | null
-  present: boolean | null
-  socialSecurityNumber: string | null
-}
-
-/**
 * Generated from fi.espoo.evaka.reports.RawReportRow
 */
 export interface RawReportRow {
@@ -833,7 +800,6 @@ export interface RawReportRow {
   capacityFactor: number
   careArea: string
   caretakersPlanned: number | null
-  caretakersRealized: number | null
   childId: PersonId
   costCenter: string | null
   dateOfBirth: LocalDate
@@ -926,7 +892,6 @@ export interface RegionalSurveyReportYearlyStatisticsResult {
 */
 export type Report =
   | 'APPLICATIONS'
-  | 'ASSISTANCE_NEED_DECISIONS'
   | 'ASSISTANCE_NEEDS_AND_ACTIONS'
   | 'ASSISTANCE_NEEDS_AND_ACTIONS_BY_CHILD'
   | 'ATTENDANCE_RESERVATION'
@@ -1176,8 +1141,14 @@ export interface UnitsReportRow {
   name: string
   ophOrganizerOid: string | null
   ophUnitOid: string | null
+  postOffice: string
   preschoolApply: boolean
+  preschoolManagerEmail: string
+  preschoolManagerName: string
+  preschoolManagerPhone: string
   providerType: ProviderType
+  providesShiftCare: boolean
+  unitManagerEmail: string
   unitManagerName: string
   unitManagerPhone: string
   uploadChildrenToVarda: boolean
@@ -1236,15 +1207,6 @@ export interface YearlyStatisticsResult {
   voucherGeneralAssistanceCount: number
   voucherSpecialAssistanceCount: number
   voucherTotalCount: number
-}
-
-
-export function deserializeJsonAssistanceNeedDecisionsReportRow(json: JsonOf<AssistanceNeedDecisionsReportRow>): AssistanceNeedDecisionsReportRow {
-  return {
-    ...json,
-    decisionMade: (json.decisionMade != null) ? LocalDate.parseIso(json.decisionMade) : null,
-    sentForDecision: LocalDate.parseIso(json.sentForDecision)
-  }
 }
 
 
@@ -1402,14 +1364,6 @@ export function deserializeJsonPreschoolApplicationReportRow(json: JsonOf<Presch
   return {
     ...json,
     childDateOfBirth: LocalDate.parseIso(json.childDateOfBirth)
-  }
-}
-
-
-export function deserializeJsonPresenceReportRow(json: JsonOf<PresenceReportRow>): PresenceReportRow {
-  return {
-    ...json,
-    date: LocalDate.parseIso(json.date)
   }
 }
 

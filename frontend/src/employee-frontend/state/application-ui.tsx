@@ -72,6 +72,12 @@ interface UIState {
   >
   occupancyPeriodStart: LocalDate
   setOccupancyPeriodStart: (date: LocalDate) => void
+
+  toggleApplicationExpanded: (applicationId: ApplicationId) => void
+  isApplicationExpanded: (applicationId: ApplicationId) => boolean
+
+  savedScrollPosition: number | null
+  setSavedScrollPosition: (position: number | null) => void
 }
 
 interface RawApplicationSearchFilters {
@@ -163,7 +169,13 @@ const defaultState: UIState = {
   placementDesktopDaycares: undefined,
   setPlacementDesktopDaycares: () => undefined,
   occupancyPeriodStart: LocalDate.todayInHelsinkiTz(),
-  setOccupancyPeriodStart: () => undefined
+  setOccupancyPeriodStart: () => undefined,
+
+  toggleApplicationExpanded: () => undefined,
+  isApplicationExpanded: () => true,
+
+  savedScrollPosition: null,
+  setSavedScrollPosition: () => undefined
 }
 
 export const ApplicationUIContext = createContext<UIState>(defaultState)
@@ -257,6 +269,36 @@ export const ApplicationUIContextProvider = React.memo(
         ].includes(confirmedSearchFilters.status)
       : false
 
+    const [collapsedApplications, setCollapsedApplications] = useState<
+      Set<ApplicationId>
+    >(new Set())
+
+    const [savedScrollPosition, setSavedScrollPosition] = useState<
+      number | null
+    >(null)
+
+    const toggleApplicationExpanded = useCallback(
+      (applicationId: ApplicationId) => {
+        setCollapsedApplications((prev) => {
+          const newSet = new Set(prev)
+          if (newSet.has(applicationId)) {
+            newSet.delete(applicationId)
+          } else {
+            newSet.add(applicationId)
+          }
+          return newSet
+        })
+      },
+      []
+    )
+
+    const isApplicationExpanded = useCallback(
+      (applicationId: ApplicationId) => {
+        return !collapsedApplications.has(applicationId)
+      },
+      [collapsedApplications]
+    )
+
     const value = useMemo(
       () => ({
         page,
@@ -275,7 +317,11 @@ export const ApplicationUIContextProvider = React.memo(
         placementDesktopDaycares,
         setPlacementDesktopDaycares,
         occupancyPeriodStart,
-        setOccupancyPeriodStart
+        setOccupancyPeriodStart,
+        toggleApplicationExpanded,
+        isApplicationExpanded,
+        savedScrollPosition,
+        setSavedScrollPosition
       }),
       [
         page,
@@ -292,7 +338,10 @@ export const ApplicationUIContextProvider = React.memo(
         placementDesktopDaycares,
         setPlacementDesktopDaycares,
         occupancyPeriodStart,
-        setOccupancyPeriodStart
+        setOccupancyPeriodStart,
+        toggleApplicationExpanded,
+        isApplicationExpanded,
+        savedScrollPosition
       ]
     )
 

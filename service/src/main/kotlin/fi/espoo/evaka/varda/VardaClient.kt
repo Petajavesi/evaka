@@ -6,9 +6,6 @@ package fi.espoo.evaka.varda
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.databind.json.JsonMapper
-import com.fasterxml.jackson.module.kotlin.readValue
-import com.google.common.util.concurrent.RateLimiter
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.net.URI
 import java.net.URLEncoder
@@ -18,6 +15,8 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.module.kotlin.readValue
 
 private val logger = KotlinLogging.logger {}
 
@@ -90,8 +89,8 @@ interface VardaReadClient {
         val vuorohoito_kytkin: Boolean,
         val tilapainen_vaka_kytkin: Boolean,
         val tuntimaara_viikossa: Double,
-        val paivittainen_vaka_kytkin: Boolean,
-        val kokopaivainen_vaka_kytkin: Boolean,
+        val paivittainen_vaka_kytkin: Boolean?,
+        val kokopaivainen_vaka_kytkin: Boolean?,
         val jarjestamismuoto_koodi: String,
     ) : VardaEntityWithValidity
 
@@ -151,9 +150,9 @@ interface VardaWriteClient {
         val alkamis_pvm: LocalDate,
         val paattymis_pvm: LocalDate?,
         val tuntimaara_viikossa: Double,
-        val kokopaivainen_vaka_kytkin: Boolean,
+        val kokopaivainen_vaka_kytkin: Boolean?,
         val tilapainen_vaka_kytkin: Boolean,
-        val paivittainen_vaka_kytkin: Boolean,
+        val paivittainen_vaka_kytkin: Boolean?,
         val vuorohoito_kytkin: Boolean,
         val jarjestamismuoto_koodi: String,
         val lahdejarjestelma: String,
@@ -235,7 +234,7 @@ class VardaClient(
 ) : VardaReadClient, VardaWriteClient, VardaUnitClient {
     private var token: String? = null
     private val baseUrl = vardaBaseUrl.ensureTrailingSlash()
-    val rateLimiter: RateLimiter = RateLimiter.create(ratePerSec)
+    val rateLimiter = StrictRateLimiter(ratePerSec)
 
     override fun getOrCreateHenkilo(
         body: VardaReadClient.GetOrCreateHenkiloRequest
@@ -351,7 +350,7 @@ class VardaClient(
         return httpClient.executeAuthenticated(req) { response ->
             if (!response.isSuccessful) {
                 val message =
-                    "request failed $method $url: status=${response.code} body=${response.body?.string()}"
+                    "request failed $method $url: status=${response.code} body=${response.body.string()}"
                 logger.error { message }
                 error(message)
             }
@@ -360,7 +359,7 @@ class VardaClient(
             if (Unit is R) {
                 Unit
             } else {
-                jsonMapper.readValue(response.body?.string()!!)
+                jsonMapper.readValue(response.body.string())
             }
         }
     }
@@ -419,8 +418,8 @@ class VardaClient(
                 if (!response.isSuccessful) {
                     error { "Failed to get Varda API token: status=${response.code}" }
                 }
-                val body = response.body?.string() ?: error("Varda API token response body is null")
-                jsonMapper.readTree(body).get("token").asText()
+                val body = response.body.string()
+                jsonMapper.readTree(body).get("token").asString()
             }
         logger.info { "Successfully fetched new Varda API token with rate wait of $rate" }
         token = newToken
@@ -429,9 +428,9 @@ class VardaClient(
 
     private fun isVardaTokenError(response: Response): Boolean =
         response.code == 403 &&
-            response.body?.let { body ->
+            response.body.let { body ->
                 jsonMapper.readTree(body.string()).get("errors")?.any {
-                    it.get("error_code").asText() == "PE007"
+                    it.get("error_code").asString() == "PE007"
                 }
             } ?: false
 }

@@ -4,7 +4,6 @@
 
 package fi.espoo.evaka.sficlient.rest
 
-import com.fasterxml.jackson.module.kotlin.readValue
 import fi.espoo.evaka.Sensitive
 import fi.espoo.evaka.SfiEnv
 import fi.espoo.evaka.s3.Document
@@ -21,6 +20,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
+import tools.jackson.module.kotlin.readValue
 
 class Config(env: SfiEnv) {
     val urls =
@@ -156,14 +156,14 @@ class SfiMessagesRestClient(
         jsonMapper.writeValueAsString(value).toRequestBody(jsonMediaType)
 
     private inline fun <reified T : Any> jsonResponseBody(response: Response) =
-        response.body?.let { body ->
+        response.body.let { body ->
             if (body.contentType() == null || body.contentType() == jsonMediaType)
                 jsonMapper.readValue<T>(body.charStream())
             else
                 error(
                     "Expected JSON response body ${T::class}, got ${body.contentType()} with length ${body.contentLength()} (${body.string()})"
                 )
-        } ?: error("Expected JSON response body ${T::class}, got nothing")
+        }
 
     private fun getAccessToken(password: Sensitive<String>): String {
         logger.info { "Requesting a new access token" }

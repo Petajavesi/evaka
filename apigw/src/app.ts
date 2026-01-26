@@ -10,6 +10,7 @@ import { createDevSfiRouter } from './enduser/dev-sfi-auth.ts'
 import mapRoutes from './enduser/mapRoutes.ts'
 import { citizenAuthStatus } from './enduser/routes/auth-status.ts'
 import { authWeakLogin } from './enduser/routes/auth-weak-login.ts'
+import { authWeakUpdateCredentials } from './enduser/routes/auth-weak-update-credentials.ts'
 import {
   createCitizenSuomiFiIntegration,
   createEmployeeSuomiFiIntegration
@@ -84,14 +85,26 @@ export function apiRouter(config: Config, redisClient: RedisClient) {
     createProxy({ getUserHeader: (_) => integrationUserHeader })
   )
 
-  const citizenSessions = sessionSupport('citizen', redisClient, config.citizen)
+  const citizenSessions = sessionSupport(
+    'citizen',
+    redisClient,
+    config.citizen,
+    Math.max(
+      config.citizen.sessionTimeoutMinutes,
+      config.employee.sessionTimeoutMinutes
+    )
+  )
   const citizenProxy = createProxy({
     getUserHeader: (req) => citizenSessions.getUserHeader(req)
   })
   const employeeSessions = sessionSupport(
     'employee',
     redisClient,
-    config.employee
+    config.employee,
+    Math.max(
+      config.citizen.sessionTimeoutMinutes,
+      config.employee.sessionTimeoutMinutes
+    )
   )
   const employeeProxy = createProxy({
     getUserHeader: (req) => employeeSessions.getUserHeader(req)
@@ -247,6 +260,12 @@ export function apiRouter(config: Config, redisClient: RedisClient) {
       redisClient,
       config.citizen.cookieSecret
     )
+  )
+  router.put(
+    '/citizen/personal-data/weak-login-credentials',
+    citizenSessions.requireAuthentication,
+    express.json(),
+    authWeakUpdateCredentials(redisClient)
   )
   router.all('/citizen/auth/{*rest}', (_, res) => res.redirect('/'))
   router.use('/citizen/public/map-api', mapRoutes)

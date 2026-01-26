@@ -7,7 +7,6 @@ package fi.espoo.evaka.shared
 import fi.espoo.evaka.application.ApplicationStatus
 import fi.espoo.evaka.application.ApplicationType
 import fi.espoo.evaka.holidayperiod.QuestionnaireType
-import fi.espoo.evaka.shared.auth.UserRole
 import java.time.MonthDay
 
 data class FeatureConfig(
@@ -27,29 +26,6 @@ data class FeatureConfig(
      * - 150 means previous week's monday at 18:00 (150 = 7 * 24 - 18)
      */
     val citizenReservationThresholdHours: Long,
-
-    /**
-     * Use a fixed divisor for calculating a daily daycare price.
-     *
-     * Daily daycare price is used for partial month invoices, daily refunds, etc. By default, it's
-     * computed by dividing the daycare fee by the number of operating days in a month. For example,
-     * December 2021 had 21 operating days (31 days minus 9 days of weekends, independence day and
-     * Christmas Eve).
-     *
-     * If this option is not null, the daily daycare price is calculated by dividing by its value
-     * regardless of the month's actual operating days.
-     */
-    val dailyFeeDivisorOperationalDaysOverride: Int?,
-
-    /**
-     * Whether a full month of sick leaves and planned absences give a free month
-     *
-     * By default, sick leaves make a month free of charge only if all the operating days in the
-     * month are marked as sick leaves. If this option is true, a month is free of charge also if
-     * there's at least one sick leave day and all the operating days are marked either sick leaves
-     * or planned absences.
-     */
-    val freeSickLeaveOnContractDays: Boolean,
 
     /** Controls whether FREE_ABSENCE absences give a daily refund on invoices or not */
     val freeAbsenceGivesADailyRefund: Boolean,
@@ -86,20 +62,6 @@ data class FeatureConfig(
      * daily price divisor
      */
     val useContractDaysAsDailyFeeDivisor: Boolean,
-
-    /**
-     * Employees with given user roles to show as options for assistance decision makers.
-     *
-     * May contain global and unit scoped roles (null = all roles are visible).
-     */
-    val assistanceDecisionMakerRoles: Set<UserRole>?,
-
-    /**
-     * Employees with given user roles to show as options for preschool assistance decision makers.
-     *
-     * May contain global and unit scoped roles (null = all roles are visible).
-     */
-    val preschoolAssistanceDecisionMakerRoles: Set<UserRole>?,
 
     /** The number of days citizens can move daycare start forward */
     val requestedStartUpperLimit: Int,
@@ -170,8 +132,6 @@ enum class ArchiveProcessType {
     APPLICATION_DAYCARE,
     APPLICATION_PRESCHOOL,
     APPLICATION_CLUB,
-    ASSISTANCE_NEED_DECISION_DAYCARE,
-    ASSISTANCE_NEED_DECISION_PRESCHOOL,
     FEE_DECISION,
     VOUCHER_VALUE_DECISION;
 

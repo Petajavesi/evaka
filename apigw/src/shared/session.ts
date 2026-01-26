@@ -41,6 +41,14 @@ function logoutKey(token: LogoutToken['value']) {
   return `slo:${token}`
 }
 
+function userSessionsKey(userIdHash: string) {
+  return `usess:${userIdHash}`
+}
+
+function sfiSessionsKey(sfiNameId: string) {
+  return `sfisess:${sfiNameId}`
+}
+
 export function sessionCookie(sessionType: SessionType) {
   return `${cookiePrefix(sessionType)}.session`
 }
@@ -71,7 +79,8 @@ export interface Sessions<T extends SessionType> {
 export function sessionSupport<T extends SessionType>(
   sessionType: T,
   redisClient: RedisClient,
-  config: SessionConfig
+  config: SessionConfig,
+  maxSessionTimeoutMinutes?: number
 ): Sessions<T> {
   const cookieName = sessionCookie(sessionType)
 
@@ -225,6 +234,17 @@ export function sessionSupport<T extends SessionType>(
         await redisClient.del([sessionKey(sid), logoutKey(logoutToken)])
       }
     }
+
+    if (req.user?.authType === 'sfi' && req.user.ssnHash) {
+      const key = sfiSessionsKey(req.user.ssnHash)
+      const sessionIds = await redisClient.sMembers(key)
+      if (sessionIds.length > 0) {
+        await redisClient.del(
+          sessionIds.map((sessionId) => `sess:${sessionId}`)
+        )
+        await redisClient.del(key)
+      }
+    }
   }
 
   async function updateUser(
@@ -237,13 +257,38 @@ export function sessionSupport<T extends SessionType>(
   }
 
   async function saveUser(req: express.Request, user: EvakaSessionUser) {
+    const userIdHash = createSha256Hash(user.id)
+
     req.session.passport = { user }
     req.session.evaka = {
       user,
-      userIdHash: createSha256Hash(user.id)
+      userIdHash: userIdHash
     }
     await save(req)
     req.user = user
+
+    if (req.session.id && user.authType === 'citizen-weak') {
+      const key = userSessionsKey(userIdHash)
+      await redisClient
+        .multi()
+        .sAdd(key, req.session.id)
+        .expire(key, config.sessionTimeoutMinutes * 60)
+        .exec()
+    }
+
+    if (
+      req.session.id &&
+      user.authType === 'sfi' &&
+      user.ssnHash &&
+      maxSessionTimeoutMinutes
+    ) {
+      const key = sfiSessionsKey(user.ssnHash)
+      await redisClient
+        .multi()
+        .sAdd(key, req.session.id)
+        .expire(key, maxSessionTimeoutMinutes * 60)
+        .exec()
+    }
   }
 
   function getUser(req: express.Request): EvakaSessionUser | undefined {

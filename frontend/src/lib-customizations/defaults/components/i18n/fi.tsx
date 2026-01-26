@@ -45,8 +45,7 @@ const components: Translations = {
   },
   datePicker: {
     placeholder: 'pp.kk.vvvv',
-    description:
-      'Kirjoita päivämäärä kenttään muodossa pp.kk.vvvv. Nuoli alas -näppäimellä pääset kuukausivalitsimeen.',
+    description: 'Kirjoita päivämäärä kenttään muodossa pp.kk.vvvv.',
     validationErrors: {
       validDate: 'Anna muodossa pp.kk.vvvv',
       dateTooEarly: 'Valitse myöhäisempi päivä',
@@ -178,6 +177,7 @@ const components: Translations = {
       'Voit hakea täydentävää varhaiskasvatusta lapsen esiopetuksen alkamisesta alkaen.',
     timeFormat: 'Tarkista',
     timeRequired: 'Pakollinen',
+    exceedsMaxDuration: 'Maksimi varhaiskasvatusaika ylittyy',
     dateTooEarly: 'Valitse myöhäisempi päivä',
     dateTooLate: 'Valitse aikaisempi päivä',
     unitNotSelected: 'Valitse vähintään yksi hakutoive',

@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController
 
 enum class Report {
     APPLICATIONS,
-    ASSISTANCE_NEED_DECISIONS,
     ASSISTANCE_NEEDS_AND_ACTIONS,
     ASSISTANCE_NEEDS_AND_ACTIONS_BY_CHILD,
     ATTENDANCE_RESERVATION,
@@ -79,20 +78,6 @@ class ReportPermissions(private val accessControl: AccessControl) {
                 setOfNotNull(
                     Report.APPLICATIONS.takeIf {
                         permittedActionsForSomeUnit.contains(Action.Unit.READ_APPLICATIONS_REPORT)
-                    },
-                    Report.ASSISTANCE_NEED_DECISIONS.takeIf {
-                        accessControl.isPermittedForSomeTarget(
-                            tx,
-                            user,
-                            clock,
-                            Action.AssistanceNeedDecision.READ_IN_REPORT,
-                        ) ||
-                            accessControl.isPermittedForSomeTarget(
-                                tx,
-                                user,
-                                clock,
-                                Action.AssistanceNeedPreschoolDecision.READ_IN_REPORT,
-                            )
                     },
                     Report.ASSISTANCE_NEEDS_AND_ACTIONS.takeIf {
                         permittedActionsForSomeUnit.contains(
@@ -201,9 +186,6 @@ class ReportPermissions(private val accessControl: AccessControl) {
                             Action.Global.READ_PLACEMENT_SKETCHING_REPORT
                         )
                     },
-                    Report.PRESENCE.takeIf {
-                        permittedGlobalActions.contains(Action.Global.READ_PRESENCE_REPORT)
-                    },
                     Report.RAW.takeIf {
                         permittedGlobalActions.contains(Action.Global.READ_RAW_REPORT)
                     },
@@ -224,7 +206,7 @@ class ReportPermissions(private val accessControl: AccessControl) {
                         )
                     },
                     Report.TITANIA_ERRORS.takeIf {
-                        permittedGlobalActions.contains(Action.Global.READ_TITANIA_ERRORS)
+                        permittedActionsForSomeUnit.contains(Action.Unit.READ_TITANIA_ERRORS)
                     },
                     Report.UNITS.takeIf {
                         permittedGlobalActions.contains(Action.Global.READ_UNITS_REPORT)

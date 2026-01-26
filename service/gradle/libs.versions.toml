@@ -4,18 +4,18 @@
 
 [versions]
 bouncycastle = "1.83"
-dd-java-agent = "1.56.1"
-flyingsaucer = "10.0.5"
-flyway = "11.18.0"
+dd-java-agent = "1.58.0"
+flyingsaucer = "10.0.6"
+flyway = "11.20.1"
 fuel = "2.3.1"
-java = "21"
-kotlin = "2.2.21"
+java = "25"
+kotlin = "2.3.0"
 ktfmt = "0.25.0"
 ktlint = "1.8.0"
 ktlint-gradle = "14.0.1"
-mockito = "5.20.0"
-owasp = "12.1.9"
-spring-boot = "3.5.8"
+mockito = "5.21.0"
+owasp = "12.2.0"
+spring-boot = "4.0.1"
 versions = "0.53.0"
 
 [libraries]

@@ -11,8 +11,8 @@ import fi.espoo.evaka.application.DaycarePlacementPlan
 import fi.espoo.evaka.application.fetchApplicationDetails
 import fi.espoo.evaka.daycare.CareType
 import fi.espoo.evaka.daycare.Daycare
-import fi.espoo.evaka.daycare.getActiveClubTermAt
-import fi.espoo.evaka.daycare.getActivePreschoolTermAt
+import fi.espoo.evaka.daycare.getClubTerm
+import fi.espoo.evaka.daycare.getPreschoolTerm
 import fi.espoo.evaka.serviceneed.findServiceNeedOptionById
 import fi.espoo.evaka.shared.ApplicationId
 import fi.espoo.evaka.shared.ChildId
@@ -76,23 +76,29 @@ class PlacementPlanService(
 
         val startDate = maxOf(minStartDate, form.preferences.preferredStartDate!!)
 
-        val placementDraftUnit =
+        val placementDraft =
             tx.createQuery {
                     sql(
                         """
-            SELECT d.id, d.name
+            SELECT d.id, d.name, pd.start_date
             FROM placement_draft pd
             JOIN daycare d ON d.id = pd.unit_id
             WHERE pd.application_id = ${bind(applicationId)}
         """
                     )
                 }
-                .exactlyOneOrNull<PlacementDraftUnit>()
+                .map {
+                    PlacementDraftSummary(
+                        unit = PlacementDraftUnit(column("id"), column("name")),
+                        startDate = column("start_date"),
+                    )
+                }
+                .exactlyOneOrNull()
 
         return when (application.type) {
             ApplicationType.PRESCHOOL -> {
                 val preschoolTerms =
-                    tx.getActivePreschoolTermAt(startDate)
+                    tx.getPreschoolTerm(startDate)
                         ?: throw Exception(
                             "No suitable preschool term found for start date $startDate"
                         )
@@ -134,8 +140,10 @@ class PlacementPlanService(
                 PlacementPlanDraft(
                     child = child,
                     type = type,
+                    preferredStartDate = application.form.preferences.preferredStartDate,
+                    dueDate = application.dueDate,
                     preferredUnits = preferredUnits,
-                    placementDraftUnit = placementDraftUnit,
+                    placementDraft = placementDraft,
                     period = period,
                     preschoolDaycarePeriod = preschoolDaycarePeriod,
                     placements = placements,
@@ -159,8 +167,10 @@ class PlacementPlanService(
                 PlacementPlanDraft(
                     child = child,
                     type = type,
+                    preferredStartDate = application.form.preferences.preferredStartDate,
+                    dueDate = application.dueDate,
                     preferredUnits = preferredUnits,
-                    placementDraftUnit = placementDraftUnit,
+                    placementDraft = placementDraft,
                     period = period,
                     preschoolDaycarePeriod = null,
                     placements = placements,
@@ -170,14 +180,16 @@ class PlacementPlanService(
 
             ApplicationType.CLUB -> {
                 val clubTerm =
-                    tx.getActiveClubTermAt(startDate)
+                    tx.getClubTerm(startDate)
                         ?: throw Exception("No suitable club term found for start date $startDate")
                 val period = FiniteDateRange(startDate, clubTerm.term.end)
                 PlacementPlanDraft(
                     child = child,
                     type = type,
+                    preferredStartDate = application.form.preferences.preferredStartDate,
+                    dueDate = application.dueDate,
                     preferredUnits = preferredUnits,
-                    placementDraftUnit = placementDraftUnit,
+                    placementDraft = placementDraft,
                     period = period,
                     preschoolDaycarePeriod = null,
                     placements = placements,
@@ -235,12 +247,11 @@ class PlacementPlanService(
                         PlacementType.PRESCHOOL_DAYCARE -> PlacementType.PRESCHOOL
                         PlacementType.PRESCHOOL_CLUB -> PlacementType.PRESCHOOL
                         PlacementType.PREPARATORY_DAYCARE -> PlacementType.PREPARATORY
-                        else -> error("Invalid placement plan type")
                     }
                 preschoolPeriods.map { it to preschoolPlacementType } +
                     (preschoolDaycarePeriod?.let { period ->
                         val preschoolTerms =
-                            tx.getActivePreschoolTermAt(period.start)
+                            tx.getPreschoolTerm(period.start)
                                 ?: throw Exception(
                                     "No suitable preschool term found for start date ${period.start}"
                                 )

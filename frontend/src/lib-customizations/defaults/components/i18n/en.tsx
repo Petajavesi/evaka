@@ -46,8 +46,7 @@ const components: Translations = {
   },
   datePicker: {
     placeholder: 'dd.mm.yyyy',
-    description:
-      'Type the date in dd.mm.yyyy format. You can get to month picker with the Down Arrow key.',
+    description: 'Type the date in dd.mm.yyyy format.',
     validationErrors: {
       validDate: 'Valid date format is dd.mm.yyyy',
       dateTooEarly: 'Pick a later date',
@@ -182,6 +181,7 @@ const components: Translations = {
       "You can apply for supplementary early childhood education from the start of your child's preschool education.",
     timeFormat: 'Check',
     timeRequired: 'Required',
+    exceedsMaxDuration: 'Exceeds maximum early childhood education time',
     dateTooEarly: 'Pick a later date',
     dateTooLate: 'Pick an earlier date',
     unitNotSelected: 'Pick at least one choice',

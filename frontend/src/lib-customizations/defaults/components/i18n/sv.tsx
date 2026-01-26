@@ -46,8 +46,7 @@ const components: Translations = {
   },
   datePicker: {
     placeholder: 'dd.mm.åååå',
-    description:
-      'Skriv in datumet i formatet dd.mm.åååå. Du kan komma till månadsväljaren med pil ned-tangenten.',
+    description: 'Skriv in datumet i formatet dd.mm.åååå.',
     validationErrors: {
       validDate: 'Ange i format dd.mm.åååå',
       dateTooEarly: 'Välj ett senare datum',
@@ -182,6 +181,7 @@ const components: Translations = {
       'Du kan ansöka om kompletterande förskoleutbildning från början av ditt barns förskoleutbildning',
     timeFormat: 'Kolla',
     timeRequired: 'Nödvändig',
+    exceedsMaxDuration: 'Överstiger maximal tid för småbarnspedagogik',
     dateTooEarly: 'Välj ett senare datum',
     dateTooLate: 'Välj ett tidigare datum',
     unitNotSelected: 'Välj minst en enhet',

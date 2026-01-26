@@ -762,8 +762,7 @@ export default {
                 >
                   Suomi.fi-viestit
                 </a>{' '}
-                -palveluun tai postitse, mikäli et ole ottanut Suomi.fi
-                -palvelua käyttöön.
+                -palveluun.
               </P>
               <P>
                 Kunnallisen varhaiskasvatuksen asiakasmaksut
@@ -800,8 +799,7 @@ export default {
                 >
                   Suomi.fi-viestit
                 </a>{' '}
-                -palveluun tai postitse, mikäli et ole ottanut Suomi.fi
-                -palvelua käyttöön.
+                -palveluun.
               </P>
               <P fitted={true}>* Tähdellä merkityt tiedot ovat pakollisia</P>
             </>
@@ -1046,7 +1044,7 @@ export default {
           info: {
             DAYCARE: [] as React.ReactNode[],
             PRESCHOOL: [
-              'Suomen- ja ruotsinkielinen esiopetus alkaa 8.8.2024. Jos tarvitsette varhaiskasvatusta 1.8.2024 lähtien ennen esiopetuksen alkua, voitte hakea sitä tällä hakemuksella valitsemalla ”Haen myös esiopetukseen liittyvää varhaiskasvatusta”.'
+              'Suomen- ja ruotsinkielinen esiopetus alkaa 13.8.2026. Jos tarvitsette varhaiskasvatusta elokuussa ennen esiopetuksen alkua, voitte hakea sitä tällä hakemuksella valitsemalla ”Haen myös esiopetukseen liittyvää varhaiskasvatusta”.'
             ],
             CLUB: [
               'Kerhot noudattavat esiopetuksen työ- ja loma-aikoja. Kerhon toimintakausi on elokuusta toukokuun loppuun, ja kullekin toimintakaudelle haetaan erikseen. Eri kerhot kokoontuvat eri viikonpäivinä.'
@@ -1116,6 +1114,7 @@ export default {
           }
         },
         partTime: {
+          label: 'Valitse osa- tai kokopäiväinen varhaiskasvatus',
           true: 'Osapäiväinen (max 5h / pv, 25h / vko)',
           false: 'Kokopäiväinen'
         },
@@ -1151,8 +1150,7 @@ export default {
                 >
                   Suomi.fi-viestit
                 </a>{' '}
-                -palveluun tai postitse, mikäli et ole ottanut Suomi.fi-viestit
-                -palvelua käyttöön.
+                -palveluun.
               </P>
             </>
           ),

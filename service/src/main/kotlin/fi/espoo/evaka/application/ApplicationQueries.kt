@@ -521,6 +521,8 @@ fun Database.Read.fetchApplicationSummaries(
                 COALESCE((a.document -> 'additionalDetails' ->> 'allergyType'), '') != ''
             ) as additionalInfo,
             (a.document -> 'apply' ->> 'siblingBasis')::boolean as siblingBasis,
+            sb.sibling_name,
+            sb.sibling_unit_name,
             COALESCE(a.document -> 'careDetails' ->> 'assistanceNeeded', a.document -> 'clubCare' ->> 'assistanceNeeded')::boolean as assistanceNeed,
             club_care.was_on_club_care AS was_on_club_care,
             (a.document ->> 'wasOnDaycare')::boolean as wasOnDaycare,
@@ -606,6 +608,15 @@ fun Database.Read.fetchApplicationSummaries(
             JOIN daycare ON pd.unit_id = daycare.id
             WHERE pd.application_id = a.id
         ) pd ON true
+        -- Sibling basis placement details
+        LEFT JOIN LATERAL (
+            SELECT sbd.name as sibling_unit_name, sibling.last_name || ' ' || sibling.first_name as sibling_name
+            FROM person sibling
+            JOIN placement sbpl ON sibling.id = sbpl.child_id
+            JOIN daycare sbd ON sbpl.unit_id = sbd.id
+            WHERE sibling.social_security_number = (a.document -> 'apply' ->> 'siblingSsn')
+                AND daterange(sbpl.start_date, sbpl.end_date, '[]') @> ${bind(today)}
+        ) sb ON (a.document -> 'apply' ->> 'siblingBasis')::boolean
         WHERE a.status != 'CREATED'::application_status_type AND ${predicate(predicates)}
         $orderBy LIMIT $pageSize OFFSET ${bind((page - 1) * pageSize)}
         """
@@ -650,6 +661,8 @@ fun Database.Read.fetchApplicationSummaries(
                     serviceWorkerNote =
                         if (canReadServiceWorkerNotes) column("service_worker_note") else "",
                     siblingBasis = column("siblingBasis"),
+                    siblingName = column("sibling_name"),
+                    siblingUnitName = column("sibling_unit_name"),
                     assistanceNeed = column("assistanceNeed"),
                     wasOnClubCare = column("was_on_club_care"),
                     wasOnDaycare = column("wasOnDaycare"),
@@ -786,7 +799,8 @@ fun Database.Read.fetchApplicationSummariesForChild(
         .toList<PersonApplicationSummary>()
 
 fun Database.Read.fetchApplicationSummariesForCitizen(
-    citizenId: PersonId
+    citizenId: PersonId,
+    today: LocalDate,
 ): List<CitizenApplicationSummary> =
     createQuery {
             val useDecisionDateAsStartDate =
@@ -819,10 +833,13 @@ SELECT
 FROM application a
 WHERE (a.guardian_id = ${bind(citizenId)} OR EXISTS (
     SELECT 1 FROM application_other_guardian WHERE application_id = a.id AND guardian_id = ${bind(citizenId)}
-))
+)) AND (
+    EXISTS (SELECT FROM guardian WHERE guardian_id = ${bind(citizenId)} AND child_id = a.child_id) OR
+    EXISTS (SELECT FROM foster_parent WHERE parent_id = ${bind(citizenId)} AND child_id = a.child_id AND valid_during @> ${bind(today)})
+)
 AND NOT a.hidefromguardian AND a.status != 'CANCELLED'
 ORDER BY sentDate DESC
-                """
+"""
             )
         }
         .toList()
@@ -1527,7 +1544,10 @@ SELECT COUNT(*)
 FROM application a
 JOIN person guardian ON a.guardian_id = guardian.id
 JOIN person child ON a.child_id = child.id
-WHERE (a.guardian_id = ${bind(citizenId)} OR (
+WHERE ((a.guardian_id = ${bind(citizenId)} AND (
+    EXISTS (SELECT FROM guardian g WHERE g.guardian_id = ${bind(citizenId)} AND g.child_id = a.child_id)
+    OR EXISTS (SELECT FROM foster_parent fp WHERE fp.parent_id = ${bind(citizenId)} AND fp.child_id = a.child_id AND valid_during @> ${bind(today)})
+)) OR (
     a.allow_other_guardian_access IS TRUE
     AND EXISTS (
         SELECT FROM application_other_guardian aog

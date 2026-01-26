@@ -137,8 +137,7 @@ const customizations: CitizenCustomizations = {
                     >
                       Suomi.fi-viestit
                     </a>{' '}
-                    -palveluun tai postitse, mikäli et ole ottanut Suomi.fi
-                    -palvelua käyttöön.
+                    -palveluun.
                   </P>
                   <P fitted>* Tähdellä merkityt tiedot ovat pakollisia</P>
                 </>
@@ -161,7 +160,7 @@ const customizations: CitizenCustomizations = {
                   </a>
                 ],
                 PRESCHOOL: [
-                  'Esiopetus alkaa 7.8.2025. Jos tarvitset varhaiskasvatusta elokuun alusta ennen esiopetuksen alkua, hae sitä tällä hakemuksella valitsemalla ”Haen myös esiopetukseen liittyvää varhaiskasvatusta”.'
+                  'Esiopetus alkaa 13.8.2026. Jos tarvitset varhaiskasvatusta elokuun alusta ennen esiopetuksen alkua, hae sitä tällä hakemuksella valitsemalla ”Haen myös esiopetukseen liittyvää varhaiskasvatusta”.'
                 ]
               },
               instructions: {
@@ -242,8 +241,7 @@ const customizations: CitizenCustomizations = {
                     >
                       Suomi.fi-viestit
                     </a>{' '}
-                    -palveluun tai postitse, mikäli et ole ottanut
-                    Suomi.fi-viestit -palvelua käyttöön.
+                    -palveluun.
                   </P>
                 </>
               ),
@@ -330,12 +328,12 @@ const customizations: CitizenCustomizations = {
               DAYCARE:
                 'Lapsella on kehitykseen tai oppimiseen liittyvä tuen tarve',
               PRESCHOOL:
-                'Valitse tämä kohta, jos lapsi tarvitsee kasvulleen ja/tai oppimiselleen tukea esiopetusvuonna.',
+                'Valitse tämä kohta, jos lapsi tarvitsee kehitykselleen, oppimiselleen ja/tai hyvinvoinnille tukea.',
               CLUB: 'Lapsella on kehitykseen tai oppimiseen liittyvä tuen tarve'
             },
             assistanceNeedInstructions: {
               DAYCARE:
-                'Valitse tämä kohta, jos lapsesi tarvitsee tukea kehitykseen, oppimiseen tai hyvinvointiin. Tukea annetaan lapsen arjessa osana varhaiskasvatusta. Jos lapsella on tuen tarvetta, varhaiskasvatuksen erityisopettaja ottaa hakijaan yhteyttä. Näin voimme huomioida lapsen tarpeet ja osoittaa hänelle sopivan varhaiskasvatuspaikan.',
+                'Valitse tämä kohta, jos lapsesi tarvitsee tukea kehitykseen, oppimiseen tai hyvinvointiin. Tukea annetaan lapsen arjessa osana varhaiskasvatusta. Jos lapsella on oppimisen ja/tai esiopetukseen osallistumisen tuen tarvetta, varhaiskasvatuksen erityisopettaja ottaa hakijaan yhteyttä. Näin voimme huomioida lapsen tarpeet ja osoittaa hänelle sopivan varhaiskasvatuspaikan.',
               PRESCHOOL: null
             },
             assistanceNeedExtraInstructions: {
@@ -345,10 +343,10 @@ const customizations: CitizenCustomizations = {
                   varhaiskasvatusta. Valitse tämä kohta myös, jos lapsella on
                   muu erityinen syy, jolla on suoranaista vaikutusta
                   esiopetuksen järjestämiseen ja siihen, missä yksikössä lapsen
-                  esiopetus tulee järjestää. Jos lapsella on kasvun ja/tai
-                  oppimisen tuen tarvetta, varhaiskasvatuksen erityisopettaja
-                  ottaa hakijaan yhteyttä. Näin voimme huomioida lapsen tarpeet
-                  ja osoittaa hänelle sopivan esiopetuspaikan.
+                  esiopetus tulee järjestää. Jos lapsella on oppimisen ja/tai
+                  esiopetukseen osallistumisen tuen tarvetta, varhaiskasvatuksen
+                  erityisopettaja ottaa hakijaan yhteyttä. Näin voimme huomioida
+                  lapsen tarpeet ja osoittaa hänelle sopivan esiopetuspaikan.
                 </P>
               )
             }
@@ -603,9 +601,9 @@ const customizations: CitizenCustomizations = {
                   <P>
                     Barn deltar i förskoleundervisning året innan läroplikten
                     inleds. Förskoleundervisningen är kostnadsfri. Anmälan till
-                    förskoleundervisning under läsåret 2025–2026 pågår 8–20
-                    januari 2025. Den finsk- och den svenskspråkiga
-                    förskoleundervisningen börjar den 7 augusti 2025.
+                    förskoleundervisning under läsåret 2026–2027 pågår 8–20
+                    januari 2026. Den finsk- och den svenskspråkiga
+                    förskoleundervisningen börjar den 13 augusti 2026.
                   </P>
                   <P>
                     Du får ett skriftligt beslut om plats inom
@@ -617,7 +615,7 @@ const customizations: CitizenCustomizations = {
                     >
                       Suomi.fi-meddelanden
                     </a>{' '}
-                    eller per post, om du inte använder Suomi.fi-tjänsten.
+                    .
                   </P>
                   <P fitted={true}>
                     * Informationen markerad med en stjärna är obligatorisk
@@ -645,7 +643,7 @@ const customizations: CitizenCustomizations = {
                   </a>
                 ],
                 PRESCHOOL: [
-                  'Den finsk- och den svenskspråkiga förskoleundervisningen börjar den 7 augusti 2025. Om du behöver småbarnspedagogik i början av augusti före förskoleundervisningen börjar, ska du ansöka om det med denna ansökan genom att kryssa för ”Jag ansöker också om småbarnspedagogik i samband med förskolan”.'
+                  'Den finsk- och den svenskspråkiga förskoleundervisningen börjar den 13 augusti 2026. Om du behöver småbarnspedagogik i början av augusti före förskoleundervisningen börjar, ska du ansöka om det med denna ansökan genom att kryssa för ”Jag ansöker också om småbarnspedagogik i samband med förskolan”.'
                 ]
               },
               label: {
@@ -806,7 +804,8 @@ const customizations: CitizenCustomizations = {
             assistanceNeed: 'Stödbehov',
             assistanceNeeded: {
               DAYCARE: 'Barnet behöver stöd för utvecklingen eller lärandet',
-              PRESCHOOL: 'Barnet behöver stöd för utvecklingen eller lärandet',
+              PRESCHOOL:
+                'Välj detta alternativ om barnet behöver stöd för sin utveckling, sitt lärande och/eller sitt välbefinnande under',
               CLUB: 'Barnet behöver stöd för utvecklingen eller lärandet'
             },
             assistanceNeedInstructions: {
@@ -823,11 +822,12 @@ const customizations: CitizenCustomizations = {
                   småbarnspedagogiken. Kryssa för denna punkt också om det finns
                   någon annan särskild anledning som direkt påverkar ordnandet
                   av förskoleundervisningen och vid vilken enhet
-                  förskoleundervisningen bör ordnas för barnet. Om barnet
-                  behöver stöd för utvecklingen eller lärandet kontaktar
-                  specialläraren inom småbarnspedagogiken den sökande. På så
-                  sätt kan vi ta hänsyn till barnets behov och anvisa barnet en
-                  lämplig plats inom förskoleundervisningen.
+                  förskoleundervisningen bör ordnas för barnet. Om barnet har
+                  behov av stöd för lärande och/eller deltagande i
+                  förskoleundervisningen, kommer specialläraren inom
+                  småbarnspedagogik att. På så sätt kan vi ta hänsyn till
+                  barnets behov och anvisa barnet en lämplig plats inom
+                  förskoleundervisningen.
                 </P>
               )
             },
@@ -1086,7 +1086,6 @@ const customizations: CitizenCustomizations = {
                     >
                       Suomi.fi Messages
                     </a>{' '}
-                    service or by post if you have not activated the Suomi.fi
                     service.
                   </P>
                   <P>
@@ -1143,20 +1142,12 @@ const customizations: CitizenCustomizations = {
                     Children attend pre-primary education during the year before
                     the start of compulsory education. Pre-primary education is
                     free of charge. Enrolment for pre-primary education for the
-                    school year 2025–2026 takes place between 8 and 20 January
-                    2025. Finnish and Swedish pre-primary education starts on 7
-                    August 2025.
+                    school year 2026–2027 takes place between 8 and 20 January
+                    2026. Finnish and Swedish pre-primary education starts on 13
+                    August 2026.
                   </P>
                   <P>
                     The decisions will be sent to the{' '}
-                    <a
-                      href="https://www.suomi.fi/messages"
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Suomi.fi Messages
-                    </a>{' '}
-                    service or by post, if the applicant does not use the{' '}
                     <a
                       href="https://www.suomi.fi/messages"
                       target="_blank"
@@ -1193,7 +1184,7 @@ const customizations: CitizenCustomizations = {
                   </a>
                 ],
                 PRESCHOOL: [
-                  'Finnish and Swedish pre-primary education starts on 7 August 2025. If your child needs early childhood education at the beginning of August before pre-primary education starts, you can apply for it on this application by selecting  I also apply for early childhood education related to pre-primary education.'
+                  'Finnish and Swedish pre-primary education starts on 13 August 2026. If your child needs early childhood education at the beginning of August before pre-primary education starts, you can apply for it on this application by selecting  I also apply for early childhood education related to pre-primary education.'
                 ]
               },
               instructions: {
@@ -1383,7 +1374,8 @@ const customizations: CitizenCustomizations = {
             assistanceNeed: 'Need for support',
             assistanceNeeded: {
               DAYCARE: 'My child needs support for development or learning',
-              PRESCHOOL: 'My child needs support for development or learning',
+              PRESCHOOL:
+                'Select this option if the child needs support for their development, learning and/or wellbeing during the pre-primary education year',
               CLUB: 'My child needs support for development or learning'
             },
             assistanceNeedInstructions: {
@@ -1400,11 +1392,12 @@ const customizations: CitizenCustomizations = {
                   early childhood education. Also tick this box if your child
                   has another special reason that directly affects the provision
                   of pre-primary education or the unit in which their
-                  pre-primary education should be provided. If your child needs
-                  support for development and/or learning, a special needs
-                  teacher will contact you. This will ensure that your child’s
-                  needs are taken into account and your child is given a place
-                  in a suitable pre-primary education unit.
+                  pre-primary education should be provided. If a child needs
+                  support for learning and/or participation in pre-primary
+                  education, the early childhood special education teacher will
+                  contact you. This will ensure that your child’s needs are
+                  taken into account and your child is given a placein a
+                  suitable pre-primary education unit.
                 </P>
               )
             },

@@ -9,7 +9,6 @@ import { mergePeople, safeDeletePerson } from '../../generated/api-clients/pis'
 import {
   clearTitaniaErrors,
   getApplicationsReport,
-  getAssistanceNeedDecisionsReport,
   getAssistanceNeedsAndActionsReport,
   getAssistanceNeedsAndActionsReportByChild,
   getAttendanceReservationReportByChild,
@@ -52,7 +51,6 @@ import {
   getPlacementSketchingReport,
   getPreschoolAbsenceReport,
   getPreschoolApplicationReport,
-  getPresenceReport,
   getRawReport,
   getServiceNeedReport,
   getServiceVoucherReportForAllUnits,
@@ -221,12 +219,6 @@ export const childDocumentDecisionsReportQuery = q.query(
 )
 
 export const decisionReportQuery = q.query(getDecisionsReport)
-
-export const assistanceNeedDecisionsReportQuery = q.query(
-  getAssistanceNeedDecisionsReport
-)
-
-export const presenceReportQuery = q.query(getPresenceReport)
 
 export const rawReportQuery = q.query(getRawReport)
 export const sendPatuReportMutation = q.mutation(sendPatuReport)

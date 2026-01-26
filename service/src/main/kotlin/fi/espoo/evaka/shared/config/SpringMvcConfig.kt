@@ -16,6 +16,7 @@ import fi.espoo.evaka.shared.domain.HelsinkiDateTime
 import fi.espoo.evaka.shared.domain.MockEvakaClock
 import fi.espoo.evaka.shared.domain.RealEvakaClock
 import fi.espoo.evaka.shared.domain.Unauthorized
+import fi.espoo.evaka.shared.logging.RouteLoggingInterceptor
 import fi.espoo.evaka.shared.utils.asArgumentResolver
 import fi.espoo.evaka.shared.utils.convertFrom
 import io.opentelemetry.api.trace.Tracer
@@ -27,13 +28,14 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.core.MethodParameter
 import org.springframework.format.FormatterRegistry
 import org.springframework.http.MediaType
-import org.springframework.http.converter.HttpMessageConverter
+import org.springframework.http.converter.HttpMessageConverters
 import org.springframework.http.converter.StringHttpMessageConverter
 import org.springframework.web.context.request.NativeWebRequest
 import org.springframework.web.context.request.WebRequest
 import org.springframework.web.context.request.WebRequest.SCOPE_REQUEST
 import org.springframework.web.method.support.HandlerMethodArgumentResolver
 import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import org.springframework.web.servlet.function.ServerRequest
 
@@ -75,14 +77,22 @@ class SpringMvcConfig(
         registry.addConverter(convertFrom<String, Id<*>> { Id<DatabaseTable>(UUID.fromString(it)) })
     }
 
+    override fun addInterceptors(registry: InterceptorRegistry) {
+        registry.addInterceptor(RouteLoggingInterceptor())
+    }
+
     override fun configureContentNegotiation(configurer: ContentNegotiationConfigurer) {
         configurer.defaultContentType(MediaType.APPLICATION_JSON, MediaType.ALL)
     }
 
-    override fun configureMessageConverters(converters: MutableList<HttpMessageConverter<*>>) {
+    override fun configureMessageConverters(builder: HttpMessageConverters.ServerBuilder) {
         // If the response body is a string, we want it to be converted as JSON, not directly
-        // serialized as string
-        converters.removeIf { it is StringHttpMessageConverter }
+        // serialized as string (unless the caller expects text/plain)
+        builder.withStringConverter(
+            StringHttpMessageConverter().apply {
+                supportedMediaTypes = listOf(MediaType.TEXT_PLAIN)
+            }
+        )
     }
 
     private fun WebRequest.getDatabaseInstance(): Database =

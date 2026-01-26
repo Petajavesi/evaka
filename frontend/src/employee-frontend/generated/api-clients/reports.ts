@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2017-2025 City of Espoo
+// SPDX-FileCopyrightText: 2017-2026 City of Espoo
 //
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
@@ -8,7 +8,6 @@ import type { ApplicationStatus } from 'lib-common/generated/api-types/applicati
 import type { ApplicationType } from 'lib-common/generated/api-types/application'
 import type { ApplicationsReportRow } from 'lib-common/generated/api-types/reports'
 import type { AreaId } from 'lib-common/generated/api-types/shared'
-import type { AssistanceNeedDecisionsReportRow } from 'lib-common/generated/api-types/reports'
 import type { AssistanceNeedsAndActionsReport } from 'lib-common/generated/api-types/reports'
 import type { AssistanceNeedsAndActionsReportByChild } from 'lib-common/generated/api-types/reports'
 import type { AttendanceReservationReportByChildBody } from 'lib-common/generated/api-types/reports'
@@ -66,7 +65,6 @@ import type { PlacementType } from 'lib-common/generated/api-types/placement'
 import type { PreschoolApplicationReportRow } from 'lib-common/generated/api-types/reports'
 import type { PreschoolAssistanceLevel } from 'lib-common/generated/api-types/assistance'
 import type { PreschoolUnitsReportRow } from 'lib-common/generated/api-types/reports'
-import type { PresenceReportRow } from 'lib-common/generated/api-types/reports'
 import type { ProviderType } from 'lib-common/generated/api-types/daycare'
 import type { RawReportRow } from 'lib-common/generated/api-types/reports'
 import type { RegionalSurveyMunicipalVoucherDistributionResult } from 'lib-common/generated/api-types/reports'
@@ -90,7 +88,6 @@ import type { VardaUnitErrorReportRow } from 'lib-common/generated/api-types/rep
 import YearMonth from 'lib-common/year-month'
 import { client } from '../../api/client'
 import { createUrlSearchParams } from 'lib-common/api'
-import { deserializeJsonAssistanceNeedDecisionsReportRow } from 'lib-common/generated/api-types/reports'
 import { deserializeJsonAttendanceReservationReportByChildGroup } from 'lib-common/generated/api-types/reports'
 import { deserializeJsonAttendanceReservationReportRow } from 'lib-common/generated/api-types/reports'
 import { deserializeJsonChildAttendanceReportRow } from 'lib-common/generated/api-types/reports'
@@ -109,7 +106,6 @@ import { deserializeJsonNonSsnChildrenReportRow } from 'lib-common/generated/api
 import { deserializeJsonPlacementGuaranteeReportRow } from 'lib-common/generated/api-types/reports'
 import { deserializeJsonPlacementSketchingReportRow } from 'lib-common/generated/api-types/reports'
 import { deserializeJsonPreschoolApplicationReportRow } from 'lib-common/generated/api-types/reports'
-import { deserializeJsonPresenceReportRow } from 'lib-common/generated/api-types/reports'
 import { deserializeJsonRawReportRow } from 'lib-common/generated/api-types/reports'
 import { deserializeJsonServiceVoucherReport } from 'lib-common/generated/api-types/reports'
 import { deserializeJsonServiceVoucherUnitReport } from 'lib-common/generated/api-types/reports'
@@ -143,30 +139,6 @@ export async function getApplicationsReport(
 
 
 /**
-* Generated from fi.espoo.evaka.reports.AssistanceNeedDecisionsReport.getAssistanceNeedDecisionsReport
-*/
-export async function getAssistanceNeedDecisionsReport(): Promise<AssistanceNeedDecisionsReportRow[]> {
-  const { data: json } = await client.request<JsonOf<AssistanceNeedDecisionsReportRow[]>>({
-    url: uri`/employee/reports/assistance-need-decisions`.toString(),
-    method: 'GET'
-  })
-  return json.map(e => deserializeJsonAssistanceNeedDecisionsReportRow(e))
-}
-
-
-/**
-* Generated from fi.espoo.evaka.reports.AssistanceNeedDecisionsReport.getAssistanceNeedDecisionsReportUnreadCount
-*/
-export async function getAssistanceNeedDecisionsReportUnreadCount(): Promise<number> {
-  const { data: json } = await client.request<JsonOf<number>>({
-    url: uri`/employee/reports/assistance-need-decisions/unread-count`.toString(),
-    method: 'GET'
-  })
-  return json
-}
-
-
-/**
 * Generated from fi.espoo.evaka.reports.AssistanceNeedsAndActionsReportController.getAssistanceNeedsAndActionsReport
 */
 export async function getAssistanceNeedsAndActionsReport(
@@ -175,7 +147,8 @@ export async function getAssistanceNeedsAndActionsReport(
     daycareAssistanceLevels?: DaycareAssistanceLevel[] | null,
     preschoolAssistanceLevels?: PreschoolAssistanceLevel[] | null,
     otherAssistanceMeasureTypes?: OtherAssistanceMeasureType[] | null,
-    placementTypes?: PlacementType[] | null
+    placementTypes?: PlacementType[] | null,
+    includeDecisions?: boolean | null
   }
 ): Promise<AssistanceNeedsAndActionsReport> {
   const params = createUrlSearchParams(
@@ -183,7 +156,8 @@ export async function getAssistanceNeedsAndActionsReport(
     ...(request.daycareAssistanceLevels?.map((e): [string, string | null | undefined] => ['daycareAssistanceLevels', e.toString()]) ?? []),
     ...(request.preschoolAssistanceLevels?.map((e): [string, string | null | undefined] => ['preschoolAssistanceLevels', e.toString()]) ?? []),
     ...(request.otherAssistanceMeasureTypes?.map((e): [string, string | null | undefined] => ['otherAssistanceMeasureTypes', e.toString()]) ?? []),
-    ...(request.placementTypes?.map((e): [string, string | null | undefined] => ['placementTypes', e.toString()]) ?? [])
+    ...(request.placementTypes?.map((e): [string, string | null | undefined] => ['placementTypes', e.toString()]) ?? []),
+    ['includeDecisions', request.includeDecisions?.toString()]
   )
   const { data: json } = await client.request<JsonOf<AssistanceNeedsAndActionsReport>>({
     url: uri`/employee/reports/assistance-needs-and-actions`.toString(),
@@ -203,7 +177,8 @@ export async function getAssistanceNeedsAndActionsReportByChild(
     daycareAssistanceLevels?: DaycareAssistanceLevel[] | null,
     preschoolAssistanceLevels?: PreschoolAssistanceLevel[] | null,
     otherAssistanceMeasureTypes?: OtherAssistanceMeasureType[] | null,
-    placementTypes?: PlacementType[] | null
+    placementTypes?: PlacementType[] | null,
+    includeDecisions?: boolean | null
   }
 ): Promise<AssistanceNeedsAndActionsReportByChild> {
   const params = createUrlSearchParams(
@@ -211,7 +186,8 @@ export async function getAssistanceNeedsAndActionsReportByChild(
     ...(request.daycareAssistanceLevels?.map((e): [string, string | null | undefined] => ['daycareAssistanceLevels', e.toString()]) ?? []),
     ...(request.preschoolAssistanceLevels?.map((e): [string, string | null | undefined] => ['preschoolAssistanceLevels', e.toString()]) ?? []),
     ...(request.otherAssistanceMeasureTypes?.map((e): [string, string | null | undefined] => ['otherAssistanceMeasureTypes', e.toString()]) ?? []),
-    ...(request.placementTypes?.map((e): [string, string | null | undefined] => ['placementTypes', e.toString()]) ?? [])
+    ...(request.placementTypes?.map((e): [string, string | null | undefined] => ['placementTypes', e.toString()]) ?? []),
+    ['includeDecisions', request.includeDecisions?.toString()]
   )
   const { data: json } = await client.request<JsonOf<AssistanceNeedsAndActionsReportByChild>>({
     url: uri`/employee/reports/assistance-needs-and-actions/by-child`.toString(),
@@ -1036,28 +1012,6 @@ export async function getPreschoolApplicationReport(): Promise<PreschoolApplicat
     method: 'GET'
   })
   return json.map(e => deserializeJsonPreschoolApplicationReportRow(e))
-}
-
-
-/**
-* Generated from fi.espoo.evaka.reports.PresenceReportController.getPresenceReport
-*/
-export async function getPresenceReport(
-  request: {
-    from: LocalDate,
-    to: LocalDate
-  }
-): Promise<PresenceReportRow[]> {
-  const params = createUrlSearchParams(
-    ['from', request.from.formatIso()],
-    ['to', request.to.formatIso()]
-  )
-  const { data: json } = await client.request<JsonOf<PresenceReportRow[]>>({
-    url: uri`/employee/reports/presences`.toString(),
-    method: 'GET',
-    params
-  })
-  return json.map(e => deserializeJsonPresenceReportRow(e))
 }
 
 

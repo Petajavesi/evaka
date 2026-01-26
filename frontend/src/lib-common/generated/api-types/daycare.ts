@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2017-2025 City of Espoo
+// SPDX-FileCopyrightText: 2017-2026 City of Espoo
 //
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
@@ -565,6 +565,7 @@ export interface UnitOperationPeriod {
 */
 export interface UnitStub {
   careTypes: CareType[]
+  closingDate: LocalDate | null
   id: DaycareId
   name: string
 }
@@ -851,5 +852,13 @@ export function deserializeJsonUnitOperationPeriod(json: JsonOf<UnitOperationPer
     ...json,
     closingDate: (json.closingDate != null) ? LocalDate.parseIso(json.closingDate) : null,
     openingDate: (json.openingDate != null) ? LocalDate.parseIso(json.openingDate) : null
+  }
+}
+
+
+export function deserializeJsonUnitStub(json: JsonOf<UnitStub>): UnitStub {
+  return {
+    ...json,
+    closingDate: (json.closingDate != null) ? LocalDate.parseIso(json.closingDate) : null
   }
 }

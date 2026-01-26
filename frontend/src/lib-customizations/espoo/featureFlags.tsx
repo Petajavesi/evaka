@@ -18,11 +18,11 @@ const features: Features = {
     assistanceActionOther: true,
     daycareApplication: {
       dailyTimes: true,
-      serviceNeedOption: true
+      serviceNeedOption: true // Petäjävesi: changed false -> true
     },
     preschoolApplication: {
       connectedDaycarePreferredStartDate: true,
-      serviceNeedOption: true
+      serviceNeedOption: true // Petäjävesi: changed false -> true
     },
     decisionDraftMultipleUnits: false,
     preschool: true,
@@ -31,124 +31,76 @@ const features: Features = {
     financeDecisionHandlerSelect: false,
     feeDecisionPreschoolClubFilter: false,
     placementGuarantee: true,
-    voucherUnitPayments: true,
+    voucherUnitPayments: false, // Petäjävesi: changed true -> false
     voucherValueSeparation: true,
-    hideClubApplication: true,
-    assistanceNeedDecisionsLanguageSelect: true,
     extendedPreschoolTerm: true,
     citizenAttendanceSummary: false,
     intermittentShiftCare: false,
     noAbsenceType: false,
     discussionReservations: true,
-    jamixIntegration: true,
+    jamixIntegration: false, // Petäjävesi: changed true -> false
     nekkuIntegration: false,
-    forceUnpublishDocumentTemplate: true,
+    forceUnpublishDocumentTemplate: false, // Petäjävesi: changed true -> false
     invoiceDisplayAccountNumber: true,
-    serviceApplications: true,
-    multiSelectDeparture: true,
-    archiveIntegration: {
-      childDocuments: true
-    },
-    aromiIntegration: true,
-    citizenChildDocumentTypes: true,
-    decisionChildDocumentTypes: true,
-    showCitizenApplicationPreschoolTerms: true,
-    missingQuestionnaireAnswerMarkerEnabled: false,
-    absenceApplications: true,
-    showMetadataToCitizen: true,
-    placementDesktop: true
-  },
-  dev: {
-    environmentLabel: 'Dev',
-    citizenShiftCareAbsence: true,
-    assistanceActionOther: true,
-    daycareApplication: {
-      dailyTimes: true,
-      serviceNeedOption: true
-    },
-    preschoolApplication: {
-      connectedDaycarePreferredStartDate: true,
-      serviceNeedOption: true
-    },
-    decisionDraftMultipleUnits: false,
-    preschool: true,
-    preparatory: true,
-    urgencyAttachments: true,
-    financeDecisionHandlerSelect: false,
-    feeDecisionPreschoolClubFilter: false,
-    placementGuarantee: true,
-    voucherUnitPayments: true,
-    voucherValueSeparation: true,
-    hideClubApplication: true,
-    assistanceNeedDecisionsLanguageSelect: true,
-    staffAttendanceTypes: true,
-    extendedPreschoolTerm: true,
-    personDuplicate: false,
-    citizenAttendanceSummary: false,
-    intermittentShiftCare: false,
-    noAbsenceType: false,
-    discussionReservations: true,
-    jamixIntegration: true,
-    nekkuIntegration: false,
-    forceUnpublishDocumentTemplate: true,
-    invoiceDisplayAccountNumber: true,
-    serviceApplications: true,
-    multiSelectDeparture: true,
-    archiveIntegrationEnabled: true,
-    aromiIntegration: true,
-    citizenChildDocumentTypes: true,
-    decisionChildDocumentTypes: true,
-    showCitizenApplicationPreschoolTerms: true,
-    missingQuestionnaireAnswerMarkerEnabled: false,
-    absenceApplications: true,
-    showMetadataToCitizen: true
-  },
-  test: {
-    environmentLabel: 'Test',
-    citizenShiftCareAbsence: true,
-    assistanceActionOther: true,
-    daycareApplication: {
-      dailyTimes: true,
-      serviceNeedOption: true
-    },
-    preschoolApplication: {
-      connectedDaycarePreferredStartDate: true,
-      serviceNeedOption: true
-    },
-    decisionDraftMultipleUnits: false,
-    preschool: true,
-    preparatory: true,
-    urgencyAttachments: true,
-    financeDecisionHandlerSelect: false,
-    feeDecisionPreschoolClubFilter: false,
-    placementGuarantee: true,
-    assistanceNeedDecisionsLanguageSelect: true,
-    extendedPreschoolTerm: true,
-    citizenAttendanceSummary: false,
-    voucherUnitPayments: false,
-    voucherValueSeparation: true,
-    hideClubApplication: true,
-    personDuplicate: false,
-    intermittentShiftCare: false,
-    noAbsenceType: false,
-    discussionReservations: true,
-    jamixIntegration: false,
-    nekkuIntegration: false,
-    forceUnpublishDocumentTemplate: false,
-    invoiceDisplayAccountNumber: true,
-    serviceApplications: true,
+    serviceApplications: true, // Petäjävesi: changed true -> false
     multiSelectDeparture: true,
     archiveIntegration: {
       childDocuments: true
     },
     aromiIntegration: false,
     citizenChildDocumentTypes: true,
-    decisionChildDocumentTypes: true,
-    showCitizenApplicationPreschoolTerms: true,
+    decisionChildDocumentTypes: false, // Petäjävesi: changed true -> false
+    showCitizenApplicationPreschoolTerms: false, // Petäjävesi: changed true -> false
     missingQuestionnaireAnswerMarkerEnabled: false,
     absenceApplications: true,
-    showMetadataToCitizen: true,
-    placementDesktop: true
+    showMetadataToCitizen: false, // Petäjävesi: changed true -> false
+    placementDesktop: true,
+    hideClubApplication: true, // Petäjävesi: added
+  },
+  test: { // Petäjävesi: renamed from staging
+    environmentLabel: 'Test', // Petäjävesi: renamed from 'Staging'
+    citizenShiftCareAbsence: true,
+    assistanceActionOther: true,
+    daycareApplication: {
+      dailyTimes: true,
+      serviceNeedOption: true // Petäjävesi: changed false -> true
+    },
+    preschoolApplication: {
+      connectedDaycarePreferredStartDate: true,
+      serviceNeedOption: true // Petäjävesi: changed false -> true
+    },
+    decisionDraftMultipleUnits: false,
+    preschool: true,
+    preparatory: true,
+    urgencyAttachments: true,
+    financeDecisionHandlerSelect: false,
+    feeDecisionPreschoolClubFilter: false,
+    placementGuarantee: true,
+    extendedPreschoolTerm: true,
+    citizenAttendanceSummary: false,
+    voucherUnitPayments: false,
+    voucherValueSeparation: true,
+    intermittentShiftCare: false,
+    noAbsenceType: false,
+    discussionReservations: true,
+    jamixIntegration: false,
+    nekkuIntegration: false,
+    forceUnpublishDocumentTemplate: false, // Petäjävesi: changed true -> false
+    invoiceDisplayAccountNumber: true,
+    serviceApplications: true,
+    multiSelectDeparture: true,
+    archiveIntegration: {
+      childDocuments: true
+    },
+    aromiIntegration: false, // Petäjävesi: changed true -> false
+    citizenChildDocumentTypes: true,
+    decisionChildDocumentTypes: false, // Petäjävesi: changed true -> false
+    showCitizenApplicationPreschoolTerms: false, // Petäjävesi: changed true -> false
+    missingQuestionnaireAnswerMarkerEnabled: false,
+    absenceApplications: true,
+    showMetadataToCitizen: true, // Petäjävesi: changed true -> false
+    placementDesktop: true,
+    hideClubApplication: true, // Petäjävesi: added
   },
   prod: {
     environmentLabel: null,
@@ -156,11 +108,11 @@ const features: Features = {
     assistanceActionOther: true,
     daycareApplication: {
       dailyTimes: true,
-      serviceNeedOption: true
+      serviceNeedOption: true // Petäjävesi: changed false -> true
     },
     preschoolApplication: {
       connectedDaycarePreferredStartDate: true,
-      serviceNeedOption: true
+      serviceNeedOption: true // Petäjävesi: changed false -> true
     },
     decisionDraftMultipleUnits: false,
     preschool: true,
@@ -169,32 +121,31 @@ const features: Features = {
     financeDecisionHandlerSelect: false,
     feeDecisionPreschoolClubFilter: false,
     placementGuarantee: true,
-    voucherUnitPayments: false,
-    voucherValueSeparation: true,
-    hideClubApplication: true,
-    assistanceNeedDecisionsLanguageSelect: true,
     extendedPreschoolTerm: true,
     citizenAttendanceSummary: false,
+    voucherUnitPayments: false,
+    voucherValueSeparation: true,
     intermittentShiftCare: false,
     noAbsenceType: false,
     discussionReservations: true,
-    jamixIntegration: false,
-    nekkuIntegration: false,
+    jamixIntegration: false, // Petäjävesi: added
+    nekkuIntegration: false, // Petäjävesi: added
     forceUnpublishDocumentTemplate: false,
     invoiceDisplayAccountNumber: true,
-    serviceApplications: true,
+    serviceApplications: true, // Petäjävesi: changed false -> true
     multiSelectDeparture: true,
     archiveIntegration: {
       childDocuments: true
     },
     aromiIntegration: false,
     citizenChildDocumentTypes: true,
-    decisionChildDocumentTypes: false,
+    decisionChildDocumentTypes: false, // Petäjävesi: changed true -> false
     showCitizenApplicationPreschoolTerms: false,
     missingQuestionnaireAnswerMarkerEnabled: false,
     absenceApplications: true,
     showMetadataToCitizen: false,
-    placementDesktop: true
+    placementDesktop: true,
+    hideClubApplication: true, // Petäjävesi: added
   }
 }
 

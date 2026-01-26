@@ -1,10 +1,10 @@
 package fi.espoo.evaka.invoicing.integration
 
-import com.fasterxml.jackson.databind.json.JsonMapper
 import fi.espoo.evaka.invoicing.domain.InvoiceDetailed
 import fi.espoo.evaka.invoicing.domain.InvoiceRowDetailed
 import fi.espoo.evaka.invoicing.service.PetajavesiInvoiceProducts
 import io.github.oshai.kotlinlogging.KotlinLogging
+import tools.jackson.databind.json.JsonMapper
 import java.io.ByteArrayOutputStream
 import java.nio.charset.Charset
 import java.time.LocalDateTime

@@ -4,7 +4,6 @@
 package fi.espoo.evaka.nekku
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.json.JsonMapper
 import fi.espoo.evaka.ConstList
 import fi.espoo.evaka.EmailEnv
 import fi.espoo.evaka.NekkuEnv
@@ -15,7 +14,7 @@ import fi.espoo.evaka.daycare.DaycareMealtimes
 import fi.espoo.evaka.daycare.PreschoolTerm
 import fi.espoo.evaka.daycare.domain.Language
 import fi.espoo.evaka.daycare.getDaycaresById
-import fi.espoo.evaka.daycare.getPreschoolTerms
+import fi.espoo.evaka.daycare.getPreschoolTerm
 import fi.espoo.evaka.daycare.isUnitOperationDay
 import fi.espoo.evaka.emailclient.Email
 import fi.espoo.evaka.emailclient.EmailClient
@@ -50,6 +49,7 @@ import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 import org.jdbi.v3.json.Json
 import org.springframework.stereotype.Service
+import tools.jackson.databind.json.JsonMapper
 
 private val logger = KotlinLogging.logger {}
 
@@ -475,11 +475,11 @@ fun createAndSendNekkuOrder(
 ) {
     try {
 
-        val (preschoolTerms, children) =
+        val (preschoolTerm, children) =
             dbc.read { tx ->
-                val preschoolTerms = tx.getPreschoolTerms()
+                val preschoolTerm = tx.getPreschoolTerm(date)
                 val children = getNekkuChildInfos(tx, groupId, date)
-                preschoolTerms to children
+                preschoolTerm to children
             }
         val nekkuWeekday = getNekkuWeekday(date)
 
@@ -500,7 +500,7 @@ fun createAndSendNekkuOrder(
                                 nekkuMealReportData(
                                     children,
                                     date,
-                                    preschoolTerms,
+                                    preschoolTerm,
                                     nekkuProducts,
                                     nekkuDaycareCustomerMapping.customerType,
                                     nekkuMealDeductionFactor =
@@ -593,7 +593,7 @@ fun createAndSendNekkuOrder(
 fun nekkuMealReportData(
     children: Collection<NekkuChildInfo>,
     date: LocalDate,
-    preschoolTerms: List<PreschoolTerm>,
+    preschoolTerm: PreschoolTerm?,
     nekkuProducts: List<NekkuProduct>,
     customerType: String,
     nekkuMealDeductionFactor: Double,
@@ -604,8 +604,7 @@ fun nekkuMealReportData(
                 val absenceRecord =
                     childInfo.absences?.size == childInfo.placementType.absenceCategories().size
 
-                val scheduleType =
-                    childInfo.placementType.scheduleType(date, emptyList(), preschoolTerms)
+                val scheduleType = childInfo.placementType.scheduleType(date, null, preschoolTerm)
                 val effectivelyAbsent =
                     if (scheduleType == ScheduleType.TERM_BREAK) true else absenceRecord
 

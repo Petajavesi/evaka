@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2017-2025 City of Espoo
+// SPDX-FileCopyrightText: 2017-2026 City of Espoo
 //
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
@@ -331,6 +331,8 @@ export interface ApplicationSummary {
   serviceNeed: ServiceNeedOption | null
   serviceWorkerNote: string
   siblingBasis: boolean
+  siblingName: string | null
+  siblingUnitName: string | null
   startDate: LocalDate | null
   status: ApplicationStatus
   streetAddress: string | null

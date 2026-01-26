@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2017-2025 City of Espoo
+// SPDX-FileCopyrightText: 2017-2026 City of Espoo
 //
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
@@ -65,6 +65,7 @@ import { deserializeJsonScheduledDaycareAclRow } from 'lib-common/generated/api-
 import { deserializeJsonStaffAttendanceForDates } from 'lib-common/generated/api-types/daycare'
 import { deserializeJsonUnitGroupDetails } from 'lib-common/generated/api-types/daycare'
 import { deserializeJsonUnitOperationPeriod } from 'lib-common/generated/api-types/daycare'
+import { deserializeJsonUnitStub } from 'lib-common/generated/api-types/daycare'
 import { uri } from 'lib-common/uri'
 
 
@@ -543,7 +544,7 @@ export async function getUnits(
     method: 'GET',
     params
   })
-  return json
+  return json.map(e => deserializeJsonUnitStub(e))
 }
 
 

@@ -5,7 +5,6 @@
 package fi.espoo.evaka.shared.config
 
 import com.auth0.jwt.algorithms.Algorithm
-import com.fasterxml.jackson.databind.json.JsonMapper
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import fi.espoo.evaka.BucketEnv
@@ -72,6 +71,7 @@ import software.amazon.awssdk.services.s3.S3Configuration
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest
 import software.amazon.awssdk.services.s3.presigner.S3Presigner
 import software.amazon.awssdk.utils.AttributeMap
+import tools.jackson.databind.json.JsonMapper
 
 // Hides Closeable interface from Spring, which would close the shared instance otherwise
 class TestDataSource(pool: HikariDataSource) : DataSource by pool
@@ -79,13 +79,16 @@ class TestDataSource(pool: HikariDataSource) : DataSource by pool
 private val globalLock = object {}
 private var testDataSource: TestDataSource? = null
 
+private val dbPort = System.getenv("EVAKA_DATABASE_PORT")?.toIntOrNull() ?: 5432
+private val dbUrl = "jdbc:postgresql://localhost:$dbPort/evaka_it"
+
 fun getTestDataSource(): TestDataSource =
     synchronized(globalLock) {
         testDataSource
             ?: TestDataSource(
                     HikariDataSource(
                             HikariConfig().apply {
-                                jdbcUrl = "jdbc:postgresql://localhost:5432/evaka_it"
+                                jdbcUrl = dbUrl
                                 username = "evaka_it"
                                 password = "evaka_it"
                             }
@@ -100,7 +103,7 @@ fun getTestDataSource(): TestDataSource =
                                 .validateMigrationNaming(true)
                                 .dataSource(
                                     PGSimpleDataSource().apply {
-                                        setUrl("jdbc:postgresql://localhost:5432/evaka_it")
+                                        setUrl(dbUrl)
                                         user = "evaka_migration_local"
                                         password = "flyway"
                                     }
@@ -246,16 +249,12 @@ val testFeatureConfig =
     FeatureConfig(
         valueDecisionCapacityFactorEnabled = false,
         citizenReservationThresholdHours = 150,
-        dailyFeeDivisorOperationalDaysOverride = null,
-        freeSickLeaveOnContractDays = false,
         freeAbsenceGivesADailyRefund = true,
         alwaysUseDaycareFinanceDecisionHandler = false,
         paymentNumberSeriesStart = 9000000000,
         unplannedAbsencesAreContractSurplusDays = true,
         maxContractDaySurplusThreshold = null,
         useContractDaysAsDailyFeeDivisor = true,
-        assistanceDecisionMakerRoles = null,
-        preschoolAssistanceDecisionMakerRoles = null,
         requestedStartUpperLimit = 14,
         postOffice = "ESPOO",
         municipalMessageAccountName = "Espoon kaupunki - Esbo stad - City of Espoo",
@@ -287,20 +286,6 @@ val testFeatureConfig =
                     ArchiveProcessConfig(
                         processDefinitionNumber = "123.123.c",
                         archiveDurationMonths = 10 * 12,
-                    )
-                }
-
-                ArchiveProcessType.ASSISTANCE_NEED_DECISION_DAYCARE -> {
-                    ArchiveProcessConfig(
-                        processDefinitionNumber = "123.456.a",
-                        archiveDurationMonths = 120 * 12,
-                    )
-                }
-
-                ArchiveProcessType.ASSISTANCE_NEED_DECISION_PRESCHOOL -> {
-                    ArchiveProcessConfig(
-                        processDefinitionNumber = "123.456.b",
-                        archiveDurationMonths = 120 * 12,
                     )
                 }
 
