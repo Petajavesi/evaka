@@ -126,7 +126,9 @@ const customizations: CitizenCustomizations = {
                 <>
                   <P>
                     Esiopetukseen osallistutaan oppivelvollisuuden alkamista
-                    edeltävänä vuonna. Esiopetus on maksutonta.
+                    edeltävänä vuonna. Esiopetus on maksutonta. Lukuvuoden
+                    2026–2027 esiopetukseen ilmoittaudutaan 1.3.2026 mennessä
+                    Esiopetus alkaa 12.8.2026.
                   </P>
                   <P>
                     Päätökset tulevat{' '}
@@ -160,7 +162,7 @@ const customizations: CitizenCustomizations = {
                   </a>
                 ],
                 PRESCHOOL: [
-                  'Esiopetus alkaa 13.8.2026. Jos tarvitset varhaiskasvatusta elokuun alusta ennen esiopetuksen alkua, hae sitä tällä hakemuksella valitsemalla ”Haen myös esiopetukseen liittyvää varhaiskasvatusta”.'
+                  'Esiopetus alkaa 12.8.2026. Jos tarvitset varhaiskasvatusta esiopetuksen lisäksi, hae sitä tällä hakemuksella "Haen myös esiopetukseen liittyvää varhaiskasvatusta".'
                 ]
               },
               instructions: {

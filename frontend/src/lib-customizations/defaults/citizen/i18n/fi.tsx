@@ -788,7 +788,9 @@ export default {
             <>
               <P>
                 Esiopetukseen osallistutaan oppivelvollisuuden alkamista
-                edeltävänä vuonna. Esiopetus on maksutonta.
+                edeltävänä vuonna. Esiopetus on maksutonta. Lukuvuoden
+                2026–2027 esiopetukseen ilmoittaudutaan 1.3.2026 mennessä
+                Esiopetus alkaa 12.8.2026.
               </P>
               <P>
                 Päätökset tulevat{' '}
@@ -1044,7 +1046,7 @@ export default {
           info: {
             DAYCARE: [] as React.ReactNode[],
             PRESCHOOL: [
-              'Suomen- ja ruotsinkielinen esiopetus alkaa 13.8.2026. Jos tarvitsette varhaiskasvatusta elokuussa ennen esiopetuksen alkua, voitte hakea sitä tällä hakemuksella valitsemalla ”Haen myös esiopetukseen liittyvää varhaiskasvatusta”.'
+              'Esiopetus alkaa 12.8.2026. Jos tarvitset varhaiskasvatusta esiopetuksen lisäksi, hae sitä tällä hakemuksella "Haen myös esiopetukseen liittyvää varhaiskasvatusta".'
             ],
             CLUB: [
               'Kerhot noudattavat esiopetuksen työ- ja loma-aikoja. Kerhon toimintakausi on elokuusta toukokuun loppuun, ja kullekin toimintakaudelle haetaan erikseen. Eri kerhot kokoontuvat eri viikonpäivinä.'
