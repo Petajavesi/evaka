@@ -2,11 +2,11 @@
 //
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
+import { useQueryClient } from '@tanstack/react-query'
 import React, { useCallback, useContext, useState } from 'react'
 
-import { wrapResult } from 'lib-common/api'
 import type { MobileDeviceId } from 'lib-common/generated/api-types/shared'
-import { useApiState } from 'lib-common/utils/useRestApi'
+import { useMutationResult, useQueryResult } from 'lib-common/query'
 import AddButton from 'lib-components/atoms/buttons/AddButton'
 import { IconOnlyButton } from 'lib-components/atoms/buttons/IconOnlyButton'
 import InputField from 'lib-components/atoms/form/InputField'
@@ -21,43 +21,43 @@ import { H1, P } from 'lib-components/typography'
 import { Gap } from 'lib-components/white-space'
 import { faPen, faQuestion, faTrash } from 'lib-icons'
 
-import {
-  deleteMobileDevice,
-  getPersonalMobileDevices,
-  putMobileDeviceName
-} from '../../generated/api-clients/pairing'
 import { useTranslation } from '../../state/i18n'
 import { UIContext } from '../../state/ui'
 import { UserContext } from '../../state/user'
 import { renderResult } from '../async-rendering'
 
-const getPersonalMobileDevicesResult = wrapResult(getPersonalMobileDevices)
-const deleteMobileDeviceResult = wrapResult(deleteMobileDevice)
-const putMobileDeviceNameResult = wrapResult(putMobileDeviceName)
+import {
+  deletePersonalMobileDeviceMutation,
+  personalMobileDevicesQuery,
+  putPersonalMobileDeviceNameMutation
+} from './queries'
 
 export default React.memo(function PersonalMobileDevicesPage() {
   const { i18n } = useTranslation()
   const { user } = useContext(UserContext)
   const { startPairing } = useContext(UIContext)
-  const [mobileDevices, reloadDevices] = useApiState(
-    () => getPersonalMobileDevicesResult(),
-    []
-  )
+  const queryClient = useQueryClient()
+  const mobileDevices = useQueryResult(personalMobileDevicesQuery())
   const [openModal, setOpenModal] = useState<{
     id: MobileDeviceId
     action: 'rename' | 'delete'
     currentName?: string
   }>()
 
+  const invalidateDevices = useCallback(
+    () => void queryClient.invalidateQueries(personalMobileDevicesQuery()),
+    [queryClient]
+  )
   const pairNewDevice = useCallback(
     () =>
-      user ? startPairing({ employeeId: user?.id }, reloadDevices) : undefined,
-    [user, startPairing, reloadDevices]
+      user
+        ? startPairing({ employeeId: user?.id }, invalidateDevices)
+        : undefined,
+    [user, startPairing, invalidateDevices]
   )
   const closeModal = useCallback(() => {
     setOpenModal(undefined)
-    void reloadDevices()
-  }, [reloadDevices])
+  }, [])
 
   if (!user) {
     return null
@@ -65,7 +65,7 @@ export default React.memo(function PersonalMobileDevicesPage() {
 
   return (
     <Container>
-      <ContentArea opaque>
+      <ContentArea $opaque>
         <H1>{i18n.personalMobileDevices.title}</H1>
         <P>{i18n.personalMobileDevices.infoParagraph1}</P>
         <P>{i18n.personalMobileDevices.infoParagraph2}</P>
@@ -75,15 +75,15 @@ export default React.memo(function PersonalMobileDevicesPage() {
               <Thead>
                 <Tr>
                   <Th>{i18n.personalMobileDevices.name}</Th>
-                  <Th align="right" />
+                  <Th $align="right" />
                 </Tr>
               </Thead>
               <Tbody>
                 {devices.map(({ id, name }) => (
                   <Tr key={id}>
                     <Td>{name}</Td>
-                    <Td align="right">
-                      <FixedSpaceRow justifyContent="flex-end" spacing="L">
+                    <Td $align="right">
+                      <FixedSpaceRow $justifyContent="flex-end" $spacing="L">
                         <IconOnlyButton
                           icon={faPen}
                           onClick={() =>
@@ -108,7 +108,7 @@ export default React.memo(function PersonalMobileDevicesPage() {
                 ))}
               </Tbody>
             </Table>
-            <Gap size="m" />
+            <Gap $size="m" />
             <AddButton
               onClick={pairNewDevice}
               text={i18n.personalMobileDevices.addDevice}
@@ -140,6 +140,9 @@ const EditNameModal = React.memo(function EditNameModal({
   currentName: string
 }) {
   const { i18n } = useTranslation()
+  const { mutateAsync: renameMobileDevice } = useMutationResult(
+    putPersonalMobileDeviceNameMutation
+  )
   const [newName, setNewName] = useState(currentName)
 
   return (
@@ -150,13 +153,13 @@ const EditNameModal = React.memo(function EditNameModal({
       reject={{ action: close, label: i18n.common.cancel }}
       resolve={{
         action: () =>
-          putMobileDeviceNameResult({ id, body: { name: newName } }).then(
-            close
+          renameMobileDevice({ id, body: { name: newName } }).then(() =>
+            close()
           ),
         label: i18n.common.save
       }}
     >
-      <FixedSpaceColumn alignItems="center">
+      <FixedSpaceColumn $alignItems="center">
         <InputField
           value={newName}
           onChange={setNewName}
@@ -176,6 +179,9 @@ const DeleteModal = React.memo(function DeleteModal({
   close: () => void
 }) {
   const { i18n } = useTranslation()
+  const { mutateAsync: deleteMobileDevice } = useMutationResult(
+    deletePersonalMobileDeviceMutation
+  )
 
   return (
     <InfoModal
@@ -184,7 +190,7 @@ const DeleteModal = React.memo(function DeleteModal({
       type="warning"
       reject={{ action: close, label: i18n.common.cancel }}
       resolve={{
-        action: () => deleteMobileDeviceResult({ id }).then(close),
+        action: () => deleteMobileDevice({ id }).then(() => close()),
         label: i18n.common.confirm
       }}
     />

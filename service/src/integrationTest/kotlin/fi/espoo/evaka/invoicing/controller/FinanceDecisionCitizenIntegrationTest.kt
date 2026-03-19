@@ -38,8 +38,9 @@ import fi.espoo.evaka.shared.DaycareId
 import fi.espoo.evaka.shared.FeeDecisionId
 import fi.espoo.evaka.shared.PersonId
 import fi.espoo.evaka.shared.VoucherValueDecisionId
-import fi.espoo.evaka.shared.auth.AuthenticatedUser
 import fi.espoo.evaka.shared.auth.CitizenAuthLevel
+import fi.espoo.evaka.shared.dev.DevCareArea
+import fi.espoo.evaka.shared.dev.DevDaycare
 import fi.espoo.evaka.shared.dev.DevPerson
 import fi.espoo.evaka.shared.dev.DevPersonType
 import fi.espoo.evaka.shared.dev.insert
@@ -48,8 +49,6 @@ import fi.espoo.evaka.shared.domain.Forbidden
 import fi.espoo.evaka.shared.domain.HelsinkiDateTime
 import fi.espoo.evaka.shared.domain.MockEvakaClock
 import fi.espoo.evaka.snDaycareFullDay35
-import fi.espoo.evaka.testArea
-import fi.espoo.evaka.testDaycare
 import fi.espoo.evaka.toFeeDecisionServiceNeed
 import fi.espoo.evaka.toValueDecisionServiceNeed
 import java.math.BigDecimal
@@ -69,141 +68,116 @@ class FinanceDecisionCitizenIntegrationTest : FullApplicationTest(resetDbBeforeE
     private val clock =
         MockEvakaClock(HelsinkiDateTime.of(LocalDate.of(2022, 10, 23), LocalTime.of(21, 0)))
 
-    private lateinit var headOfFamily: DevPerson
-    private lateinit var partner: DevPerson
-    private lateinit var child: DevPerson
+    private val area = DevCareArea()
+    private val daycare = DevDaycare(areaId = area.id)
+    private val headOfFamily = DevPerson()
+    private val partner = DevPerson()
+    private val child = DevPerson(dateOfBirth = LocalDate.of(2020, 2, 2))
 
-    private lateinit var feeDecisions: List<FinanceDecisionCitizenInfo>
-    private lateinit var voucherValueDecisions: List<FinanceDecisionCitizenInfo>
+    private val testPeriod1 = FiniteDateRange(LocalDate.of(2018, 5, 1), LocalDate.of(2018, 5, 31))
+    private val testPeriod2 =
+        FiniteDateRange(testPeriod1.end.plusDays(1), testPeriod1.end.plusDays(1).plusMonths(1))
+    private val fdId = FeeDecisionId(UUID.randomUUID())
+    private val feeDecisionSentAt = HelsinkiDateTime.atStartOfDay(LocalDate.of(2018, 5, 1))
+    private val vvdId = VoucherValueDecisionId(UUID.randomUUID())
+    private val voucherValueSentAt = HelsinkiDateTime.atStartOfDay(LocalDate.of(2018, 6, 1))
+
+    private val testFeeDecisions =
+        listOf(
+            createTestFeeDecision(
+                id = fdId,
+                decisionType = FeeDecisionType.NORMAL,
+                headOfFamilyId = headOfFamily.id,
+                partnerId = partner.id,
+                period = testPeriod1,
+                children =
+                    listOf(
+                        createFeeDecisionChildFixture(
+                            childId = child.id,
+                            dateOfBirth = child.dateOfBirth,
+                            placementUnitId = daycare.id,
+                            placementType = PlacementType.DAYCARE,
+                            serviceNeed = snDaycareFullDay35.toFeeDecisionServiceNeed(),
+                        )
+                    ),
+            )
+        )
+
+    private val feeDecisions =
+        testFeeDecisions.map {
+            FinanceDecisionCitizenInfo(
+                id = it.id.raw,
+                type = FinanceDecisionType.FEE_DECISION,
+                validFrom = it.validFrom,
+                validTo = it.validTo,
+                sentAt = feeDecisionSentAt,
+                coDebtors =
+                    listOf(
+                        LiableCitizenInfo(partner.id, partner.firstName, partner.lastName),
+                        LiableCitizenInfo(
+                            headOfFamily.id,
+                            headOfFamily.firstName,
+                            headOfFamily.lastName,
+                        ),
+                    ),
+                decisionChildren = emptyList(),
+            )
+        }
+
+    private val testVoucherValueDecisions =
+        listOf(
+            createTestVoucherValueDecision(
+                id = vvdId,
+                validFrom = testPeriod2.start,
+                validTo = testPeriod2.end,
+                headOfFamilyId = headOfFamily.id,
+                childId = child.id,
+                dateOfBirth = child.dateOfBirth,
+                unitId = daycare.id,
+                placementType = PlacementType.DAYCARE,
+                serviceNeed = snDaycareFullDay35.toValueDecisionServiceNeed(),
+            )
+        )
+
+    private val voucherValueDecisions =
+        testVoucherValueDecisions.map {
+            FinanceDecisionCitizenInfo(
+                id = it.id.raw,
+                type = FinanceDecisionType.VOUCHER_VALUE_DECISION,
+                validFrom = it.validFrom,
+                validTo = it.validTo,
+                sentAt = voucherValueSentAt,
+                coDebtors =
+                    listOf(
+                        LiableCitizenInfo(
+                            headOfFamily.id,
+                            headOfFamily.firstName,
+                            headOfFamily.lastName,
+                        )
+                    ),
+                decisionChildren =
+                    listOf(FinanceDecisionChildInfo(child.id, child.firstName, child.lastName)),
+            )
+        }
 
     @BeforeEach
     fun beforeEach() {
         db.transaction { tx ->
-            headOfFamily =
-                DevPerson(id = PersonId(UUID.randomUUID()), firstName = "Hof", lastName = "Person")
-            partner =
-                DevPerson(
-                    id = PersonId(UUID.randomUUID()),
-                    firstName = "Partner",
-                    lastName = "Person",
-                )
-            child =
-                DevPerson(
-                    id = PersonId(UUID.randomUUID()),
-                    firstName = "Only",
-                    lastName = "Child",
-                    dateOfBirth = LocalDate.of(2020, 2, 2),
-                )
-
             tx.insertServiceNeedOptions()
-            tx.insert(testArea)
-            tx.insert(testDaycare)
-
+            tx.insert(area)
+            tx.insert(daycare)
             tx.insert(headOfFamily, DevPersonType.ADULT)
             tx.insert(partner, DevPersonType.ADULT)
             tx.insert(child, DevPersonType.CHILD)
-
-            val testPeriod1 = FiniteDateRange(LocalDate.of(2018, 5, 1), LocalDate.of(2018, 5, 31))
-            val testPeriod2 =
-                FiniteDateRange(
-                    testPeriod1.end.plusDays(1),
-                    testPeriod1.end.plusDays(1).plusMonths(1),
-                )
-
-            val fdId = FeeDecisionId(UUID.randomUUID())
-            val testFeeDecisions =
-                listOf(
-                    createTestFeeDecision(
-                        id = fdId,
-                        decisionType = FeeDecisionType.NORMAL,
-                        headOfFamilyId = headOfFamily.id,
-                        partnerId = partner.id,
-                        period =
-                            FiniteDateRange(LocalDate.of(2018, 5, 1), LocalDate.of(2018, 5, 31)),
-                        children =
-                            listOf(
-                                createFeeDecisionChildFixture(
-                                    childId = child.id,
-                                    dateOfBirth = child.dateOfBirth,
-                                    placementUnitId = testDaycare.id,
-                                    placementType = PlacementType.DAYCARE,
-                                    serviceNeed = snDaycareFullDay35.toFeeDecisionServiceNeed(),
-                                )
-                            ),
-                    )
-                )
-
-            val feeDecisionSentAt = HelsinkiDateTime.atStartOfDay(LocalDate.of(2018, 5, 1))
             tx.upsertFeeDecisions(testFeeDecisions)
             tx.setFeeDecisionSent(
                 ids = listOf(fdId),
                 clock = MockEvakaClock(now = feeDecisionSentAt),
             )
             tx.updateFeeDecisionDocumentKey(fdId, "test-fd-document-key")
-
-            feeDecisions =
-                testFeeDecisions.map {
-                    FinanceDecisionCitizenInfo(
-                        id = it.id.raw,
-                        type = FinanceDecisionType.FEE_DECISION,
-                        validFrom = it.validFrom,
-                        validTo = it.validTo,
-                        sentAt = feeDecisionSentAt,
-                        coDebtors =
-                            listOf(
-                                LiableCitizenInfo(partner.id, partner.firstName, partner.lastName),
-                                LiableCitizenInfo(
-                                    headOfFamily.id,
-                                    headOfFamily.firstName,
-                                    headOfFamily.lastName,
-                                ),
-                            ),
-                        decisionChildren = emptyList(),
-                    )
-                }
-
-            val vvdId = VoucherValueDecisionId(UUID.randomUUID())
-            val testVoucherValueDecisions =
-                listOf(
-                    createTestVoucherValueDecision(
-                        id = vvdId,
-                        validFrom = testPeriod2.start,
-                        validTo = testPeriod2.end,
-                        headOfFamilyId = headOfFamily.id,
-                        childId = child.id,
-                        dateOfBirth = child.dateOfBirth,
-                        unitId = testDaycare.id,
-                        placementType = PlacementType.DAYCARE,
-                        serviceNeed = snDaycareFullDay35.toValueDecisionServiceNeed(),
-                    )
-                )
-            val voucherValueSentAt = HelsinkiDateTime.atStartOfDay(LocalDate.of(2018, 6, 1))
             tx.upsertValueDecisions(testVoucherValueDecisions)
             tx.markVoucherValueDecisionsSent(ids = listOf(vvdId), now = voucherValueSentAt)
             tx.updateVoucherValueDecisionDocumentKey(vvdId, "test-vvd-document-key")
-
-            voucherValueDecisions =
-                testVoucherValueDecisions.map {
-                    FinanceDecisionCitizenInfo(
-                        id = it.id.raw,
-                        type = FinanceDecisionType.VOUCHER_VALUE_DECISION,
-                        validFrom = it.validFrom,
-                        validTo = it.validTo,
-                        sentAt = voucherValueSentAt,
-                        coDebtors =
-                            listOf(
-                                LiableCitizenInfo(
-                                    headOfFamily.id,
-                                    headOfFamily.firstName,
-                                    headOfFamily.lastName,
-                                )
-                            ),
-                        decisionChildren =
-                            listOf(
-                                FinanceDecisionChildInfo(child.id, child.firstName, child.lastName)
-                            ),
-                    )
-                }
         }
     }
 
@@ -213,7 +187,7 @@ class FinanceDecisionCitizenIntegrationTest : FullApplicationTest(resetDbBeforeE
         val financeDecisions =
             applicationControllerCitizen.getLiableCitizenFinanceDecisions(
                 dbInstance(),
-                AuthenticatedUser.Citizen(headOfFamily.id, CitizenAuthLevel.STRONG),
+                headOfFamily.user(CitizenAuthLevel.STRONG),
                 clock,
             )
 
@@ -229,7 +203,7 @@ class FinanceDecisionCitizenIntegrationTest : FullApplicationTest(resetDbBeforeE
         val financeDecisions =
             applicationControllerCitizen.getLiableCitizenFinanceDecisions(
                 dbInstance(),
-                AuthenticatedUser.Citizen(partner.id, CitizenAuthLevel.STRONG),
+                partner.user(CitizenAuthLevel.STRONG),
                 clock,
             )
 
@@ -245,7 +219,7 @@ class FinanceDecisionCitizenIntegrationTest : FullApplicationTest(resetDbBeforeE
         assertThrows<Forbidden> {
             applicationControllerCitizen.getLiableCitizenFinanceDecisions(
                 dbInstance(),
-                AuthenticatedUser.Citizen(headOfFamily.id, CitizenAuthLevel.WEAK),
+                headOfFamily.user(CitizenAuthLevel.WEAK),
                 clock,
             )
         }

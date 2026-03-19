@@ -19,16 +19,17 @@ import type { InfoStatus } from '../StatusIcon'
 import UnderRowStatusIcon from '../StatusIcon'
 import { IconOnlyButton } from '../buttons/IconOnlyButton'
 
-const inputWidths = {
+export const inputWidths = {
   xs: '60px',
   s: '120px',
   m: '240px',
   L: '480px',
   XL: '720px',
-  full: '100%'
+  full: '100%',
+  chs: '12ch' // for date inputs, to fix text zooming overflowing the input field
 } as const
 
-type InputWidth = keyof typeof inputWidths
+export type InputWidth = keyof typeof inputWidths
 
 const width = (width: InputWidth) => css`
   width: ${inputWidths[width]};
@@ -53,27 +54,27 @@ const width = (width: InputWidth) => css`
   }
 `
 
-const Wrapper = styled.div<{ width: InputWidth }>`
+const Wrapper = styled.div<{ $width: InputWidth }>`
   position: relative;
   display: inline-block;
-  ${(p) => width(p.width)}
+  ${(p) => width(p.$width)}
 `
 
 interface StyledInputProps {
-  width: InputWidth
-  align?: 'left' | 'right'
+  $width: InputWidth
+  $align?: 'left' | 'right'
   $icon?: boolean
 }
 
 export const StyledInput = styled.input<StyledInputProps>`
-  ${(p) => width(p.width)}
+  ${(p) => width(p.$width)}
   margin: 0;
   border: none;
   border-top: 2px solid transparent;
   border-bottom: 1px solid ${(p) => p.theme.colors.grayscale.g70};
   border-radius: 0;
   outline: none;
-  text-align: ${(p) => p.align ?? 'left'};
+  text-align: ${(p) => p.$align ?? 'left'};
   background-color: ${(p) => p.theme.colors.grayscale.g0};
   font-size: 1rem;
   color: ${(p) => p.theme.colors.grayscale.g100};
@@ -133,7 +134,7 @@ export const StyledInput = styled.input<StyledInputProps>`
   }
 `
 
-const IconContainer = styled.div<{ clickable: boolean }>`
+const IconContainer = styled.div<{ $clickable: boolean }>`
   position: absolute;
   right: 12px;
   top: 0;
@@ -144,7 +145,7 @@ const IconContainer = styled.div<{ clickable: boolean }>`
   font-size: 1rem;
 
   ${(p) =>
-    !p.clickable
+    !p.$clickable
       ? css`
           pointer-events: none;
         `
@@ -281,7 +282,7 @@ const InputField = React.memo(function InputField({
   const showIcon = !!(clearable || icon || symbol)
 
   return (
-    <Wrapper className={className} width={width}>
+    <Wrapper className={className} $width={width}>
       <StyledInput
         autoComplete={autoComplete}
         value={value}
@@ -301,10 +302,10 @@ const InputField = React.memo(function InputField({
         placeholder={placeholder}
         readOnly={readonly}
         disabled={readonly}
-        width={width}
+        $width={width}
         $icon={showIcon}
         inputMode={inputMode}
-        align={align}
+        $align={align}
         className={classNames(className, infoStatus)}
         data-qa={dataQa}
         type={type}
@@ -322,7 +323,7 @@ const InputField = React.memo(function InputField({
         {...rest}
       />
       {showIcon && (
-        <IconContainer clickable={clearable}>
+        <IconContainer $clickable={clearable}>
           {clearable ? (
             <StyledIconButton
               icon={faTimes}

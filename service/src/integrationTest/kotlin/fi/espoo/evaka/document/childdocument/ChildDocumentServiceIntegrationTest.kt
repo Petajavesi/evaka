@@ -14,13 +14,14 @@ import fi.espoo.evaka.emailclient.Email
 import fi.espoo.evaka.emailclient.MockEmailClient
 import fi.espoo.evaka.pis.service.insertGuardian
 import fi.espoo.evaka.shared.ChildDocumentId
-import fi.espoo.evaka.shared.ChildId
 import fi.espoo.evaka.shared.DocumentTemplateId
-import fi.espoo.evaka.shared.PersonId
 import fi.espoo.evaka.shared.async.AsyncJob
 import fi.espoo.evaka.shared.async.AsyncJobRunner
 import fi.espoo.evaka.shared.auth.UserRole
+import fi.espoo.evaka.shared.dev.DevCareArea
 import fi.espoo.evaka.shared.dev.DevChildDocument
+import fi.espoo.evaka.shared.dev.DevChildDocumentPublishedVersion
+import fi.espoo.evaka.shared.dev.DevDaycare
 import fi.espoo.evaka.shared.dev.DevDocumentTemplate
 import fi.espoo.evaka.shared.dev.DevEmployee
 import fi.espoo.evaka.shared.dev.DevGuardian
@@ -31,10 +32,6 @@ import fi.espoo.evaka.shared.dev.insert
 import fi.espoo.evaka.shared.domain.DateRange
 import fi.espoo.evaka.shared.domain.HelsinkiDateTime
 import fi.espoo.evaka.shared.domain.MockEvakaClock
-import fi.espoo.evaka.testAdult_2
-import fi.espoo.evaka.testArea
-import fi.espoo.evaka.testChild_1
-import fi.espoo.evaka.testDaycare
 import java.time.LocalTime
 import java.util.*
 import kotlin.test.assertEquals
@@ -49,6 +46,11 @@ class ChildDocumentServiceIntegrationTest : FullApplicationTest(resetDbBeforeEac
     @Autowired lateinit var controller: ChildDocumentController
 
     final val clock = MockEvakaClock(2022, 1, 1, 15, 0)
+
+    private val area = DevCareArea()
+    private val daycare = DevDaycare(areaId = area.id, language = Language.sv)
+    private val adult = DevPerson(email = "joan.doe@example.com")
+    private val child = DevPerson()
 
     final val activeHojksTemplateId = DocumentTemplateId(UUID.randomUUID())
     final val expiredHojksTemplateId = DocumentTemplateId(UUID.randomUUID())
@@ -85,15 +87,15 @@ class ChildDocumentServiceIntegrationTest : FullApplicationTest(resetDbBeforeEac
     @BeforeEach
     internal fun setUp() {
         db.transaction { tx ->
-            tx.insert(testArea)
-            tx.insert(testDaycare.copy(language = Language.sv))
-            tx.insert(testAdult_2, DevPersonType.RAW_ROW)
-            tx.insert(testChild_1, DevPersonType.CHILD)
-            tx.insert(DevGuardian(guardianId = testAdult_2.id, childId = testChild_1.id))
+            tx.insert(area)
+            tx.insert(daycare)
+            tx.insert(adult, DevPersonType.RAW_ROW)
+            tx.insert(child, DevPersonType.CHILD)
+            tx.insert(DevGuardian(guardianId = adult.id, childId = child.id))
             tx.insert(
                 DevPlacement(
-                    childId = testChild_1.id,
-                    unitId = testDaycare.id,
+                    childId = child.id,
+                    unitId = daycare.id,
                     startDate = clock.today(),
                     endDate = clock.today().plusDays(5),
                 )
@@ -139,16 +141,13 @@ class ChildDocumentServiceIntegrationTest : FullApplicationTest(resetDbBeforeEac
                 DevChildDocument(
                     id = activeHojksDocumentId,
                     status = DocumentStatus.DRAFT,
-                    childId = testChild_1.id,
+                    childId = child.id,
                     templateId = activeHojksTemplateId,
                     content = content,
-                    publishedContent = null,
                     modifiedAt = clock.now(),
                     modifiedBy = employee.evakaUserId,
                     contentLockedAt = clock.now(),
                     contentLockedBy = null,
-                    publishedAt = null,
-                    publishedBy = null,
                     answeredAt = null,
                     answeredBy = null,
                 )
@@ -157,53 +156,65 @@ class ChildDocumentServiceIntegrationTest : FullApplicationTest(resetDbBeforeEac
                 DevChildDocument(
                     id = expiredHojksDocumentId,
                     status = DocumentStatus.DRAFT,
-                    childId = testChild_1.id,
+                    childId = child.id,
                     templateId = expiredHojksTemplateId,
                     content = content,
-                    publishedContent = updatedContent,
                     modifiedAt = clock.now(),
                     modifiedBy = employee.evakaUserId,
                     contentLockedAt = clock.now(),
                     contentLockedBy = null,
-                    publishedAt =
-                        HelsinkiDateTime.of(clock.today().minusMonths(1), LocalTime.of(8, 0)),
-                    publishedBy = employee.evakaUserId,
                     answeredAt = null,
                     answeredBy = null,
+                    publishedVersions =
+                        listOf(
+                            DevChildDocumentPublishedVersion(
+                                versionNumber = 1,
+                                createdAt =
+                                    HelsinkiDateTime.of(
+                                        clock.today().minusMonths(1),
+                                        LocalTime.of(8, 0),
+                                    ),
+                                createdBy = employee.evakaUserId,
+                                publishedContent = updatedContent,
+                            )
+                        ),
                 )
             )
             tx.insert(
                 DevChildDocument(
                     id = alreadyCompletedHojksDocumentId,
                     status = DocumentStatus.COMPLETED,
-                    childId = testChild_1.id,
+                    childId = child.id,
                     templateId = expiredHojksTemplateId,
                     content = content,
-                    publishedContent = updatedContent,
                     modifiedAt = clock.now().minusMonths(1),
                     modifiedBy = employee.evakaUserId,
                     contentLockedAt = clock.now().minusMonths(1),
                     contentLockedBy = null,
-                    publishedAt = clock.now().minusMonths(1),
-                    publishedBy = employee.evakaUserId,
                     answeredAt = null,
                     answeredBy = null,
+                    publishedVersions =
+                        listOf(
+                            DevChildDocumentPublishedVersion(
+                                versionNumber = 1,
+                                createdAt = clock.now().minusMonths(1),
+                                createdBy = employee.evakaUserId,
+                                publishedContent = updatedContent,
+                            )
+                        ),
                 )
             )
             tx.insert(
                 DevChildDocument(
                     id = expiredDecisionDocumentId,
                     status = DocumentStatus.DRAFT,
-                    childId = testChild_1.id,
+                    childId = child.id,
                     templateId = expiredDecisionTemplateId,
                     content = content,
-                    publishedContent = null,
                     modifiedAt = clock.now(),
                     modifiedBy = employee.evakaUserId,
                     contentLockedAt = clock.now(),
                     contentLockedBy = null,
-                    publishedAt = null,
-                    publishedBy = null,
                     answeredAt = null,
                     answeredBy = null,
                 )
@@ -237,7 +248,7 @@ class ChildDocumentServiceIntegrationTest : FullApplicationTest(resetDbBeforeEac
             }
         }
         assertEquals(1, MockEmailClient.emails.size)
-        assertEquals(testAdult_2.email, MockEmailClient.emails.first().toAddress)
+        assertEquals(adult.email, MockEmailClient.emails.first().toAddress)
     }
 
     @Test
@@ -250,19 +261,28 @@ class ChildDocumentServiceIntegrationTest : FullApplicationTest(resetDbBeforeEac
                 DevChildDocument(
                     id = expiredHojksDocumentId,
                     status = DocumentStatus.DRAFT,
-                    childId = testChild_1.id,
+                    childId = child.id,
                     templateId = expiredHojksTemplateId,
                     content = content,
-                    publishedContent = updatedContent,
                     modifiedAt = clock.now(),
                     modifiedBy = employee.evakaUserId,
                     contentLockedAt = clock.now(),
                     contentLockedBy = null,
-                    publishedAt =
-                        HelsinkiDateTime.of(clock.today().minusMonths(1), LocalTime.of(8, 0)),
-                    publishedBy = employee.evakaUserId,
                     answeredAt = null,
                     answeredBy = null,
+                    publishedVersions =
+                        listOf(
+                            DevChildDocumentPublishedVersion(
+                                versionNumber = 1,
+                                createdAt =
+                                    HelsinkiDateTime.of(
+                                        clock.today().minusMonths(1),
+                                        LocalTime.of(8, 0),
+                                    ),
+                                createdBy = employee.evakaUserId,
+                                publishedContent = updatedContent,
+                            )
+                        ),
                 )
             )
 
@@ -294,19 +314,28 @@ class ChildDocumentServiceIntegrationTest : FullApplicationTest(resetDbBeforeEac
                 DevChildDocument(
                     id = expiredHojksDocumentId,
                     status = DocumentStatus.DRAFT,
-                    childId = testChild_1.id,
+                    childId = child.id,
                     templateId = expiredHojksTemplateId,
                     content = content,
-                    publishedContent = content,
                     modifiedAt = clock.now(),
                     modifiedBy = employee.evakaUserId,
                     contentLockedAt = clock.now(),
                     contentLockedBy = null,
-                    publishedAt =
-                        HelsinkiDateTime.of(clock.today().minusMonths(1), LocalTime.of(8, 0)),
-                    publishedBy = employee.evakaUserId,
                     answeredAt = null,
                     answeredBy = null,
+                    publishedVersions =
+                        listOf(
+                            DevChildDocumentPublishedVersion(
+                                versionNumber = 1,
+                                createdAt =
+                                    HelsinkiDateTime.of(
+                                        clock.today().minusMonths(1),
+                                        LocalTime.of(8, 0),
+                                    ),
+                                createdBy = employee.evakaUserId,
+                                publishedContent = content,
+                            )
+                        ),
                 )
             )
         }
@@ -326,15 +355,8 @@ class ChildDocumentServiceIntegrationTest : FullApplicationTest(resetDbBeforeEac
 
     @Test
     fun `citizen basic notification email is sent if document is fillable by guardian`() {
-        val testAdult =
-            DevPerson(
-                id = PersonId(UUID.randomUUID()),
-                firstName = "John",
-                lastName = "Doe",
-                ssn = "010101-123N",
-                email = "john.doe@example.com",
-            )
-        val testChild = DevPerson(id = ChildId(UUID.randomUUID()))
+        val testAdult = DevPerson(email = "john.doe@example.com")
+        val testChild = DevPerson()
         val employeeUser = DevEmployee(roles = setOf(UserRole.ADMIN))
         db.transaction { tx ->
             tx.insert(
@@ -353,7 +375,7 @@ class ChildDocumentServiceIntegrationTest : FullApplicationTest(resetDbBeforeEac
             tx.insert(
                 DevPlacement(
                     childId = testChild.id,
-                    unitId = testDaycare.id,
+                    unitId = daycare.id,
                     startDate = clock.today(),
                     endDate = clock.today().plusDays(5),
                 )
@@ -383,15 +405,8 @@ class ChildDocumentServiceIntegrationTest : FullApplicationTest(resetDbBeforeEac
 
     @Test
     fun `child document notification email is sent if document is not fillable by guardian`() {
-        val testAdult =
-            DevPerson(
-                id = PersonId(UUID.randomUUID()),
-                firstName = "John",
-                lastName = "Doe",
-                ssn = "010101-123N",
-                email = "john.doe@example.com",
-            )
-        val testChild = DevPerson(id = ChildId(UUID.randomUUID()))
+        val testAdult = DevPerson(email = "john.doe@example.com")
+        val testChild = DevPerson()
         val employeeUser = DevEmployee(roles = setOf(UserRole.ADMIN))
         db.transaction { tx ->
             tx.insert(
@@ -410,7 +425,7 @@ class ChildDocumentServiceIntegrationTest : FullApplicationTest(resetDbBeforeEac
             tx.insert(
                 DevPlacement(
                     childId = testChild.id,
-                    unitId = testDaycare.id,
+                    unitId = daycare.id,
                     startDate = clock.today(),
                     endDate = clock.today().plusDays(5),
                 )

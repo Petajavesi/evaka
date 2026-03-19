@@ -7,22 +7,24 @@ package fi.espoo.evaka.application
 import fi.espoo.evaka.FullApplicationTest
 import fi.espoo.evaka.application.ApplicationStatus.CREATED
 import fi.espoo.evaka.application.ApplicationStatus.SENT
+import fi.espoo.evaka.application.persistence.daycare.Adult
+import fi.espoo.evaka.application.persistence.daycare.Apply
+import fi.espoo.evaka.application.persistence.daycare.Child
 import fi.espoo.evaka.application.persistence.daycare.DaycareFormV0
+import fi.espoo.evaka.attachment.AttachmentsController
+import fi.espoo.evaka.attachment.uploadApplicationAttachment
 import fi.espoo.evaka.shared.auth.AuthenticatedUser
 import fi.espoo.evaka.shared.auth.CitizenAuthLevel
 import fi.espoo.evaka.shared.auth.UserRole
+import fi.espoo.evaka.shared.dev.DevCareArea
+import fi.espoo.evaka.shared.dev.DevDaycare
+import fi.espoo.evaka.shared.dev.DevEmployee
+import fi.espoo.evaka.shared.dev.DevPerson
 import fi.espoo.evaka.shared.dev.DevPersonType
 import fi.espoo.evaka.shared.dev.insert
 import fi.espoo.evaka.shared.dev.insertTestApplication
 import fi.espoo.evaka.shared.domain.HelsinkiDateTime
 import fi.espoo.evaka.shared.domain.MockEvakaClock
-import fi.espoo.evaka.test.getValidDaycareApplication
-import fi.espoo.evaka.testAdult_1
-import fi.espoo.evaka.testArea
-import fi.espoo.evaka.testChild_1
-import fi.espoo.evaka.testClub
-import fi.espoo.evaka.testDaycare
-import fi.espoo.evaka.testDecisionMaker_1
 import java.time.LocalDate
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -34,21 +36,27 @@ import org.springframework.beans.factory.annotation.Autowired
 class ApplicationUpdateIntegrationTest : FullApplicationTest(resetDbBeforeEach = true) {
     @Autowired lateinit var applicationControllerV2: ApplicationControllerV2
     @Autowired lateinit var applicationControllerCitizen: ApplicationControllerCitizen
+    @Autowired lateinit var attachmentsController: AttachmentsController
+
+    private val area = DevCareArea()
+    private val daycare = DevDaycare(areaId = area.id)
+    private val employee = DevEmployee()
+    private val adult = DevPerson()
+    private val child = DevPerson()
 
     private val clock = MockEvakaClock(2021, 1, 8, 10, 10, 10)
-    private val citizen = AuthenticatedUser.Citizen(testAdult_1.id, CitizenAuthLevel.STRONG)
+    private val citizen = AuthenticatedUser.Citizen(adult.id, CitizenAuthLevel.STRONG)
     private val serviceWorker =
-        AuthenticatedUser.Employee(testDecisionMaker_1.id, setOf(UserRole.SERVICE_WORKER))
+        AuthenticatedUser.Employee(employee.id, setOf(UserRole.SERVICE_WORKER))
 
     @BeforeEach
     fun beforeEach() {
         db.transaction { tx ->
-            tx.insert(testDecisionMaker_1)
-            tx.insert(testArea)
-            tx.insert(testDaycare)
-            tx.insert(testClub)
-            tx.insert(testAdult_1, DevPersonType.ADULT)
-            tx.insert(testChild_1, DevPersonType.CHILD)
+            tx.insert(area)
+            tx.insert(daycare)
+            tx.insert(employee)
+            tx.insert(adult, DevPersonType.ADULT)
+            tx.insert(child, DevPersonType.CHILD)
         }
     }
 
@@ -136,7 +144,11 @@ class ApplicationUpdateIntegrationTest : FullApplicationTest(resetDbBeforeEach =
         assertNull(beforeSendingAttachment?.dueDate)
 
         // when
-        uploadAttachment(applicationId = application.id, serviceWorker)
+        attachmentsController.uploadApplicationAttachment(
+            dbInstance(),
+            applicationId = application.id,
+            serviceWorker,
+        )
 
         // then
         val afterSendingAttachment = db.transaction { it.fetchApplicationDetails(application.id) }
@@ -150,7 +162,11 @@ class ApplicationUpdateIntegrationTest : FullApplicationTest(resetDbBeforeEach =
         val originalDueDate = LocalDate.of(2021, 1, 15)
         val application = insertApplication(SENT, sentDate, originalDueDate, true)
 
-        uploadAttachment(applicationId = application.id, serviceWorker)
+        attachmentsController.uploadApplicationAttachment(
+            dbInstance(),
+            applicationId = application.id,
+            serviceWorker,
+        )
         db.transaction { tx ->
             tx.execute {
                 sql(
@@ -207,7 +223,11 @@ class ApplicationUpdateIntegrationTest : FullApplicationTest(resetDbBeforeEach =
         )
 
         // when
-        uploadAttachment(applicationId = application.id, serviceWorker)
+        attachmentsController.uploadApplicationAttachment(
+            dbInstance(),
+            applicationId = application.id,
+            serviceWorker,
+        )
 
         // then
         val afterSendingAttachment = db.transaction { it.fetchApplicationDetails(application.id) }
@@ -220,12 +240,14 @@ class ApplicationUpdateIntegrationTest : FullApplicationTest(resetDbBeforeEach =
         val sentDate = LocalDate.of(2021, 1, 1)
         val originalDueDate = LocalDate.of(2021, 5, 1)
         val application = insertApplication(SENT, sentDate, originalDueDate, true, shiftCare = true)
-        uploadAttachment(
+        attachmentsController.uploadApplicationAttachment(
+            dbInstance(),
             applicationId = application.id,
             user = citizen,
             type = ApplicationAttachmentType.URGENCY,
         )
-        uploadAttachment(
+        attachmentsController.uploadApplicationAttachment(
+            dbInstance(),
             applicationId = application.id,
             user = citizen,
             type = ApplicationAttachmentType.EXTENDED_CARE,
@@ -276,12 +298,14 @@ class ApplicationUpdateIntegrationTest : FullApplicationTest(resetDbBeforeEach =
         val originalDueDate = LocalDate.of(2021, 5, 1)
         val application =
             insertApplication(SENT, sentDate, originalDueDate, urgent = true, shiftCare = true)
-        uploadAttachment(
+        attachmentsController.uploadApplicationAttachment(
+            dbInstance(),
             applicationId = application.id,
             user = serviceWorker,
             type = ApplicationAttachmentType.URGENCY,
         )
-        uploadAttachment(
+        attachmentsController.uploadApplicationAttachment(
+            dbInstance(),
             applicationId = application.id,
             user = serviceWorker,
             type = ApplicationAttachmentType.EXTENDED_CARE,
@@ -331,12 +355,14 @@ class ApplicationUpdateIntegrationTest : FullApplicationTest(resetDbBeforeEach =
         val originalDueDate = LocalDate.of(2021, 5, 1)
         val application =
             insertApplication(SENT, sentDate, originalDueDate, urgent = true, shiftCare = true)
-        uploadAttachment(
+        attachmentsController.uploadApplicationAttachment(
+            dbInstance(),
             applicationId = application.id,
             user = citizen,
             type = ApplicationAttachmentType.URGENCY,
         )
-        uploadAttachment(
+        attachmentsController.uploadApplicationAttachment(
+            dbInstance(),
             applicationId = application.id,
             user = citizen,
             type = ApplicationAttachmentType.EXTENDED_CARE,
@@ -392,12 +418,14 @@ class ApplicationUpdateIntegrationTest : FullApplicationTest(resetDbBeforeEach =
         val originalDueDate = LocalDate.of(2021, 5, 1)
         val application =
             insertApplication(SENT, sentDate, originalDueDate, urgent = true, shiftCare = true)
-        uploadAttachment(
+        attachmentsController.uploadApplicationAttachment(
+            dbInstance(),
             applicationId = application.id,
             user = serviceWorker,
             type = ApplicationAttachmentType.URGENCY,
         )
-        uploadAttachment(
+        attachmentsController.uploadApplicationAttachment(
+            dbInstance(),
             applicationId = application.id,
             user = serviceWorker,
             type = ApplicationAttachmentType.EXTENDED_CARE,
@@ -459,14 +487,18 @@ class ApplicationUpdateIntegrationTest : FullApplicationTest(resetDbBeforeEach =
                     status = status,
                     sentDate = sentDate,
                     dueDate = dueDate,
-                    childId = testChild_1.id,
-                    guardianId = testAdult_1.id,
+                    childId = child.id,
+                    guardianId = adult.id,
                     type = ApplicationType.DAYCARE,
                     document =
-                        DaycareFormV0.fromApplication2(
-                                getValidDaycareApplication(shiftCare = shiftCare)
-                            )
-                            .copy(urgent = urgent),
+                        DaycareFormV0(
+                            type = ApplicationType.DAYCARE,
+                            child = Child(dateOfBirth = null),
+                            guardian = Adult(),
+                            apply = Apply(preferredUnits = listOf(daycare.id)),
+                            urgent = urgent,
+                            extendedCare = shiftCare,
+                        ),
                 )
             tx.fetchApplicationDetails(applicationId)!!
         }

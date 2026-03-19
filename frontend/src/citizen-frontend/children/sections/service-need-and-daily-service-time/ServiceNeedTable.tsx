@@ -12,7 +12,8 @@ import { StaticChip } from 'lib-components/atoms/Chip'
 import { Table, Tbody, Td, Th, Thead, Tr } from 'lib-components/layout/Table'
 import {
   FixedSpaceColumn,
-  FixedSpaceRow
+  FixedSpaceRow,
+  MobileFixedSpaceRow
 } from 'lib-components/layout/flex-helpers'
 import {
   MobileOnly,
@@ -59,10 +60,10 @@ const ServiceNeedTableDesktop = ({ serviceNeeds }: ServiceNeedTableProps) => {
     <Table data-qa="service-need-table-desktop">
       <Thead>
         <Tr>
-          <Th minimalWidth>{t.children.serviceNeed.validity}</Th>
+          <Th $minimalWidth>{t.children.serviceNeed.validity}</Th>
           <Th>{t.children.serviceNeed.description}</Th>
           <Th>{t.children.serviceNeed.unit}</Th>
-          <Th minimalWidth>{t.children.serviceNeed.status}</Th>
+          <Th $minimalWidth>{t.children.serviceNeed.status}</Th>
         </Tr>
       </Thead>
       <Tbody>
@@ -79,7 +80,7 @@ const ServiceNeedTableDesktop = ({ serviceNeeds }: ServiceNeedTableProps) => {
                 key={serviceNeed.startDate.formatIso()}
                 data-qa="service-need-table-row-desktop"
               >
-                <Td minimalWidth data-qa="service-need-date-range">
+                <Td $minimalWidth data-qa="service-need-date-range">
                   {dateRange.format()}
                 </Td>
                 <Td data-qa="service-need-description">
@@ -93,8 +94,8 @@ const ServiceNeedTableDesktop = ({ serviceNeeds }: ServiceNeedTableProps) => {
                       }`}
                 </Td>
                 <Td data-qa="service-need-unit">{serviceNeed.unitName}</Td>
-                <Td minimalWidth>
-                  <StaticChip color={colorsByTense[tense]}>
+                <Td $minimalWidth>
+                  <StaticChip $color={colorsByTense[tense]}>
                     {t.common.tense[tense]}
                   </StaticChip>
                 </Td>
@@ -125,14 +126,14 @@ const ServiceNeedTableMobile = ({ serviceNeeds }: ServiceNeedTableProps) => {
               key={serviceNeed.startDate.formatIso()}
               data-qa="service-need-table-row-mobile"
             >
-              <FixedSpaceRow justifyContent="space-between">
+              <MobileFixedSpaceRow $justifyContent="space-between">
                 <strong data-qa="service-need-date-range">
                   {dateRange.format()}
                 </strong>
-                <StaticChip color={colorsByTense[tense]}>
+                <StaticChip $color={colorsByTense[tense]} $fitContent>
                   {t.common.tense[tense]}
                 </StaticChip>
-              </FixedSpaceRow>
+              </MobileFixedSpaceRow>
               <FixedSpaceRow data-qa="service-need-description">
                 {serviceNeed.isDefault && serviceNeed.hasNonDefaultOptions
                   ? t.children.serviceNeed.empty

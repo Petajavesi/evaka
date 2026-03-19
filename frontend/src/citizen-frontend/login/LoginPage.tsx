@@ -64,19 +64,21 @@ export default React.memo(function LoginPage() {
   return (
     <Main>
       <TabletAndDesktop>
-        <Gap size="L" />
+        <Gap $size="L" />
       </TabletAndDesktop>
       <MobileOnly>
-        <Gap size="xs" />
+        <Gap $size="xs" />
       </MobileOnly>
       <Container>
-        <FixedSpaceColumn spacing="s">
-          <ContentArea opaque>
-            <H1 noMargin>{i18n.loginPage.title}</H1>
+        <FixedSpaceColumn $spacing="s">
+          <ContentArea $opaque>
+            <H1 $noMargin $hyphenate>
+              {i18n.loginPage.title}
+            </H1>
             {systemNotifications.isSuccess &&
               systemNotifications.value.notification && (
                 <>
-                  <Gap size="m" />
+                  <Gap $size="m" />
                   <AlertBox
                     title={i18n.loginPage.systemNotification}
                     message={
@@ -103,14 +105,16 @@ export default React.memo(function LoginPage() {
                 </>
               )}
             <MobileOnly>
-              <Gap size="m" />
+              <Gap $size="m" />
               <AddToHomeScreenInstructions />
             </MobileOnly>
           </ContentArea>
-          <ContentArea opaque>
-            <H2 noMargin>{i18n.loginPage.login.title}</H2>
-            <Gap size="m" />
-            <P noMargin>
+          <ContentArea $opaque>
+            <H2 $noMargin $hyphenate>
+              {i18n.loginPage.login.title}
+            </H2>
+            <Gap $size="m" />
+            <P $noMargin>
               {i18n.loginPage.login.paragraph}
               <ParagraphInfoButton
                 aria-label={i18n.common.openExpandingInfo}
@@ -124,7 +128,7 @@ export default React.memo(function LoginPage() {
                 close={() => setShowInfoBoxText1(false)}
               />
             )}
-            <Gap size="s" />
+            <Gap $size="s" />
             <LinkButton
               href={getWeakLoginUri(unvalidatedNextPath ?? '/')}
               onClick={(e) => {
@@ -136,10 +140,10 @@ export default React.memo(function LoginPage() {
               {i18n.loginPage.login.link}
             </LinkButton>
           </ContentArea>
-          <ContentArea opaque>
-            <H2 noMargin>{i18n.loginPage.applying.title}</H2>
-            <Gap size="m" />
-            <P noMargin>
+          <ContentArea $opaque>
+            <H2 $noMargin>{i18n.loginPage.applying.title}</H2>
+            <Gap $size="m" />
+            <P $noMargin>
               {i18n.loginPage.applying.paragraph}
               <ParagraphInfoButton
                 aria-label={i18n.common.openExpandingInfo}
@@ -153,24 +157,24 @@ export default React.memo(function LoginPage() {
                 close={() => setShowInfoBoxText2(false)}
               />
             )}
-            <ul>
+            <UnorderedList>
               {i18n.loginPage.applying.infoBullets.map((item, index) => (
                 <li key={`bullet-item-${index}`}>{item}</li>
               ))}
-            </ul>
-            <Gap size="s" />
+            </UnorderedList>
+            <Gap $size="s" />
             <LinkButton
               href={getStrongLoginUri(unvalidatedNextPath ?? '/')}
               data-qa="strong-login"
             >
               {i18n.loginPage.applying.link}
             </LinkButton>
-            <Gap size="m" />
-            <P noMargin>{i18n.loginPage.applying.mapText}</P>
-            <Gap size="xs" />
+            <Gap $size="m" />
+            <P $noMargin>{i18n.loginPage.applying.mapText}</P>
+            <Gap $size="xs" />
             <MapLink to="/map">
               <FontAwesomeIcon icon={farMap} />
-              <Gap size="xs" horizontal />
+              <Gap $size="xs" $horizontal />
               {i18n.loginPage.applying.mapLink}
             </MapLink>
           </ContentArea>
@@ -212,13 +216,13 @@ const AddToHomeScreenInstructions = React.memo(
       <CollapsibleContentArea
         open={open === 'open'}
         toggleOpen={toggleOpen}
-        opaque={false}
+        $opaque={false}
         title={i18n.loginPage.addToHomeScreen.title}
-        paddingHorizontal="0"
-        paddingVertical="0"
+        $paddingHorizontal="0"
+        $paddingVertical="0"
       >
-        <P noMargin>{i18n.loginPage.addToHomeScreen.subTitle}</P>
-        <Gap size="s" />
+        <P $noMargin>{i18n.loginPage.addToHomeScreen.subTitle}</P>
+        <Gap $size="s" />
         <UnorderedList>
           <li>
             {i18n.loginPage.addToHomeScreen.ios}{' '}

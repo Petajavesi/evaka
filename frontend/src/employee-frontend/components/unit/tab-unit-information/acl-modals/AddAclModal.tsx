@@ -127,19 +127,17 @@ export default React.memo(function AddAclModal({
               employeeId: formData.selectedEmployee.value,
               body: {
                 role: formData.role,
-                update: {
-                  groupIds: permittedActions.includes('UPDATE_STAFF_GROUP_ACL')
-                    ? formData.selectedGroups
-                      ? formData.selectedGroups.map((g) => g.id)
-                      : null
-                    : null,
-                  hasStaffOccupancyEffect: permittedActions.includes(
-                    'UPSERT_STAFF_OCCUPANCY_COEFFICIENTS'
-                  )
-                    ? formData.hasStaffOccupancyEffect
-                    : null,
-                  endDate: formData.endDate
-                }
+                groupIds: permittedActions.includes('UPDATE_STAFF_GROUP_ACL')
+                  ? formData.selectedGroups
+                    ? formData.selectedGroups.map((g) => g.id)
+                    : null
+                  : null,
+                hasStaffOccupancyEffect: permittedActions.includes(
+                  'UPSERT_STAFF_OCCUPANCY_COEFFICIENTS'
+                )
+                  ? formData.hasStaffOccupancyEffect
+                  : null,
+                endDate: formData.endDate
               }
             }
           : cancelMutation
@@ -152,7 +150,7 @@ export default React.memo(function AddAclModal({
       data-qa="add-acl-modal"
     >
       <FixedSpaceColumn>
-        <FixedSpaceColumn spacing="xs">
+        <FixedSpaceColumn $spacing="xs">
           <Label>
             {`${i18n.unit.accessControl.addDaycareAclModal.role} *`}
           </Label>
@@ -170,7 +168,7 @@ export default React.memo(function AddAclModal({
           />
         </FixedSpaceColumn>
 
-        <FixedSpaceColumn spacing="xs">
+        <FixedSpaceColumn $spacing="xs">
           <Label>
             {`${i18n.unit.accessControl.addDaycareAclModal.employees} *`}
           </Label>
@@ -190,7 +188,7 @@ export default React.memo(function AddAclModal({
         </FixedSpaceColumn>
 
         {permittedActions.includes('UPDATE_STAFF_GROUP_ACL') && (
-          <FixedSpaceColumn spacing="xs">
+          <FixedSpaceColumn $spacing="xs">
             <Label>{i18n.unit.accessControl.chooseGroup}</Label>
             <MultiSelect
               data-qa="group-select"
@@ -221,7 +219,7 @@ export default React.memo(function AddAclModal({
           />
         )}
 
-        <FixedSpaceColumn spacing="xs">
+        <FixedSpaceColumn $spacing="xs">
           <Label>{`${i18n.unit.accessControl.aclEndDate}`}</Label>
           <DatePicker
             data-qa="end-date"

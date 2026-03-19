@@ -15,6 +15,8 @@ import fi.espoo.evaka.shared.auth.UserRole
 import fi.espoo.evaka.shared.auth.insertDaycareAclRow
 import fi.espoo.evaka.shared.auth.syncDaycareGroupAcl
 import fi.espoo.evaka.shared.db.Database
+import fi.espoo.evaka.shared.dev.DevCareArea
+import fi.espoo.evaka.shared.dev.DevDaycare
 import fi.espoo.evaka.shared.dev.DevDaycareGroup
 import fi.espoo.evaka.shared.dev.DevDaycareGroupAcl
 import fi.espoo.evaka.shared.dev.DevEmployee
@@ -27,9 +29,6 @@ import fi.espoo.evaka.shared.domain.BadRequest
 import fi.espoo.evaka.shared.domain.Forbidden
 import fi.espoo.evaka.shared.domain.HelsinkiDateTime
 import fi.espoo.evaka.shared.domain.MockEvakaClock
-import fi.espoo.evaka.testArea
-import fi.espoo.evaka.testDaycare
-import fi.espoo.evaka.testDaycare2
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -55,25 +54,23 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
     private val mobileUser2 = AuthenticatedUser.MobileDevice(MobileDeviceId(UUID.randomUUID()))
     private val today = LocalDate.of(2022, 2, 3)
     private val now = HelsinkiDateTime.of(today, LocalTime.of(14, 5, 1))
-    private val groupId = GroupId(UUID.randomUUID())
-    private val groupId2 = GroupId(UUID.randomUUID())
+    private val area = DevCareArea()
+    private val daycare = DevDaycare(areaId = area.id)
+    private val daycare2 = DevDaycare(areaId = area.id, name = "Test Daycare 2")
+    private val group = DevDaycareGroup(daycareId = daycare.id, name = "Group in daycare 1")
+    private val group2 = DevDaycareGroup(daycareId = daycare2.id, name = "Group in daycare 2")
 
     @BeforeEach
     fun beforeEach() {
-        val groupName = "Group in daycare 1"
-        val groupName2 = "Group in daycare 2"
-
         db.transaction { tx ->
-            tx.insert(testArea)
-            tx.insert(testDaycare)
-            tx.insert(testDaycare2)
-            tx.insert(DevDaycareGroup(id = groupId, daycareId = testDaycare.id, name = groupName))
-            tx.insert(
-                DevDaycareGroup(id = groupId2, daycareId = testDaycare2.id, name = groupName2)
-            )
+            tx.insert(area)
+            tx.insert(daycare)
+            tx.insert(daycare2)
+            tx.insert(group)
+            tx.insert(group2)
 
-            tx.createMobileDeviceToUnit(mobileUser.id, testDaycare.id)
-            tx.createMobileDeviceToUnit(mobileUser2.id, testDaycare2.id)
+            tx.createMobileDeviceToUnit(mobileUser.id, daycare.id)
+            tx.createMobileDeviceToUnit(mobileUser2.id, daycare2.id)
         }
     }
 
@@ -82,14 +79,14 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         db.transaction { tx ->
             val employee = DevEmployee()
             tx.insert(employee)
-            tx.insertDaycareAclRow(testDaycare.id, employee.id, UserRole.STAFF)
-            tx.insertDaycareAclRow(testDaycare2.id, employee.id, UserRole.STAFF)
-            tx.syncDaycareGroupAcl(testDaycare.id, employee.id, listOf(groupId), now)
-            tx.syncDaycareGroupAcl(testDaycare2.id, employee.id, listOf(groupId2), now)
+            tx.insertDaycareAclRow(daycare.id, employee.id, UserRole.STAFF)
+            tx.insertDaycareAclRow(daycare2.id, employee.id, UserRole.STAFF)
+            tx.syncDaycareGroupAcl(daycare.id, employee.id, listOf(group.id), now)
+            tx.syncDaycareGroupAcl(daycare2.id, employee.id, listOf(group2.id), now)
 
             tx.markStaffArrival(
                 employee.id,
-                groupId,
+                group.id,
                 HelsinkiDateTime.of(today, LocalTime.of(8, 0, 0)),
                 BigDecimal(7.0),
                 now,
@@ -97,11 +94,45 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
             )
         }
 
-        val attnInDaycare1 = fetchRealtimeStaffAttendances(testDaycare.id, mobileUser)
-        val attnInDaycare2 = fetchRealtimeStaffAttendances(testDaycare2.id, mobileUser2)
+        val attnInDaycare1 = fetchRealtimeStaffAttendances(daycare.id, mobileUser)
+        val attnInDaycare2 = fetchRealtimeStaffAttendances(daycare2.id, mobileUser2)
 
         assertNotNull(attnInDaycare1.staff.first().present)
         assertNull(attnInDaycare2.staff.first().present)
+    }
+
+    @Test
+    fun `Unit supervisor appears in staff attendance list without group ACL`() {
+        val employee = DevEmployee()
+        db.transaction { tx ->
+            tx.insert(employee)
+            tx.insertDaycareAclRow(daycare.id, employee.id, UserRole.UNIT_SUPERVISOR)
+        }
+
+        val attendances = fetchRealtimeStaffAttendances(daycare.id, mobileUser)
+        assertThat(attendances.staff).anyMatch { it.employeeId == employee.id }
+    }
+
+    @Test
+    fun `Unit supervisor can be marked as arrived without group ACL`() {
+        val pinCode = "1212"
+        val employee = DevEmployee()
+        db.transaction { tx ->
+            tx.insert(employee)
+            tx.insert(DevEmployeePin(userId = employee.id, pin = pinCode))
+            tx.insertDaycareAclRow(daycare.id, employee.id, UserRole.UNIT_SUPERVISOR)
+        }
+
+        val arrivalTime = HelsinkiDateTime.of(today, LocalTime.of(8, 0))
+        markArrival(arrivalTime, employee.id, pinCode, group.id, arrivalTime.toLocalTime(), null)
+        val attendances = fetchRealtimeStaffAttendances(daycare.id, mobileUser)
+        attendances.staff
+            .first { it.employeeId == employee.id }
+            .let {
+                assertEquals(group.id, it.present)
+                assertEquals(1, it.attendances.size)
+                assertEquals(StaffAttendanceType.PRESENT, it.attendances.first().type)
+            }
     }
 
     @Test
@@ -111,8 +142,8 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         db.transaction { tx ->
             tx.insert(employee)
             tx.insert(DevEmployeePin(userId = employee.id, pin = pinCode))
-            tx.insertDaycareAclRow(testDaycare.id, employee.id, UserRole.STAFF)
-            tx.syncDaycareGroupAcl(testDaycare.id, employee.id, listOf(groupId), now)
+            tx.insertDaycareAclRow(daycare.id, employee.id, UserRole.STAFF)
+            tx.syncDaycareGroupAcl(daycare.id, employee.id, listOf(group.id), now)
         }
 
         val arrivalTime = HelsinkiDateTime.of(today, LocalTime.of(8, 0))
@@ -120,15 +151,15 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
             arrivalTime,
             employee.id,
             pinCode,
-            groupId,
+            group.id,
             arrivalTime.toLocalTime(),
             null,
             hasStaffOccupancyEffect = false,
         )
-        val attendances = fetchRealtimeStaffAttendances(testDaycare.id, mobileUser)
+        val attendances = fetchRealtimeStaffAttendances(daycare.id, mobileUser)
         attendances.staff.first().let {
             assertEquals(employee.id, it.employeeId)
-            assertEquals(groupId, it.present)
+            assertEquals(group.id, it.present)
             assertEquals(1, it.attendances.size)
             assertEquals(arrivalTime, it.attendances.first().arrived)
             assertEquals(null, it.attendances.first().departed)
@@ -147,8 +178,8 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         db.transaction { tx ->
             tx.insert(employee)
             tx.insert(DevEmployeePin(userId = employee.id, pin = pinCode))
-            tx.insertDaycareAclRow(testDaycare.id, employee.id, UserRole.STAFF)
-            tx.syncDaycareGroupAcl(testDaycare.id, employee.id, listOf(groupId), now)
+            tx.insertDaycareAclRow(daycare.id, employee.id, UserRole.STAFF)
+            tx.syncDaycareGroupAcl(daycare.id, employee.id, listOf(group.id), now)
         }
 
         val arrivalTime = HelsinkiDateTime.of(today, LocalTime.of(8, 0))
@@ -156,12 +187,12 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
             arrivalTime,
             employee.id,
             pinCode,
-            groupId,
+            group.id,
             arrivalTime.toLocalTime(),
             null,
             hasStaffOccupancyEffect = true,
         )
-        val attendances = fetchRealtimeStaffAttendances(testDaycare.id, mobileUser)
+        val attendances = fetchRealtimeStaffAttendances(daycare.id, mobileUser)
         attendances.staff.first().let {
             assertEquals(
                 occupancyCoefficientSeven.stripTrailingZeros(),
@@ -177,22 +208,22 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         db.transaction { tx ->
             tx.insert(employee)
             tx.insert(DevEmployeePin(userId = employee.id, pin = pinCode))
-            tx.insertDaycareAclRow(testDaycare.id, employee.id, UserRole.STAFF)
-            tx.syncDaycareGroupAcl(testDaycare.id, employee.id, listOf(groupId), now)
+            tx.insertDaycareAclRow(daycare.id, employee.id, UserRole.STAFF)
+            tx.syncDaycareGroupAcl(daycare.id, employee.id, listOf(group.id), now)
         }
 
         val arrivalTime = HelsinkiDateTime.of(today, LocalTime.of(8, 0))
-        markArrival(arrivalTime, employee.id, pinCode, groupId, arrivalTime.toLocalTime(), null)
+        markArrival(arrivalTime, employee.id, pinCode, group.id, arrivalTime.toLocalTime(), null)
         val departureTime = HelsinkiDateTime.of(today, LocalTime.of(12, 0))
         markDeparture(
             departureTime,
             employee.id,
             pinCode,
-            groupId,
+            group.id,
             departureTime.toLocalTime(),
             null,
         )
-        val attendances = fetchRealtimeStaffAttendances(testDaycare.id, mobileUser)
+        val attendances = fetchRealtimeStaffAttendances(daycare.id, mobileUser)
         attendances.staff.first().let {
             assertEquals(employee.id, it.employeeId)
             assertEquals(null, it.present)
@@ -212,8 +243,8 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         db.transaction { tx ->
             tx.insert(employee)
             tx.insert(DevEmployeePin(userId = employee.id, pin = pinCode))
-            tx.insertDaycareAclRow(testDaycare.id, employee.id, UserRole.STAFF)
-            tx.syncDaycareGroupAcl(testDaycare.id, employee.id, listOf(groupId), now)
+            tx.insertDaycareAclRow(daycare.id, employee.id, UserRole.STAFF)
+            tx.syncDaycareGroupAcl(daycare.id, employee.id, listOf(group.id), now)
             tx.insert(
                 DevStaffAttendancePlan(
                     employeeId = employee.id,
@@ -223,11 +254,11 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
             )
         }
 
-        markArrival(plannedStart, employee.id, pinCode, groupId, plannedStart.toLocalTime(), null)
-        val attendances = fetchRealtimeStaffAttendances(testDaycare.id, mobileUser)
+        markArrival(plannedStart, employee.id, pinCode, group.id, plannedStart.toLocalTime(), null)
+        val attendances = fetchRealtimeStaffAttendances(daycare.id, mobileUser)
         attendances.staff.first().let {
             assertEquals(employee.id, it.employeeId)
-            assertEquals(groupId, it.present)
+            assertEquals(group.id, it.present)
             assertEquals(1, it.attendances.size)
             assertEquals(plannedStart, it.attendances.first().arrived)
             assertEquals(null, it.attendances.first().departed)
@@ -244,8 +275,8 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         db.transaction { tx ->
             tx.insert(employee)
             tx.insert(DevEmployeePin(userId = employee.id, pin = pinCode))
-            tx.insertDaycareAclRow(testDaycare.id, employee.id, UserRole.STAFF)
-            tx.syncDaycareGroupAcl(testDaycare.id, employee.id, listOf(groupId), now)
+            tx.insertDaycareAclRow(daycare.id, employee.id, UserRole.STAFF)
+            tx.syncDaycareGroupAcl(daycare.id, employee.id, listOf(group.id), now)
             tx.insert(
                 DevStaffAttendancePlan(
                     employeeId = employee.id,
@@ -255,9 +286,9 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
             )
         }
 
-        markArrival(plannedStart, employee.id, pinCode, groupId, plannedStart.toLocalTime(), null)
-        markDeparture(plannedEnd, employee.id, pinCode, groupId, plannedEnd.toLocalTime(), null)
-        val attendances = fetchRealtimeStaffAttendances(testDaycare.id, mobileUser)
+        markArrival(plannedStart, employee.id, pinCode, group.id, plannedStart.toLocalTime(), null)
+        markDeparture(plannedEnd, employee.id, pinCode, group.id, plannedEnd.toLocalTime(), null)
+        val attendances = fetchRealtimeStaffAttendances(daycare.id, mobileUser)
         attendances.staff.first().let {
             assertEquals(employee.id, it.employeeId)
             assertEquals(null, it.present)
@@ -277,8 +308,8 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         db.transaction { tx ->
             tx.insert(employee)
             tx.insert(DevEmployeePin(userId = employee.id, pin = pinCode))
-            tx.insertDaycareAclRow(testDaycare.id, employee.id, UserRole.STAFF)
-            tx.syncDaycareGroupAcl(testDaycare.id, employee.id, listOf(groupId), now)
+            tx.insertDaycareAclRow(daycare.id, employee.id, UserRole.STAFF)
+            tx.syncDaycareGroupAcl(daycare.id, employee.id, listOf(group.id), now)
             tx.insert(
                 DevStaffAttendancePlan(
                     employeeId = employee.id,
@@ -289,11 +320,11 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         }
 
         val arrivalTime = plannedStart.plusMinutes(5)
-        markArrival(arrivalTime, employee.id, pinCode, groupId, arrivalTime.toLocalTime(), null)
-        val attendances = fetchRealtimeStaffAttendances(testDaycare.id, mobileUser)
+        markArrival(arrivalTime, employee.id, pinCode, group.id, arrivalTime.toLocalTime(), null)
+        val attendances = fetchRealtimeStaffAttendances(daycare.id, mobileUser)
         attendances.staff.first().let {
             assertEquals(employee.id, it.employeeId)
-            assertEquals(groupId, it.present)
+            assertEquals(group.id, it.present)
             assertEquals(1, it.attendances.size)
             assertEquals(arrivalTime, it.attendances.first().arrived)
             assertEquals(null, it.attendances.first().departed)
@@ -310,8 +341,8 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         db.transaction { tx ->
             tx.insert(employee)
             tx.insert(DevEmployeePin(userId = employee.id, pin = pinCode))
-            tx.insertDaycareAclRow(testDaycare.id, employee.id, UserRole.STAFF)
-            tx.syncDaycareGroupAcl(testDaycare.id, employee.id, listOf(groupId), now)
+            tx.insertDaycareAclRow(daycare.id, employee.id, UserRole.STAFF)
+            tx.syncDaycareGroupAcl(daycare.id, employee.id, listOf(group.id), now)
             tx.insert(
                 DevStaffAttendancePlan(
                     employeeId = employee.id,
@@ -322,17 +353,17 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         }
 
         val arrivalTime = plannedStart.minusMinutes(5)
-        markArrival(arrivalTime, employee.id, pinCode, groupId, arrivalTime.toLocalTime(), null)
+        markArrival(arrivalTime, employee.id, pinCode, group.id, arrivalTime.toLocalTime(), null)
         val departureTime = plannedEnd.plusMinutes(5)
         markDeparture(
             departureTime,
             employee.id,
             pinCode,
-            groupId,
+            group.id,
             departureTime.toLocalTime(),
             null,
         )
-        val attendances = fetchRealtimeStaffAttendances(testDaycare.id, mobileUser)
+        val attendances = fetchRealtimeStaffAttendances(daycare.id, mobileUser)
         attendances.staff.first().let {
             assertEquals(employee.id, it.employeeId)
             assertEquals(null, it.present)
@@ -352,8 +383,8 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         db.transaction { tx ->
             tx.insert(employee)
             tx.insert(DevEmployeePin(userId = employee.id, pin = pinCode))
-            tx.insertDaycareAclRow(testDaycare.id, employee.id, UserRole.STAFF)
-            tx.syncDaycareGroupAcl(testDaycare.id, employee.id, listOf(groupId), now)
+            tx.insertDaycareAclRow(daycare.id, employee.id, UserRole.STAFF)
+            tx.syncDaycareGroupAcl(daycare.id, employee.id, listOf(group.id), now)
             tx.insert(
                 DevStaffAttendancePlan(
                     employeeId = employee.id,
@@ -365,7 +396,14 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
 
         val arrivalTime = plannedStart.minusMinutes(20)
         assertThrows<BadRequest> {
-            markArrival(arrivalTime, employee.id, pinCode, groupId, arrivalTime.toLocalTime(), null)
+            markArrival(
+                arrivalTime,
+                employee.id,
+                pinCode,
+                group.id,
+                arrivalTime.toLocalTime(),
+                null,
+            )
         }
     }
 
@@ -377,15 +415,15 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         db.transaction { tx ->
             tx.insert(employee)
             tx.insert(DevEmployeePin(userId = employee.id, pin = pinCode))
-            tx.insertDaycareAclRow(testDaycare.id, employee.id, UserRole.STAFF)
-            tx.syncDaycareGroupAcl(testDaycare.id, employee.id, listOf(groupId), now)
+            tx.insertDaycareAclRow(daycare.id, employee.id, UserRole.STAFF)
+            tx.syncDaycareGroupAcl(daycare.id, employee.id, listOf(group.id), now)
         }
 
         val lastLoginBeforeArrival = db.read { db -> db.getEmployeeLastLogin(employee.id) }
         assertEquals(initialLastLogin, lastLoginBeforeArrival)
 
         val arrivalTime = HelsinkiDateTime.of(today, LocalTime.of(8, 0))
-        markArrival(arrivalTime, employee.id, pinCode, groupId, arrivalTime.toLocalTime(), null)
+        markArrival(arrivalTime, employee.id, pinCode, group.id, arrivalTime.toLocalTime(), null)
 
         val lastLogin = db.read { db -> db.getEmployeeLastLogin(employee.id) }
         assertEquals(arrivalTime, lastLogin)
@@ -403,8 +441,8 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         db.transaction { tx ->
             tx.insert(employee)
             tx.insert(DevEmployeePin(userId = employee.id, pin = pinCode))
-            tx.insertDaycareAclRow(testDaycare.id, employee.id, UserRole.STAFF)
-            tx.syncDaycareGroupAcl(testDaycare.id, employee.id, listOf(groupId), now)
+            tx.insertDaycareAclRow(daycare.id, employee.id, UserRole.STAFF)
+            tx.syncDaycareGroupAcl(daycare.id, employee.id, listOf(group.id), now)
             tx.insert(
                 DevStaffAttendancePlan(
                     employeeId = employee.id,
@@ -415,11 +453,11 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         }
 
         val arrivalTime = plannedStart.minusMinutes(20)
-        markArrival(arrivalTime, employee.id, pinCode, groupId, arrivalTime.toLocalTime(), type)
-        val attendances = fetchRealtimeStaffAttendances(testDaycare.id, mobileUser)
+        markArrival(arrivalTime, employee.id, pinCode, group.id, arrivalTime.toLocalTime(), type)
+        val attendances = fetchRealtimeStaffAttendances(daycare.id, mobileUser)
         attendances.staff.first().let {
             assertEquals(employee.id, it.employeeId)
-            assertEquals(groupId, it.present)
+            assertEquals(group.id, it.present)
             assertEquals(1, it.attendances.size)
             assertEquals(arrivalTime, it.attendances.first().arrived)
             assertEquals(null, it.attendances.first().departed)
@@ -439,8 +477,8 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         db.transaction { tx ->
             tx.insert(employee)
             tx.insert(DevEmployeePin(userId = employee.id, pin = pinCode))
-            tx.insertDaycareAclRow(testDaycare.id, employee.id, UserRole.STAFF)
-            tx.syncDaycareGroupAcl(testDaycare.id, employee.id, listOf(groupId), now)
+            tx.insertDaycareAclRow(daycare.id, employee.id, UserRole.STAFF)
+            tx.syncDaycareGroupAcl(daycare.id, employee.id, listOf(group.id), now)
             tx.insert(
                 DevStaffAttendancePlan(
                     employeeId = employee.id,
@@ -452,7 +490,14 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
 
         val arrivalTime = plannedStart.minusMinutes(20)
         assertThrows<BadRequest> {
-            markArrival(arrivalTime, employee.id, pinCode, groupId, arrivalTime.toLocalTime(), type)
+            markArrival(
+                arrivalTime,
+                employee.id,
+                pinCode,
+                group.id,
+                arrivalTime.toLocalTime(),
+                type,
+            )
         }
     }
 
@@ -465,8 +510,8 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         db.transaction { tx ->
             tx.insert(employee)
             tx.insert(DevEmployeePin(userId = employee.id, pin = pinCode))
-            tx.insertDaycareAclRow(testDaycare.id, employee.id, UserRole.STAFF)
-            tx.syncDaycareGroupAcl(testDaycare.id, employee.id, listOf(groupId), now)
+            tx.insertDaycareAclRow(daycare.id, employee.id, UserRole.STAFF)
+            tx.syncDaycareGroupAcl(daycare.id, employee.id, listOf(group.id), now)
             tx.insert(
                 DevStaffAttendancePlan(
                     employeeId = employee.id,
@@ -477,7 +522,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         }
 
         val arrivalTime = plannedStart.plusMinutes(35)
-        markArrival(arrivalTime, employee.id, pinCode, groupId, arrivalTime.toLocalTime(), null)
+        markArrival(arrivalTime, employee.id, pinCode, group.id, arrivalTime.toLocalTime(), null)
     }
 
     @Test
@@ -489,8 +534,8 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         db.transaction { tx ->
             tx.insert(employee)
             tx.insert(DevEmployeePin(userId = employee.id, pin = pinCode))
-            tx.insertDaycareAclRow(testDaycare.id, employee.id, UserRole.STAFF)
-            tx.syncDaycareGroupAcl(testDaycare.id, employee.id, listOf(groupId), now)
+            tx.insertDaycareAclRow(daycare.id, employee.id, UserRole.STAFF)
+            tx.syncDaycareGroupAcl(daycare.id, employee.id, listOf(group.id), now)
             tx.insert(
                 DevStaffAttendancePlan(
                     employeeId = employee.id,
@@ -505,14 +550,14 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
             arrivalTime,
             employee.id,
             pinCode,
-            groupId,
+            group.id,
             arrivalTime.toLocalTime(),
             StaffAttendanceType.JUSTIFIED_CHANGE,
         )
-        val attendances = fetchRealtimeStaffAttendances(testDaycare.id, mobileUser)
+        val attendances = fetchRealtimeStaffAttendances(daycare.id, mobileUser)
         attendances.staff.first().let {
             assertEquals(employee.id, it.employeeId)
-            assertEquals(groupId, it.present)
+            assertEquals(group.id, it.present)
             assertEquals(1, it.attendances.size)
             assertEquals(arrivalTime, it.attendances.first().arrived)
             assertEquals(null, it.attendances.first().departed)
@@ -532,8 +577,8 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         db.transaction { tx ->
             tx.insert(employee)
             tx.insert(DevEmployeePin(userId = employee.id, pin = pinCode))
-            tx.insertDaycareAclRow(testDaycare.id, employee.id, UserRole.STAFF)
-            tx.syncDaycareGroupAcl(testDaycare.id, employee.id, listOf(groupId), now)
+            tx.insertDaycareAclRow(daycare.id, employee.id, UserRole.STAFF)
+            tx.syncDaycareGroupAcl(daycare.id, employee.id, listOf(group.id), now)
             tx.insert(
                 DevStaffAttendancePlan(
                     employeeId = employee.id,
@@ -544,11 +589,11 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         }
 
         val arrivalTime = plannedStart.plusMinutes(20)
-        markArrival(arrivalTime, employee.id, pinCode, groupId, arrivalTime.toLocalTime(), type)
-        val attendances = fetchRealtimeStaffAttendances(testDaycare.id, mobileUser)
+        markArrival(arrivalTime, employee.id, pinCode, group.id, arrivalTime.toLocalTime(), type)
+        val attendances = fetchRealtimeStaffAttendances(daycare.id, mobileUser)
         attendances.staff.first().let {
             assertEquals(employee.id, it.employeeId)
-            assertEquals(groupId, it.present)
+            assertEquals(group.id, it.present)
             assertEquals(2, it.attendances.size)
             assertEquals(plannedStart, it.attendances.first().arrived)
             assertEquals(arrivalTime, it.attendances.first().departed)
@@ -571,8 +616,8 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         db.transaction { tx ->
             tx.insert(employee)
             tx.insert(DevEmployeePin(userId = employee.id, pin = pinCode))
-            tx.insertDaycareAclRow(testDaycare.id, employee.id, UserRole.STAFF)
-            tx.syncDaycareGroupAcl(testDaycare.id, employee.id, listOf(groupId), now)
+            tx.insertDaycareAclRow(daycare.id, employee.id, UserRole.STAFF)
+            tx.syncDaycareGroupAcl(daycare.id, employee.id, listOf(group.id), now)
             tx.insert(
                 DevStaffAttendancePlan(
                     employeeId = employee.id,
@@ -584,7 +629,14 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
 
         val arrivalTime = plannedStart.plusMinutes(20)
         assertThrows<BadRequest> {
-            markArrival(arrivalTime, employee.id, pinCode, groupId, arrivalTime.toLocalTime(), type)
+            markArrival(
+                arrivalTime,
+                employee.id,
+                pinCode,
+                group.id,
+                arrivalTime.toLocalTime(),
+                type,
+            )
         }
     }
 
@@ -597,8 +649,8 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         db.transaction { tx ->
             tx.insert(employee)
             tx.insert(DevEmployeePin(userId = employee.id, pin = pinCode))
-            tx.insertDaycareAclRow(testDaycare.id, employee.id, UserRole.STAFF)
-            tx.syncDaycareGroupAcl(testDaycare.id, employee.id, listOf(groupId), now)
+            tx.insertDaycareAclRow(daycare.id, employee.id, UserRole.STAFF)
+            tx.syncDaycareGroupAcl(daycare.id, employee.id, listOf(group.id), now)
             tx.insert(
                 DevStaffAttendancePlan(
                     employeeId = employee.id,
@@ -609,13 +661,13 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         }
 
         val arrivalTime = plannedStart
-        markArrival(arrivalTime, employee.id, pinCode, groupId, arrivalTime.toLocalTime(), null)
+        markArrival(arrivalTime, employee.id, pinCode, group.id, arrivalTime.toLocalTime(), null)
         val departureTime = plannedEnd.minusMinutes(6)
         markDeparture(
             departureTime,
             employee.id,
             pinCode,
-            groupId,
+            group.id,
             departureTime.toLocalTime(),
             null,
         )
@@ -630,8 +682,8 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         db.transaction { tx ->
             tx.insert(employee)
             tx.insert(DevEmployeePin(userId = employee.id, pin = pinCode))
-            tx.insertDaycareAclRow(testDaycare.id, employee.id, UserRole.STAFF)
-            tx.syncDaycareGroupAcl(testDaycare.id, employee.id, listOf(groupId), now)
+            tx.insertDaycareAclRow(daycare.id, employee.id, UserRole.STAFF)
+            tx.syncDaycareGroupAcl(daycare.id, employee.id, listOf(group.id), now)
             tx.insert(
                 DevStaffAttendancePlan(
                     employeeId = employee.id,
@@ -642,17 +694,17 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         }
 
         val arrivalTime = plannedStart
-        markArrival(arrivalTime, employee.id, pinCode, groupId, arrivalTime.toLocalTime(), null)
+        markArrival(arrivalTime, employee.id, pinCode, group.id, arrivalTime.toLocalTime(), null)
         val departureTime = plannedEnd.minusMinutes(20)
         markDeparture(
             plannedEnd,
             employee.id,
             pinCode,
-            groupId,
+            group.id,
             departureTime.toLocalTime(),
             StaffAttendanceType.JUSTIFIED_CHANGE,
         )
-        val attendances = fetchRealtimeStaffAttendances(testDaycare.id, mobileUser)
+        val attendances = fetchRealtimeStaffAttendances(daycare.id, mobileUser)
         attendances.staff.first().let {
             assertEquals(employee.id, it.employeeId)
             assertEquals(null, it.present)
@@ -672,8 +724,8 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         db.transaction { tx ->
             tx.insert(employee)
             tx.insert(DevEmployeePin(userId = employee.id, pin = pinCode))
-            tx.insertDaycareAclRow(testDaycare.id, employee.id, UserRole.STAFF)
-            tx.syncDaycareGroupAcl(testDaycare.id, employee.id, listOf(groupId), now)
+            tx.insertDaycareAclRow(daycare.id, employee.id, UserRole.STAFF)
+            tx.syncDaycareGroupAcl(daycare.id, employee.id, listOf(group.id), now)
             tx.insert(
                 DevStaffAttendancePlan(
                     employeeId = employee.id,
@@ -684,12 +736,12 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         }
 
         val arrivalTime = plannedStart.plusMinutes(90)
-        markArrival(arrivalTime, employee.id, pinCode, groupId, arrivalTime.toLocalTime(), null)
+        markArrival(arrivalTime, employee.id, pinCode, group.id, arrivalTime.toLocalTime(), null)
 
-        val attendances = fetchRealtimeStaffAttendances(testDaycare.id, mobileUser)
+        val attendances = fetchRealtimeStaffAttendances(daycare.id, mobileUser)
         attendances.staff.first().let {
             assertEquals(employee.id, it.employeeId)
-            assertEquals(groupId, it.present)
+            assertEquals(group.id, it.present)
             assertEquals(1, it.attendances.size)
             assertEquals(arrivalTime, it.attendances.first().arrived)
             assertEquals(null, it.attendances.first().departed)
@@ -709,8 +761,8 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         db.transaction { tx ->
             tx.insert(employee)
             tx.insert(DevEmployeePin(userId = employee.id, pin = pinCode))
-            tx.insertDaycareAclRow(testDaycare.id, employee.id, UserRole.STAFF)
-            tx.syncDaycareGroupAcl(testDaycare.id, employee.id, listOf(groupId), now)
+            tx.insertDaycareAclRow(daycare.id, employee.id, UserRole.STAFF)
+            tx.syncDaycareGroupAcl(daycare.id, employee.id, listOf(group.id), now)
             tx.insert(
                 DevStaffAttendancePlan(
                     employeeId = employee.id,
@@ -721,17 +773,17 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         }
 
         val arrivalTime = plannedStart
-        markArrival(arrivalTime, employee.id, pinCode, groupId, arrivalTime.toLocalTime(), null)
+        markArrival(arrivalTime, employee.id, pinCode, group.id, arrivalTime.toLocalTime(), null)
         val departureTime = plannedEnd.minusMinutes(20)
         markDeparture(
             departureTime,
             employee.id,
             pinCode,
-            groupId,
+            group.id,
             departureTime.toLocalTime(),
             type,
         )
-        val attendances = fetchRealtimeStaffAttendances(testDaycare.id, mobileUser)
+        val attendances = fetchRealtimeStaffAttendances(daycare.id, mobileUser)
         attendances.staff.first().let {
             assertEquals(employee.id, it.employeeId)
             assertEquals(null, it.present)
@@ -758,8 +810,8 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         db.transaction { tx ->
             tx.insert(employee)
             tx.insert(DevEmployeePin(userId = employee.id, pin = pinCode))
-            tx.insertDaycareAclRow(testDaycare.id, employee.id, UserRole.STAFF)
-            tx.syncDaycareGroupAcl(testDaycare.id, employee.id, listOf(groupId), now)
+            tx.insertDaycareAclRow(daycare.id, employee.id, UserRole.STAFF)
+            tx.syncDaycareGroupAcl(daycare.id, employee.id, listOf(group.id), now)
             tx.insert(
                 DevStaffAttendancePlan(
                     employeeId = employee.id,
@@ -770,14 +822,14 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         }
 
         val arrivalTime = plannedStart
-        markArrival(arrivalTime, employee.id, pinCode, groupId, arrivalTime.toLocalTime(), null)
+        markArrival(arrivalTime, employee.id, pinCode, group.id, arrivalTime.toLocalTime(), null)
         val departureTime = plannedEnd.minusMinutes(20)
         assertThrows<BadRequest> {
             markDeparture(
                 departureTime,
                 employee.id,
                 pinCode,
-                groupId,
+                group.id,
                 departureTime.toLocalTime(),
                 type,
             )
@@ -793,8 +845,8 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         db.transaction { tx ->
             tx.insert(employee)
             tx.insert(DevEmployeePin(userId = employee.id, pin = pinCode))
-            tx.insertDaycareAclRow(testDaycare.id, employee.id, UserRole.STAFF)
-            tx.syncDaycareGroupAcl(testDaycare.id, employee.id, listOf(groupId), now)
+            tx.insertDaycareAclRow(daycare.id, employee.id, UserRole.STAFF)
+            tx.syncDaycareGroupAcl(daycare.id, employee.id, listOf(group.id), now)
             tx.insert(
                 DevStaffAttendancePlan(
                     employeeId = employee.id,
@@ -805,13 +857,13 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         }
 
         val arrivalTime = plannedStart
-        markArrival(arrivalTime, employee.id, pinCode, groupId, arrivalTime.toLocalTime(), null)
+        markArrival(arrivalTime, employee.id, pinCode, group.id, arrivalTime.toLocalTime(), null)
         val departureTime = plannedEnd.plusMinutes(20)
         markDeparture(
             departureTime,
             employee.id,
             pinCode,
-            groupId,
+            group.id,
             departureTime.toLocalTime(),
             null,
         )
@@ -829,8 +881,8 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         db.transaction { tx ->
             tx.insert(employee)
             tx.insert(DevEmployeePin(userId = employee.id, pin = pinCode))
-            tx.insertDaycareAclRow(testDaycare.id, employee.id, UserRole.STAFF)
-            tx.syncDaycareGroupAcl(testDaycare.id, employee.id, listOf(groupId), now)
+            tx.insertDaycareAclRow(daycare.id, employee.id, UserRole.STAFF)
+            tx.syncDaycareGroupAcl(daycare.id, employee.id, listOf(group.id), now)
             tx.insert(
                 DevStaffAttendancePlan(
                     employeeId = employee.id,
@@ -841,17 +893,17 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         }
 
         val arrivalTime = plannedStart
-        markArrival(arrivalTime, employee.id, pinCode, groupId, arrivalTime.toLocalTime(), null)
+        markArrival(arrivalTime, employee.id, pinCode, group.id, arrivalTime.toLocalTime(), null)
         val departureTime = plannedEnd.plusMinutes(20)
         markDeparture(
             departureTime,
             employee.id,
             pinCode,
-            groupId,
+            group.id,
             departureTime.toLocalTime(),
             type,
         )
-        val attendances = fetchRealtimeStaffAttendances(testDaycare.id, mobileUser)
+        val attendances = fetchRealtimeStaffAttendances(daycare.id, mobileUser)
         attendances.staff.first().let {
             assertEquals(employee.id, it.employeeId)
             assertEquals(null, it.present)
@@ -874,8 +926,8 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         db.transaction { tx ->
             tx.insert(employee)
             tx.insert(DevEmployeePin(userId = employee.id, pin = pinCode))
-            tx.insertDaycareAclRow(testDaycare.id, employee.id, UserRole.STAFF)
-            tx.syncDaycareGroupAcl(testDaycare.id, employee.id, listOf(groupId), now)
+            tx.insertDaycareAclRow(daycare.id, employee.id, UserRole.STAFF)
+            tx.syncDaycareGroupAcl(daycare.id, employee.id, listOf(group.id), now)
             tx.insert(
                 DevStaffAttendancePlan(
                     employeeId = employee.id,
@@ -886,14 +938,14 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         }
 
         val arrivalTime = plannedStart
-        markArrival(arrivalTime, employee.id, pinCode, groupId, arrivalTime.toLocalTime(), null)
+        markArrival(arrivalTime, employee.id, pinCode, group.id, arrivalTime.toLocalTime(), null)
         val departureTime = plannedEnd.plusMinutes(20)
         assertThrows<BadRequest> {
             markDeparture(
                 departureTime,
                 employee.id,
                 pinCode,
-                groupId,
+                group.id,
                 departureTime.toLocalTime(),
                 type,
             )
@@ -909,8 +961,8 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
         db.transaction { tx ->
             tx.insert(employee)
             tx.insert(DevEmployeePin(userId = employee.id, pin = pinCode))
-            tx.insertDaycareAclRow(testDaycare.id, employee.id, UserRole.STAFF)
-            tx.syncDaycareGroupAcl(testDaycare.id, employee.id, listOf(groupId), now)
+            tx.insertDaycareAclRow(daycare.id, employee.id, UserRole.STAFF)
+            tx.syncDaycareGroupAcl(daycare.id, employee.id, listOf(group.id), now)
             tx.insert(
                 DevStaffAttendancePlan(
                     employeeId = employee.id,
@@ -925,7 +977,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
             firstArrivalTime,
             employee.id,
             pinCode,
-            groupId,
+            group.id,
             firstArrivalTime.toLocalTime(),
             StaffAttendanceType.OVERTIME,
         )
@@ -934,7 +986,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
             firstDepartureTime,
             employee.id,
             pinCode,
-            groupId,
+            group.id,
             firstDepartureTime.toLocalTime(),
             StaffAttendanceType.OTHER_WORK,
         )
@@ -943,7 +995,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
             secondArrivalTime,
             employee.id,
             pinCode,
-            groupId,
+            group.id,
             secondArrivalTime.toLocalTime(),
             StaffAttendanceType.OTHER_WORK,
         )
@@ -952,7 +1004,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
             secondDepartureTime,
             employee.id,
             pinCode,
-            groupId,
+            group.id,
             secondDepartureTime.toLocalTime(),
             StaffAttendanceType.TRAINING,
         )
@@ -961,7 +1013,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
             thirdArrivalTime,
             employee.id,
             pinCode,
-            groupId,
+            group.id,
             thirdArrivalTime.toLocalTime(),
             StaffAttendanceType.TRAINING,
         )
@@ -970,7 +1022,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
             thirdDepartureTime,
             employee.id,
             pinCode,
-            groupId,
+            group.id,
             thirdDepartureTime.toLocalTime(),
             null,
         )
@@ -979,7 +1031,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
             fourthArrivalTime,
             employee.id,
             pinCode,
-            groupId,
+            group.id,
             fourthArrivalTime.toLocalTime(),
             null,
         )
@@ -988,11 +1040,11 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
             fourthDepartureTime,
             employee.id,
             pinCode,
-            groupId,
+            group.id,
             fourthDepartureTime.toLocalTime(),
             null,
         )
-        val attendances = fetchRealtimeStaffAttendances(testDaycare.id, mobileUser)
+        val attendances = fetchRealtimeStaffAttendances(daycare.id, mobileUser)
         assertEquals(1, attendances.staff.size)
         attendances.staff.first().let {
             assertEquals(employee.id, it.employeeId)
@@ -1022,12 +1074,8 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
     private fun addEmployee(): EmployeeId {
         return db.transaction { tx ->
             val employeeId = tx.insert(DevEmployee())
-            tx.insertDaycareAclRow(
-                daycareId = testDaycare.id,
-                employeeId = employeeId,
-                UserRole.STAFF,
-            )
-            tx.insert(DevDaycareGroupAcl(groupId = groupId, employeeId = employeeId))
+            tx.insertDaycareAclRow(daycareId = daycare.id, employeeId = employeeId, UserRole.STAFF)
+            tx.insert(DevDaycareGroupAcl(groupId = group.id, employeeId = employeeId))
             tx.insert(DevEmployeePin(userId = employeeId, pin = "1122"))
             employeeId
         }
@@ -1042,7 +1090,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
                 dbInstance(),
                 mobileUser,
                 MockEvakaClock(now),
-                testDaycare.id,
+                daycare.id,
                 MobileRealtimeStaffAttendanceController.StaffAttendanceUpdateRequest(
                     employeeId = employeeId,
                     pinCode = "1122",
@@ -1051,7 +1099,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
                         listOf(
                             RealtimeStaffAttendanceController.StaffAttendanceUpsert(
                                 id = null,
-                                groupId = groupId,
+                                groupId = group.id,
                                 arrived = now,
                                 departed = null,
                                 type = StaffAttendanceType.PRESENT,
@@ -1067,7 +1115,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
                 dbInstance(),
                 mobileUser,
                 MockEvakaClock(now),
-                testDaycare.id,
+                daycare.id,
             )
         assertThat(attendances.staff).hasSize(1)
         assertThat(attendances.staff.first().attendances).hasSize(1)
@@ -1079,7 +1127,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
             assertEquals(now, it.arrived)
             assertEquals(null, it.departed)
             assertEquals(StaffAttendanceType.PRESENT, it.type)
-            assertEquals(groupId, it.groupId)
+            assertEquals(group.id, it.groupId)
         }
 
         val staffAttendanceId = insertResponse.inserted.first()
@@ -1089,7 +1137,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
                 dbInstance(),
                 mobileUser,
                 MockEvakaClock(now),
-                testDaycare.id,
+                daycare.id,
                 MobileRealtimeStaffAttendanceController.StaffAttendanceUpdateRequest(
                     employeeId = employeeId,
                     pinCode = "1122",
@@ -1098,7 +1146,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
                         listOf(
                             RealtimeStaffAttendanceController.StaffAttendanceUpsert(
                                 id = staffAttendanceId,
-                                groupId = groupId,
+                                groupId = group.id,
                                 arrived = now.minusHours(1),
                                 departed = now,
                                 type = StaffAttendanceType.JUSTIFIED_CHANGE,
@@ -1114,7 +1162,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
                 dbInstance(),
                 mobileUser,
                 MockEvakaClock(now),
-                testDaycare.id,
+                daycare.id,
             )
         assertThat(attendances2.staff).hasSize(1)
         assertThat(attendances2.staff.first().attendances).hasSize(1)
@@ -1123,7 +1171,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
             assertEquals(now.minusHours(1), it.arrived)
             assertEquals(now, it.departed)
             assertEquals(StaffAttendanceType.JUSTIFIED_CHANGE, it.type)
-            assertEquals(groupId, it.groupId)
+            assertEquals(group.id, it.groupId)
         }
 
         val deleteResponse =
@@ -1131,7 +1179,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
                 dbInstance(),
                 mobileUser,
                 MockEvakaClock(now),
-                testDaycare.id,
+                daycare.id,
                 MobileRealtimeStaffAttendanceController.StaffAttendanceUpdateRequest(
                     employeeId = employeeId,
                     pinCode = "1122",
@@ -1152,7 +1200,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
                     DevStaffAttendance(
                         id = StaffAttendanceRealtimeId(UUID.randomUUID()),
                         employeeId = employeeId,
-                        groupId = groupId,
+                        groupId = group.id,
                         arrived = HelsinkiDateTime.of(today, LocalTime.of(8, 0)),
                         departed = HelsinkiDateTime.of(today, LocalTime.of(12, 0)),
                         occupancyCoefficient = occupancyCoefficientSeven,
@@ -1169,7 +1217,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
                     DevStaffAttendance(
                         id = StaffAttendanceRealtimeId(UUID.randomUUID()),
                         employeeId = employeeId,
-                        groupId = groupId,
+                        groupId = group.id,
                         arrived = HelsinkiDateTime.of(today, LocalTime.of(14, 0)),
                         departed = HelsinkiDateTime.of(today, LocalTime.of(18, 0)),
                         occupancyCoefficient = occupancyCoefficientSeven,
@@ -1186,7 +1234,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
                 dbInstance(),
                 mobileUser,
                 MockEvakaClock(now),
-                testDaycare.id,
+                daycare.id,
                 MobileRealtimeStaffAttendanceController.StaffAttendanceUpdateRequest(
                     employeeId = employeeId,
                     pinCode = "1122",
@@ -1195,7 +1243,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
                         listOf(
                             RealtimeStaffAttendanceController.StaffAttendanceUpsert(
                                 id = staffAttendance1Id,
-                                groupId = groupId,
+                                groupId = group.id,
                                 arrived = HelsinkiDateTime.of(today, LocalTime.of(8, 0)),
                                 departed = HelsinkiDateTime.of(today, LocalTime.of(15, 0)),
                                 type = StaffAttendanceType.PRESENT,
@@ -1203,7 +1251,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
                             ),
                             RealtimeStaffAttendanceController.StaffAttendanceUpsert(
                                 id = staffAttendance2Id,
-                                groupId = groupId,
+                                groupId = group.id,
                                 arrived = HelsinkiDateTime.of(today, LocalTime.of(16, 0)),
                                 departed = HelsinkiDateTime.of(today, LocalTime.of(18, 0)),
                                 type = StaffAttendanceType.PRESENT,
@@ -1243,7 +1291,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
                 dbInstance(),
                 mobileUser,
                 MockEvakaClock(now),
-                testDaycare.id,
+                daycare.id,
                 body,
             )
 
@@ -1257,17 +1305,17 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
             db.transaction { tx ->
                 val employeeId = tx.insert(DevEmployee())
                 tx.insertDaycareAclRow(
-                    daycareId = testDaycare.id,
+                    daycareId = daycare.id,
                     employeeId = employeeId,
                     UserRole.STAFF,
                 )
-                tx.insert(DevDaycareGroupAcl(groupId = groupId, employeeId = employeeId))
+                tx.insert(DevDaycareGroupAcl(groupId = group.id, employeeId = employeeId))
                 tx.insertDaycareAclRow(
-                    daycareId = testDaycare2.id,
+                    daycareId = daycare2.id,
                     employeeId = employeeId,
                     UserRole.STAFF,
                 )
-                tx.insert(DevDaycareGroupAcl(groupId = groupId2, employeeId = employeeId))
+                tx.insert(DevDaycareGroupAcl(groupId = group2.id, employeeId = employeeId))
                 tx.insert(DevEmployeePin(userId = employeeId, pin = "1122"))
                 employeeId
             }
@@ -1277,7 +1325,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
                 dbInstance(),
                 mobileUser,
                 MockEvakaClock(now),
-                testDaycare.id,
+                daycare.id,
                 MobileRealtimeStaffAttendanceController.StaffAttendanceUpdateRequest(
                     employeeId = employeeId,
                     pinCode = "1122",
@@ -1286,7 +1334,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
                         listOf(
                             RealtimeStaffAttendanceController.StaffAttendanceUpsert(
                                 id = null,
-                                groupId = groupId,
+                                groupId = group.id,
                                 arrived = now.minusHours(2),
                                 departed = now,
                                 type = StaffAttendanceType.PRESENT,
@@ -1303,7 +1351,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
                 dbInstance(),
                 mobileUser2,
                 MockEvakaClock(now),
-                testDaycare2.id,
+                daycare2.id,
                 MobileRealtimeStaffAttendanceController.StaffAttendanceUpdateRequest(
                     employeeId = employeeId,
                     pinCode = "1122",
@@ -1312,7 +1360,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
                         listOf(
                             RealtimeStaffAttendanceController.StaffAttendanceUpsert(
                                 id = null,
-                                groupId = groupId2,
+                                groupId = group2.id,
                                 arrived = now,
                                 departed = now.plusHours(2),
                                 type = StaffAttendanceType.PRESENT,
@@ -1337,7 +1385,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
                     listOf(
                         RealtimeStaffAttendanceController.StaffAttendanceUpsert(
                             id = StaffAttendanceRealtimeId(UUID.randomUUID()),
-                            groupId = groupId,
+                            groupId = group.id,
                             arrived = now,
                             departed = null,
                             type = StaffAttendanceType.PRESENT,
@@ -1352,7 +1400,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
                     dbInstance(),
                     mobileUser2,
                     MockEvakaClock(now),
-                    testDaycare.id,
+                    daycare.id,
                     body,
                 )
             }
@@ -1371,7 +1419,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
                     listOf(
                         RealtimeStaffAttendanceController.StaffAttendanceUpsert(
                             id = StaffAttendanceRealtimeId(UUID.randomUUID()),
-                            groupId = groupId,
+                            groupId = group.id,
                             arrived = now,
                             departed = null,
                             type = StaffAttendanceType.PRESENT,
@@ -1387,7 +1435,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
                         dbInstance(),
                         mobileUser,
                         MockEvakaClock(now),
-                        testDaycare.id,
+                        daycare.id,
                         body,
                     )
                 }
@@ -1414,7 +1462,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
                     listOf(
                         RealtimeStaffAttendanceController.StaffAttendanceUpsert(
                             id = StaffAttendanceRealtimeId(UUID.randomUUID()),
-                            groupId = groupId,
+                            groupId = group.id,
                             arrived = now.plusDays(1),
                             departed = null,
                             type = StaffAttendanceType.PRESENT,
@@ -1429,7 +1477,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
                     dbInstance(),
                     mobileUser,
                     MockEvakaClock(now),
-                    testDaycare.id,
+                    daycare.id,
                     body,
                 )
             }
@@ -1448,7 +1496,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
                     listOf(
                         RealtimeStaffAttendanceController.StaffAttendanceUpsert(
                             id = StaffAttendanceRealtimeId(UUID.randomUUID()),
-                            groupId = groupId,
+                            groupId = group.id,
                             arrived = now,
                             departed = null,
                             type = StaffAttendanceType.PRESENT,
@@ -1463,7 +1511,7 @@ class MobileRealtimeStaffAttendanceControllerIntegrationTest :
                     dbInstance(),
                     mobileUser,
                     MockEvakaClock(now),
-                    testDaycare.id,
+                    daycare.id,
                     body,
                 )
             }

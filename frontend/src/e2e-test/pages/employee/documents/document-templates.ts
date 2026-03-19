@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
-import type { Locator } from 'playwright'
+import type { Locator } from '@playwright/test'
 
 import type { Page } from '../../../utils/page'
 import {
@@ -59,9 +59,11 @@ export class DocumentTemplatesListPage {
 }
 
 export class DocumentTemplateRow extends Element {
+  readonly duplicateButton: Element
   readonly exportButton: Element
   constructor(locator: Locator) {
     super(locator)
+    this.duplicateButton = this.findByDataQa('duplicate')
     this.exportButton = this.findByDataQa('export')
   }
 

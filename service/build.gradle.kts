@@ -83,6 +83,8 @@ dependencies {
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-database-postgresql")
     implementation("org.postgresql:postgresql")
+    // Needed on the compile classpath to avoid Kotlin warnings about missing
+    // annotation types used by the PostgreSQL driver
     implementation("org.checkerframework:checker-qual")
 
     // JDBI
@@ -90,10 +92,6 @@ dependencies {
     implementation("org.jdbi:jdbi3-jackson3")
     implementation("org.jdbi:jdbi3-kotlin")
     implementation("org.jdbi:jdbi3-postgres")
-
-    // Fuel
-    implementation("com.github.kittinunf.fuel:fuel")
-    implementation("com.github.kittinunf.fuel:fuel-jackson")
 
     // OkHttp
     implementation("com.squareup.okhttp3:okhttp")
@@ -108,12 +106,6 @@ dependencies {
     implementation("tools.jackson.core:jackson-core")
     implementation("tools.jackson.core:jackson-databind")
     implementation("tools.jackson.module:jackson-module-kotlin")
-    implementation("com.fasterxml.jackson.core:jackson-core")
-    implementation("com.fasterxml.jackson.core:jackson-databind")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jdk8")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-    implementation("com.fasterxml.jackson.module:jackson-module-parameter-names")
 
     // AWS SDK
     implementation("software.amazon.awssdk:s3")
@@ -137,9 +129,9 @@ dependencies {
     // Miscellaneous
     implementation("com.github.kagkarlsson:db-scheduler")
     implementation("com.auth0:java-jwt")
+    // Exports micrometer metrics as JMX MBeans for Datadog jmxfetch (see dd-jmxfetch/conf.yaml)
     implementation("io.micrometer:micrometer-registry-jmx")
     implementation("io.opentelemetry:opentelemetry-api")
-    implementation("jakarta.annotation:jakarta.annotation-api")
     implementation("org.apache.commons:commons-text")
     implementation("org.glassfish.jaxb:jaxb-runtime")
     implementation("org.bouncycastle:bcprov-jdk18on")
@@ -153,10 +145,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
 
     testImplementation("io.kotest:kotest-property")
-    testImplementation("io.mockk:mockk")
-    testImplementation("net.bytebuddy:byte-buddy")
     testImplementation("net.logstash.logback:logstash-logback-encoder")
-    testImplementation("org.jetbrains:annotations")
     testImplementation("org.mockito:mockito-core")
     testImplementation("org.mockito:mockito-junit-jupiter")
     testImplementation("org.mockito.kotlin:mockito-kotlin")

@@ -7,7 +7,7 @@ import styled from 'styled-components'
 
 import type { VoucherValueDecisionDetailed } from 'lib-common/generated/api-types/invoicing'
 import { formatCents } from 'lib-common/money'
-import { formatDecimal } from 'lib-common/utils/number'
+import { formatDecimal, formatPercentage } from 'lib-common/utils/number'
 import { H3 } from 'lib-components/typography'
 import { Gap } from 'lib-components/white-space'
 
@@ -33,9 +33,9 @@ export default React.memo(function VoucherValueDecisionValueSection({
     i18n.valueDecision.summary.age[childAge < 3 ? 'LESS_THAN_3' : 'OVER_3']
   } (${formatCents(baseValue)} €), ${i18n.placement.type[
     placement.type
-  ].toLowerCase()} ${serviceNeed.voucherValueDescriptionFi} (${
+  ].toLowerCase()} ${serviceNeed.voucherValueDescriptionFi} (${formatPercentage(
     serviceNeed.voucherValueCoefficient * 100
-  } %)${
+  )})${
     assistanceNeedCoefficient !== 1
       ? `, ${
           i18n.valueDecision.summary.assistanceNeedCoefficient
@@ -45,8 +45,8 @@ export default React.memo(function VoucherValueDecisionValueSection({
 
   return (
     <section>
-      <H3 noMargin>{i18n.valueDecision.summary.value}</H3>
-      <Gap size="s" />
+      <H3 $noMargin>{i18n.valueDecision.summary.value}</H3>
+      <Gap $size="s" />
       <PartRow>
         <span>{mainDescription}</span>
         <b>{`${formatCents(voucherValue) ?? ''} €`}</b>

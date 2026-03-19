@@ -89,7 +89,9 @@ export default {
     openExpandingInfo: 'Avaa lisätietokenttä',
     errors: {
       genericGetError: 'Tietojen hakeminen ei onnistunut',
-      http403Error: 'Oikeudet puuttuvat'
+      http403Error: 'Oikeudet puuttuvat',
+      endpointDisabled:
+        'eVakassa on käynnissä osittainen huoltokatko. Osa toiminnoista ei ole tällä hetkellä käytettävissä. Yritä hetken kuluttua uudelleen.'
     },
     today: 'Tänään',
     datetime: {
@@ -781,7 +783,7 @@ export default {
                 </a>
                 .
               </P>
-              <P fitted={true}>* Tähdellä merkityt tiedot ovat pakollisia</P>
+              <P $fitted={true}>* Tähdellä merkityt tiedot ovat pakollisia</P>
             </>
           ),
           PRESCHOOL: (
@@ -803,7 +805,7 @@ export default {
                 </a>{' '}
                 -palveluun.
               </P>
-              <P fitted={true}>* Tähdellä merkityt tiedot ovat pakollisia</P>
+              <P $fitted={true}>* Tähdellä merkityt tiedot ovat pakollisia</P>
             </>
           ),
           CLUB: (
@@ -831,7 +833,7 @@ export default {
                 myönnetty varhaiskasvatuspaikka tai yksityisen hoidon tuki, ei
                 hänelle voida myöntää kerhopaikkaa.
               </P>
-              <P fitted={true}>* Tähdellä merkityt tiedot ovat pakollisia</P>
+              <P $fitted={true}>* Tähdellä merkityt tiedot ovat pakollisia</P>
             </>
           )
         },
@@ -1102,7 +1104,7 @@ export default {
           label: 'Hakemus on kiireellinen (ei koske siirtohakemuksia)',
           attachmentsMessage: {
             text: (
-              <P fitted={true}>
+              <P $fitted={true}>
                 Mikäli varhaiskasvatuspaikan tarve johtuu äkillisestä
                 työllistymisestä tai opiskelusta, tulee paikkaa hakea
                 viimeistään <strong>kaksi viikkoa ennen</strong> kuin tarve
@@ -1595,11 +1597,11 @@ export default {
   decisions: {
     title: 'Päätökset',
     childhoodEducationTitle:
-      'Varhaiskasvatukseen ja esiopetukseen liittyvät päätökset',
+      'Varhaiskasvatukseen, esiopetukseen ja kerhoon liittyvät päätökset',
     summary: (
       <P width="800px">
         Tälle sivulle saapuvat lapsen varhaiskasvatukseen, esiopetukseen,
-        ja maksuihin liittyvät päätökset.
+        kerhoon ja maksuihin liittyvät päätökset.
         <br aria-hidden="true" />
         <br aria-hidden="true" />
         Jos päätös koskee uutta lapselle haettua paikkaa,{' '}
@@ -1607,9 +1609,13 @@ export default {
         vai hylkäätkö lapselle tarjotun paikan.
       </P>
     ),
-    unconfirmedDecisions: (n: number) =>
-      `${n} ${n === 1 ? 'päätös' : 'päätöstä'} odottaa vahvistustasi`,
-    noUnconfirmedDecisions: 'kaikki päätökset vahvistettu',
+    unconfirmedDecisions: (n: number) => {
+      if (n === 0) {
+        return 'Vahvistettavat paikat'
+      }
+      return `${n} ${n === 1 ? 'paikka' : 'paikkaa'} odottaa huoltajan vahvistusta`
+    },
+    noUnconfirmedDecisions: 'kaikki paikat vahvistettu',
     unreadDecision: 'lukematon päätös',
     pageLoadError: 'Tietojen hakeminen ei onnistunut',
     financeDecisions: {
@@ -1625,47 +1631,44 @@ export default {
       loadDecisionPDF: 'Näytä päätös'
     },
     applicationDecisions: {
-      decision: 'Päätös',
+      decision: 'Paikka',
       type: {
-        CLUB: 'kerhosta',
-        DAYCARE: 'varhaiskasvatuksesta',
-        DAYCARE_PART_TIME: 'osa-aikaisesta varhaiskasvatuksesta',
-        PRESCHOOL: 'esiopetuksesta',
-        PRESCHOOL_DAYCARE: 'liittyvästä varhaiskasvatuksesta',
-        PRESCHOOL_CLUB: 'esiopetuksen kerhosta',
-        PREPARATORY_EDUCATION: 'valmistavasta opetuksesta'
+        CLUB: 'Kerho',
+        DAYCARE: 'Varhaiskasvatus',
+        DAYCARE_PART_TIME: 'Osa-aikainen varhaiskasvatus',
+        PRESCHOOL: 'Esiopetus',
+        PRESCHOOL_DAYCARE: 'Liittyvä varhaiskasvatus',
+        PRESCHOOL_CLUB: 'Esiopetuksen kerho',
+        PREPARATORY_EDUCATION: 'Valmistava opetus'
       },
+      data: 'Tiedot',
       childName: 'Lapsen nimi',
       unit: 'Toimipaikka',
       period: 'Ajalle',
       sentDate: 'Päätös tehty',
       resolved: 'Vahvistettu',
+      confirmation: 'Vahvistus',
       statusLabel: 'Tila',
       summary:
-        'Päätöksessä ilmoitettu paikka / ilmoitetut paikat tulee joko hyväksyä tai hylätä välittömästi, viimeistään kahden viikon kuluessa päätöksen saapumisesta.',
+        'Hyväksy tai hylkää paikat välittömästi tai viimeistään kahden viikon kuluessa ilmoituksen vastaanottamisesta.',
+      allDecisionsConfirmed: 'Olet vahvistanut kaikki paikat.',
       status: {
-        PENDING: 'Vahvistettavana huoltajalla',
-        ACCEPTED: 'Hyväksytty',
-        REJECTED: 'Hylätty'
+        PENDING: 'Odottaa vahvistusta',
+        ACCEPTED: 'Vahvistettu',
+        REJECTED: 'Kieltäydytty'
       },
-      confirmationInfo: {
-        preschool:
-          'Esiopetuksen ja/tai liittyvän varhaiskasvatuksen hyväksymis- tai hylkäämisilmoitus on toimitettava välittömästi, viimeistään kahden viikon kuluessa tämän ilmoituksen saamisesta. Jos olet hakenut useampaa palvelua, saat jokaisesta oman päätöksen erikseen vahvistettavaksi',
-        default:
-          'Päätöksessä ilmoitetun paikan hyväksymis- tai hylkäämisilmoitus on toimitettava välittömästi, viimeistään kahden viikon kuluessa tämän ilmoituksen saamisesta.'
-      },
-      goToConfirmation:
-        'Siirry lukemaan päätös ja vastaamaan hyväksytkö vai hylkäätkö paikan.',
-      confirmationLink: 'Siirry vastaamaan',
+      confirmationLink: 'Lue ja vahvista',
+      information:
+        'Vahvista paikat välittömästi tai viimeistään kahden viikon kuluessa ilmoituksen vastaanottamisesta.',
+      new: (n: number) => (n === 1 ? '1 uusi' : `${n} uutta`),
       response: {
-        title: 'Paikan hyväksyminen tai hylkääminen',
         accept1: 'Otamme paikan vastaan',
         accept2: 'alkaen',
         reject: 'Emme ota paikkaa vastaan',
-        cancel: 'Palaa takaisin vastaamatta',
-        submit: 'Lähetä vastaus päätökseen',
+        cancel: 'Palaa takaisin vahvistamatta',
+        submit: 'Lähetä vahvistus päätökseen',
         disabledInfo:
-          'HUOM! Pääset hyväksymään/hylkäämään liittyvää varhaiskasvatusta koskevan päätöksen mikäli hyväksyt ensin esiopetusta koskevan päätöksen.'
+          'Vahvista ensin esiopetuksen tai valmistavan opetuksen paikka. Tämän jälkeen voit vahvistaa liittyvän varhaiskasvatuksen paikan.'
       },
       openPdf: 'Näytä päätös',
       warnings: {
@@ -1820,7 +1823,7 @@ export default {
             Oikaisuvaatimus on tehtävä kirjallisesti. Myös sähköinen asiakirja
             täyttää vaatimuksen kirjallisesta muodosta.
           </P>
-          <P noMargin>Oikaisuvaatimuksessa on ilmoitettava</P>
+          <P $noMargin>Oikaisuvaatimuksessa on ilmoitettava</P>
           <ul>
             <li>päätös, johon vaaditaan oikaisua,</li>
             <li>millaista oikaisua päätökseen vaaditaan,</li>
@@ -1842,7 +1845,7 @@ export default {
             joku muu henkilö, oikaisuvaatimuksessa on ilmoitettava myös tämän
             nimi ja kotikunta.
           </P>
-          <P noMargin>Oikaisuvaatimukseen on liitettävä</P>
+          <P $noMargin>Oikaisuvaatimukseen on liitettävä</P>
           <ul>
             <li>
               päätös, johon haetaan oikaisua, alkuperäisenä tai jäljennöksenä
@@ -1989,7 +1992,7 @@ export default {
               Oikaisuvaatimus on tehtävä kirjallisesti. Myös sähköinen asiakirja
               täyttää vaatimuksen kirjallisesta muodosta.
             </P>
-            <P noMargin>Oikaisuvaatimuksessa on ilmoitettava</P>
+            <P $noMargin>Oikaisuvaatimuksessa on ilmoitettava</P>
             <ul>
               <li>
                 Oikaisuvaatimuksen tekijän nimi, kotikunta, postiosoite,
@@ -2014,7 +2017,7 @@ export default {
               on joku muu henkilö, oikaisuvaatimuksessa on ilmoitettava myös
               tämän nimi ja kotikunta.
             </P>
-            <P noMargin>Oikaisuvaatimukseen on liitettävä</P>
+            <P $noMargin>Oikaisuvaatimukseen on liitettävä</P>
             <ul>
               <li>
                 päätös, johon haetaan oikaisua, alkuperäisenä tai jäljennöksenä
@@ -2080,26 +2083,26 @@ export default {
     removeApplicationBtn: 'Poista hakemus',
     cancelApplicationBtn: 'Peruuta hakemus',
     confirmationLinkInstructions:
-      'Päätökset-välilehdellä voit lukea päätöksen ja hyväksyä/hylätä tarjotun paikan',
-    confirmationLink: 'Siirry vahvistamaan',
+      'Päätökset-välilehdellä voit lukea päätöksen ja vahvistaa/kieltäytyä tarjotusta paikasta',
+    confirmationLink: 'Paikkojen vahvistaminen',
     newApplicationLink: 'Uusi hakemus',
     namelessChild: 'Nimetön lapsi',
     noCustodians: 'Ei huollettavia lapsia',
     noCustodiansInfo: (
       <>
-        <P width="100%">
+        <P $width="100%">
           Digi- ja väestötietoviraston (DVV) tiedoissa sinulla ei näy
           huollettavia lapsia.
         </P>
-        <P width="100%">
+        <P $width="100%">
           Mikäli sinulla kuitenkin on huollettavia lapsia, voi tietojen
           puuttuminen johtua siitä, että DVV:n tiedot yhdistyvät viiveellä.
         </P>
-        <P width="100%">
+        <P $width="100%">
           Varmista DVV:ltä, että olet tehnyt kaikki heidän tarvitsemansa
           huoltajuuteen liittyvät asiat.
         </P>
-        <P width="100%">
+        <P $width="100%">
           Voit käyttää eVakaa vasta, kun huoltajuus on päivittynyt DVV:n
           tietoihin. Sillä välin voit olla yhteydessä esimerkiksi haluamaasi
           päiväkotiin soittamalla, tai laittamalla sähköpostia päiväkodin
@@ -2317,7 +2320,7 @@ export default {
         <P>
           <strong>Huomioitavaa:</strong>
         </P>
-        <Gap size="xs" />
+        <Gap $size="xs" />
         <UnorderedList>
           <li>
             Maksu voidaan tarkistaa kesken toimintavuotta, mikäli perheen
@@ -2403,7 +2406,7 @@ export default {
       title: 'Bruttotulotietojen täyttäminen',
       description: (
         <>
-          <P noMargin>
+          <P $noMargin>
             Valitse alta haluatko toimittaa tulotietosi liitteinä, vai katsooko
             viranomainen tietosi suoraan tulorekisteristä sekä Kelasta
             tarvittaessa.
@@ -2656,6 +2659,7 @@ export default {
       statuses: {
         DRAFT: 'Luonnos',
         SENT: 'Lähetetty',
+        HANDLING: 'Käsittelyssä',
         HANDLED: 'Käsitelty'
       },
       actions: {

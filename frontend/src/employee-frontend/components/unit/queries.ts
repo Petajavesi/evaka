@@ -10,7 +10,12 @@ import {
   getUnitApplications,
   respondToPlacementProposal
 } from '../../generated/api-clients/application'
-import { getOpenGroupAttendance } from '../../generated/api-clients/attendance'
+import {
+  getOpenGroupAttendance,
+  getRealtimeStaffAttendances,
+  upsertDailyExternalRealtimeAttendances,
+  upsertDailyStaffRealtimeAttendances
+} from '../../generated/api-clients/attendance'
 import {
   addFullAclForRole,
   createDaycare,
@@ -38,7 +43,7 @@ import {
   setUnitServiceWorkerNote,
   updateDaycare,
   updateGroup,
-  updateGroupAclWithOccupancyCoefficient,
+  updateGroupAcl,
   updateTemporaryEmployee,
   updateUnitClosingDate
 } from '../../generated/api-clients/daycare'
@@ -65,7 +70,10 @@ import {
   postChildDatePresence,
   postReservations
 } from '../../generated/api-clients/reservations'
-import { getUndecidedServiceApplications } from '../../generated/api-clients/serviceneed'
+import {
+  getChildServiceNeeds,
+  getUndecidedServiceApplications
+} from '../../generated/api-clients/serviceneed'
 
 const q = new Queries()
 
@@ -136,10 +144,9 @@ export const deleteStaffMutation = q.mutation(deleteStaff, [
 export const deleteScheduledAclMutation = q.mutation(deleteScheduledAcl, [
   ({ unitId }) => unitScheduledAclQuery({ unitId })
 ])
-export const updateGroupAclWithOccupancyCoefficientMutation = q.mutation(
-  updateGroupAclWithOccupancyCoefficient,
-  [({ unitId }) => unitAclQuery({ unitId })]
-)
+export const updateGroupAclMutation = q.mutation(updateGroupAcl, [
+  ({ unitId }) => unitAclQuery({ unitId })
+])
 
 export const unitServiceWorkerNoteQuery = q.query(getUnitServiceWorkerNote)
 
@@ -229,6 +236,8 @@ export const unitAttendanceReservationsQuery = q.query(
   getAttendanceReservations
 )
 
+export const childServiceNeedsQuery = q.query(getChildServiceNeeds)
+
 export const ongoingChildAttendanceQuery = q.query(getOngoingChildAttendance)
 
 export const postReservationsMutation = q.mutation(postReservations, [
@@ -260,3 +269,17 @@ export const respondToPlacementProposalMutation = q.parametricMutation<{
 export const openAttendanceQuery = q.query(getOpenGroupAttendance)
 
 export const nekkuManualOrderMutation = q.mutation(nekkuManualOrder)
+
+export const realtimeStaffAttendancesQuery = q.query(
+  getRealtimeStaffAttendances
+)
+
+export const upsertStaffAttendancesMutation = q.mutation(
+  upsertDailyStaffRealtimeAttendances,
+  [realtimeStaffAttendancesQuery.prefix]
+)
+
+export const upsertExternalAttendancesMutation = q.mutation(
+  upsertDailyExternalRealtimeAttendances,
+  [realtimeStaffAttendancesQuery.prefix]
+)

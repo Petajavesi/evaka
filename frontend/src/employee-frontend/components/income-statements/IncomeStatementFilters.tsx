@@ -5,7 +5,10 @@
 import React, { Fragment, useCallback, useContext } from 'react'
 
 import type { ProviderType } from 'lib-common/generated/api-types/daycare'
+import type { IncomeStatementStatus } from 'lib-common/generated/api-types/incomestatement'
 import type { DaycareId } from 'lib-common/generated/api-types/shared'
+import Checkbox from 'lib-components/atoms/form/Checkbox'
+import { FixedSpaceColumn } from 'lib-components/layout/flex-helpers'
 import DatePickerLowLevel from 'lib-components/molecules/date-picker/DatePickerLowLevel'
 import { Label } from 'lib-components/typography'
 import { Gap } from 'lib-components/white-space'
@@ -84,6 +87,23 @@ export default React.memo(function IncomeStatementsFilters() {
     })
   }
 
+  const toggleStatus = useCallback(
+    (status: IncomeStatementStatus) => () => {
+      setSearchFilters((old) =>
+        old.status.includes(status)
+          ? {
+              ...old,
+              status: old.status.filter((s) => s !== status)
+            }
+          : {
+              ...old,
+              status: [...old.status, status]
+            }
+      )
+    },
+    [setSearchFilters]
+  )
+
   return (
     <Filters
       clearFilters={clearSearchFilters}
@@ -95,7 +115,7 @@ export default React.memo(function IncomeStatementsFilters() {
             toggled={searchFilters.area}
             toggle={toggleArea}
           />
-          <Gap size="L" />
+          <Gap $size="L" />
           {renderResult(unitsResult, (units) => (
             <UnitFilter
               units={units}
@@ -122,15 +142,47 @@ export default React.memo(function IncomeStatementsFilters() {
             endDate={searchFilters.sentEndDate}
             setEndDate={setSentEndDate}
           />
-          <Gap size="L" />
+          <Gap $size="L" />
           <Label>{i18n.filters.incomeStatementPlacementValidDate}</Label>
           <DatePickerLowLevel
             value={searchFilters.placementValidDate}
             onChange={setPlacementValidDate}
             locale="fi"
           />
+          <Gap $size="L" />
+          <StatusFilter toggled={searchFilters.status} toggle={toggleStatus} />
         </Fragment>
       }
     />
   )
 })
+
+interface StatusFilterProps {
+  toggled: IncomeStatementStatus[]
+  toggle: (state: IncomeStatementStatus) => () => void
+}
+
+function StatusFilter({ toggled, toggle }: StatusFilterProps) {
+  const { i18n } = useTranslation()
+
+  type FilterStatuses = 'SENT' | 'HANDLING'
+  const filterStatuses: FilterStatuses[] = ['SENT', 'HANDLING']
+
+  return (
+    <>
+      <Label>{i18n.filters.incomeStatementStatusTitle}</Label>
+      <Gap $size="xs" />
+      <FixedSpaceColumn $spacing="xs">
+        {filterStatuses.map((status) => (
+          <Checkbox
+            key={status}
+            label={i18n.filters.incomeStatementStatus[status]}
+            checked={toggled.includes(status)}
+            onChange={toggle(status)}
+            data-qa={`status-filter-${status}`}
+          />
+        ))}
+      </FixedSpaceColumn>
+    </>
+  )
+}

@@ -4,9 +4,6 @@
 
 package fi.espoo.evaka.placement
 
-import com.github.kittinunf.fuel.core.ResponseResultOf
-import com.github.kittinunf.fuel.jackson.objectBody
-import com.github.kittinunf.fuel.jackson.responseObject
 import fi.espoo.evaka.FullApplicationTest
 import fi.espoo.evaka.absence.getAbsencesOfChildByRange
 import fi.espoo.evaka.backupcare.getBackupCaresForChild
@@ -17,27 +14,30 @@ import fi.espoo.evaka.shared.ChildId
 import fi.espoo.evaka.shared.DaycareId
 import fi.espoo.evaka.shared.EmployeeId
 import fi.espoo.evaka.shared.GroupId
+import fi.espoo.evaka.shared.GroupPlacementId
 import fi.espoo.evaka.shared.PlacementId
 import fi.espoo.evaka.shared.auth.AuthenticatedUser
 import fi.espoo.evaka.shared.auth.UserRole
-import fi.espoo.evaka.shared.auth.asUser
 import fi.espoo.evaka.shared.dev.DevBackupCare
+import fi.espoo.evaka.shared.dev.DevCareArea
+import fi.espoo.evaka.shared.dev.DevDaycare
 import fi.espoo.evaka.shared.dev.DevDaycareGroup
+import fi.espoo.evaka.shared.dev.DevEmployee
+import fi.espoo.evaka.shared.dev.DevPerson
 import fi.espoo.evaka.shared.dev.DevPersonType
 import fi.espoo.evaka.shared.dev.DevPlacement
 import fi.espoo.evaka.shared.dev.insert
 import fi.espoo.evaka.shared.dev.updateDaycareAclWithEmployee
+import fi.espoo.evaka.shared.domain.BadRequest
+import fi.espoo.evaka.shared.domain.Conflict
 import fi.espoo.evaka.shared.domain.DateRange
 import fi.espoo.evaka.shared.domain.FiniteDateRange
+import fi.espoo.evaka.shared.domain.Forbidden
 import fi.espoo.evaka.shared.domain.HelsinkiDateTime
 import fi.espoo.evaka.shared.domain.MockEvakaClock
+import fi.espoo.evaka.shared.domain.NotFound
 import fi.espoo.evaka.shared.domain.TimeRange
-import fi.espoo.evaka.testArea
-import fi.espoo.evaka.testChild_1
-import fi.espoo.evaka.testDaycare
-import fi.espoo.evaka.testDaycare2
-import fi.espoo.evaka.testDecisionMaker_1
-import fi.espoo.evaka.testDecisionMaker_2
+import fi.espoo.evaka.shared.security.PilotFeature
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.UUID
@@ -50,6 +50,7 @@ import kotlin.test.assertTrue
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
 
 class PlacementControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach = true) {
@@ -59,17 +60,25 @@ class PlacementControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach
     private val mockClock =
         MockEvakaClock(HelsinkiDateTime.of(LocalDate.of(2023, 1, 1), LocalTime.of(12, 0)))
 
-    final val childId = testChild_1.id
-    final val daycareId = testDaycare.id
-    final val testDaycareGroup = DevDaycareGroup(daycareId = daycareId)
-    final val groupId = testDaycareGroup.id
+    private val area = DevCareArea()
+    private val daycare =
+        DevDaycare(areaId = area.id, enabledPilotFeatures = setOf(PilotFeature.RESERVATIONS))
+    private val daycare2 = DevDaycare(areaId = area.id, name = "Test Daycare 2")
+    private val child = DevPerson()
+    private val supervisorEmployee = DevEmployee()
+    private val staffEmployee = DevEmployee()
 
-    final val placementStart = LocalDate.of(2020, 1, 1)
-    final val placementEnd = placementStart.plusDays(200)
-    lateinit var testPlacement: DaycarePlacementDetails
+    private val childId = child.id
+    private val daycareId = daycare.id
+    private val daycareGroup = DevDaycareGroup(daycareId = daycare.id)
+    private val groupId = daycareGroup.id
 
-    private val unitSupervisor = AuthenticatedUser.Employee(testDecisionMaker_1.id, emptySet())
-    private val staff = AuthenticatedUser.Employee(testDecisionMaker_2.id, emptySet())
+    private val placementStart = LocalDate.of(2020, 1, 1)
+    private val placementEnd = placementStart.plusDays(200)
+    private lateinit var testPlacement: DaycarePlacementDetails
+
+    private val unitSupervisor = supervisorEmployee.user
+    private val staff = staffEmployee.user
     private val serviceWorker =
         AuthenticatedUser.Employee(EmployeeId(UUID.randomUUID()), setOf(UserRole.SERVICE_WORKER))
     private val admin =
@@ -80,42 +89,36 @@ class PlacementControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach
     @BeforeEach
     fun setUp() {
         db.transaction { tx ->
-            tx.insert(testDecisionMaker_1)
-            tx.insert(testDecisionMaker_2)
-            tx.insert(testArea)
-            tx.insert(testDaycare)
-            tx.insert(testDaycare2)
-            tx.insert(testChild_1, DevPersonType.CHILD)
+            tx.insert(supervisorEmployee)
+            tx.insert(staffEmployee)
+            tx.insert(area)
+            tx.insert(daycare)
+            tx.insert(daycare2)
+            tx.insert(child, DevPersonType.CHILD)
             tx.insert(
                 DevPlacement(
-                    childId = childId,
-                    unitId = daycareId,
+                    childId = child.id,
+                    unitId = daycare.id,
                     startDate = placementStart,
                     endDate = placementEnd,
                 )
             )
-            tx.insert(testDaycareGroup)
-            testPlacement = tx.getDaycarePlacements(daycareId, null, null, null).first()
-            tx.updateDaycareAclWithEmployee(daycareId, unitSupervisor.id, UserRole.UNIT_SUPERVISOR)
+            tx.insert(daycareGroup)
+            testPlacement = tx.getDaycarePlacements(daycare.id, null, null, null).first()
+            tx.updateDaycareAclWithEmployee(daycare.id, unitSupervisor.id, UserRole.UNIT_SUPERVISOR)
         }
     }
 
     @Test
     fun `get placements works with childId and without dates`() {
-        val (_, res, result) =
-            http
-                .get("/employee/children/$childId/placements")
-                .asUser(serviceWorker)
-                .responseObject<PlacementResponse>(jackson2JsonMapper)
+        val response = getChildPlacements()
 
-        Assertions.assertThat(res.statusCode).isEqualTo(200)
-
-        val placements = result.get().placements.toList()
+        val placements = response.placements.toList()
         Assertions.assertThat(placements).hasSize(1)
 
         val placement = placements[0]
         Assertions.assertThat(placement.daycare.id).isEqualTo(daycareId)
-        Assertions.assertThat(placement.daycare.name).isEqualTo(testDaycare.name)
+        Assertions.assertThat(placement.daycare.name).isEqualTo(daycare.name)
         Assertions.assertThat(placement.child.id).isEqualTo(childId)
         Assertions.assertThat(placement.startDate).isEqualTo(placementStart)
         Assertions.assertThat(placement.endDate).isEqualTo(placementEnd)
@@ -125,12 +128,10 @@ class PlacementControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach
     fun `creating group placement works with valid data`() {
         val groupPlacementStart = placementStart.plusDays(1)
         val groupPlacementEnd = placementEnd.minusDays(1)
-        val (_, res, _) =
-            createGroupPlacement(
-                testPlacement.id,
-                GroupPlacementRequestBody(groupId, groupPlacementStart, groupPlacementEnd),
-            )
-        Assertions.assertThat(res.statusCode).isEqualTo(200)
+        createGroupPlacement(
+            testPlacement.id,
+            GroupPlacementRequestBody(groupId, groupPlacementStart, groupPlacementEnd),
+        )
 
         val groupPlacements = getGroupPlacements(childId, daycareId)
         Assertions.assertThat(groupPlacements.size).isEqualTo(1)
@@ -234,13 +235,12 @@ class PlacementControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach
 
     @Test
     fun `creating group placement throws NotFound if group does not exist`() {
-        val (_, res, _) =
+        assertThrows<NotFound> {
             createGroupPlacement(
                 testPlacement.id,
                 GroupPlacementRequestBody(GroupId(UUID.randomUUID()), placementStart, placementEnd),
             )
-
-        Assertions.assertThat(res.statusCode).isEqualTo(404)
+        }
     }
 
     @Test
@@ -848,18 +848,15 @@ class PlacementControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach
 
     @Test
     fun `creating group placement works with the full duration`() {
-        val (_, res, _) =
-            createGroupPlacement(
-                testPlacement.id,
-                GroupPlacementRequestBody(groupId, placementStart, placementEnd),
-            )
-
-        Assertions.assertThat(res.statusCode).isEqualTo(200)
+        createGroupPlacement(
+            testPlacement.id,
+            GroupPlacementRequestBody(groupId, placementStart, placementEnd),
+        )
     }
 
     @Test
     fun `creating group placement throws BadRequest if group placement starts before the daycare placements`() {
-        val (_, res, _) =
+        assertThrows<BadRequest> {
             createGroupPlacement(
                 testPlacement.id,
                 GroupPlacementRequestBody(
@@ -868,13 +865,12 @@ class PlacementControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach
                     placementEnd,
                 ),
             )
-
-        Assertions.assertThat(res.statusCode).isEqualTo(400)
+        }
     }
 
     @Test
     fun `creating group placement throws BadRequest if group placement ends after the daycare placements`() {
-        val (_, res, _) =
+        assertThrows<BadRequest> {
             createGroupPlacement(
                 testPlacement.id,
                 GroupPlacementRequestBody(
@@ -883,8 +879,7 @@ class PlacementControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach
                     placementEnd.plusDays(1),
                 ),
             )
-
-        Assertions.assertThat(res.statusCode).isEqualTo(400)
+        }
     }
 
     @Test
@@ -894,22 +889,10 @@ class PlacementControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach
                 tx.createGroupPlacement(testPlacement.id, groupId, placementStart, placementEnd)
             }
 
-        val (_, res, _) =
-            http
-                .delete("/employee/group-placements/$groupPlacementId")
-                .asUser(unitSupervisor)
-                .response()
-
-        Assertions.assertThat(res.statusCode).isEqualTo(200)
-
-        val (_, _, result) =
-            http
-                .get("/employee/children/$childId/placements")
-                .asUser(serviceWorker)
-                .responseObject<PlacementResponse>(jackson2JsonMapper)
+        deleteGroupPlacement(groupPlacementId)
 
         val groupPlacementsAfter =
-            result.get().placements.single { it.daycare.id == daycareId }.groupPlacements
+            getChildPlacements().placements.single { it.daycare.id == daycareId }.groupPlacements
         Assertions.assertThat(groupPlacementsAfter).hasSize(1)
         Assertions.assertThat(groupPlacementsAfter.first().groupId).isNull()
     }
@@ -933,22 +916,16 @@ class PlacementControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach
                 tx.insert(
                     DevPlacement(
                         childId = childId,
-                        unitId = testDaycare2.id,
+                        unitId = daycare2.id,
                         startDate = LocalDate.now().minusDays(2),
                         endDate = LocalDate.now().minusDays(1),
                     )
                 )
             }
 
-        val (_, res, result) =
-            http
-                .get("/employee/children/$childId/placements")
-                .asUser(unitSupervisor)
-                .responseObject<PlacementResponse>(jackson2JsonMapper)
+        val response = getChildPlacements(user = unitSupervisor)
 
-        assertEquals(200, res.statusCode)
-
-        val placements = result.get().placements.toList()
+        val placements = response.placements.toList()
         val allowed = placements.find { it.id == allowedId }!!
         val restricted = placements.find { it.id == restrictedId }!!
 
@@ -966,7 +943,7 @@ class PlacementControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach
                 tx.insert(
                     DevPlacement(
                         childId = childId,
-                        unitId = testDaycare2.id,
+                        unitId = daycare2.id,
                         startDate = placementEnd.plusDays(1),
                         endDate = placementEnd.plusMonths(2),
                     )
@@ -974,40 +951,25 @@ class PlacementControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach
             }
         val body = PlacementUpdateRequestBody(startDate = newStart, endDate = newEnd)
 
-        val (_, forbidden, _) =
-            http
-                .put("/employee/placements/$restrictedId")
-                .objectBody(bodyObject = body, mapper = jackson2JsonMapper)
-                .asUser(unitSupervisor)
-                .response()
+        assertThrows<Forbidden> { updatePlacement(restrictedId, body) }
 
-        org.junit.jupiter.api.Assertions.assertEquals(403, forbidden.statusCode)
-
-        val (_, allowed, _) =
-            http
-                .put("/employee/placements/$allowedId")
-                .objectBody(bodyObject = body, mapper = jackson2JsonMapper)
-                .asUser(unitSupervisor)
-                .response()
-
-        org.junit.jupiter.api.Assertions.assertEquals(200, allowed.statusCode)
+        updatePlacement(allowedId, body)
 
         db.read { r ->
             val updated = r.getPlacementsForChild(childId).find { it.id == allowedId }!!
-            org.junit.jupiter.api.Assertions.assertEquals(newStart, updated.startDate)
-            org.junit.jupiter.api.Assertions.assertEquals(newEnd, updated.endDate)
+            assertEquals(newStart, updated.startDate)
+            assertEquals(newEnd, updated.endDate)
         }
     }
 
     @Test
     fun `unit supervisor can't modify placement if it overlaps with another that supervisor doesn't have the rights to`() {
         val newEnd = placementEnd.plusDays(1)
-        val allowedId = testPlacement.id
         db.transaction { tx ->
             tx.insert(
                 DevPlacement(
                     childId = childId,
-                    unitId = testDaycare2.id,
+                    unitId = daycare2.id,
                     startDate = newEnd,
                     endDate = newEnd.plusMonths(2),
                 )
@@ -1019,14 +981,7 @@ class PlacementControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach
                 endDate = newEnd,
             ) // endDate overlaps with another placement
 
-        val (_, res, _) =
-            http
-                .put("/employee/placements/$allowedId")
-                .objectBody(bodyObject = body, mapper = jackson2JsonMapper)
-                .asUser(unitSupervisor)
-                .response()
-
-        org.junit.jupiter.api.Assertions.assertEquals(409, res.statusCode)
+        assertThrows<Conflict> { updatePlacement(testPlacement.id, body) }
     }
 
     @Test
@@ -1037,14 +992,14 @@ class PlacementControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach
                 tx.insert(
                         DevPlacement(
                             childId = childId,
-                            unitId = testDaycare2.id,
+                            unitId = daycare2.id,
                             startDate = newEnd,
                             endDate = newEnd.plusMonths(2),
                         )
                     )
                     .also {
                         tx.updateDaycareAclWithEmployee(
-                            testDaycare2.id,
+                            daycare2.id,
                             unitSupervisor.id,
                             UserRole.UNIT_SUPERVISOR,
                         )
@@ -1056,21 +1011,14 @@ class PlacementControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach
                 startDate = placementStart,
                 endDate = newEnd,
             ) // endDate overlaps with another placement
-        val (_, res, _) =
-            http
-                .put("/employee/placements/${testPlacement.id}")
-                .objectBody(bodyObject = body, mapper = jackson2JsonMapper)
-                .asUser(unitSupervisor)
-                .response()
-
-        org.junit.jupiter.api.Assertions.assertEquals(200, res.statusCode)
+        updatePlacement(testPlacement.id, body)
 
         val placements = db.read { r -> r.getPlacementsForChild(childId) }
         val first = placements.find { it.id == testPlacement.id }!!
         val second = placements.find { it.id == secondPlacement }!!
 
-        org.junit.jupiter.api.Assertions.assertEquals(newEnd, first.endDate)
-        org.junit.jupiter.api.Assertions.assertEquals(newEnd.plusDays(1), second.startDate)
+        assertEquals(newEnd, first.endDate)
+        assertEquals(newEnd.plusDays(1), second.startDate)
     }
 
     @Test
@@ -1082,14 +1030,7 @@ class PlacementControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach
         val newEnd = placementEnd.minusDays(2)
         val body = PlacementUpdateRequestBody(startDate = newStart, endDate = newEnd)
 
-        val (_, res, _) =
-            http
-                .put("/employee/placements/$daycareId")
-                .objectBody(bodyObject = body, mapper = jackson2JsonMapper)
-                .asUser(unitSupervisor)
-                .response()
-
-        org.junit.jupiter.api.Assertions.assertEquals(403, res.statusCode)
+        assertThrows<Forbidden> { updatePlacement(testPlacement.id, body, staff) }
     }
 
     @Test
@@ -1099,13 +1040,7 @@ class PlacementControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach
                 tx.createGroupPlacement(testPlacement.id, groupId, placementStart, placementEnd)
             }
 
-        val (_, res, _) =
-            http
-                .delete("/employee/group-placements/$groupPlacementId")
-                .asUser(serviceWorker)
-                .response()
-
-        Assertions.assertThat(res.statusCode).isEqualTo(403)
+        assertThrows<Forbidden> { deleteGroupPlacement(groupPlacementId, serviceWorker) }
     }
 
     @Test
@@ -1114,7 +1049,7 @@ class PlacementControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach
             tx.insert(
                 DevBackupCare(
                     childId = childId,
-                    unitId = testDaycare2.id,
+                    unitId = daycare2.id,
                     period = FiniteDateRange(placementEnd.minusDays(5), placementEnd.minusDays(1)),
                 )
             )
@@ -1123,14 +1058,7 @@ class PlacementControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach
         val newEnd = placementEnd.minusDays(1)
 
         val body = PlacementUpdateRequestBody(startDate = placementStart, endDate = newEnd)
-        val (_, res, _) =
-            http
-                .put("/employee/placements/${testPlacement.id}")
-                .objectBody(bodyObject = body, mapper = jackson2JsonMapper)
-                .asUser(unitSupervisor)
-                .response()
-
-        assertEquals(200, res.statusCode)
+        updatePlacement(testPlacement.id, body)
 
         val backupCares = db.transaction { it.getBackupCaresForChild(childId) }
         assertEquals(1, backupCares.size)
@@ -1143,7 +1071,7 @@ class PlacementControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach
             tx.insert(
                 DevBackupCare(
                     childId = childId,
-                    unitId = testDaycare2.id,
+                    unitId = daycare2.id,
                     period = FiniteDateRange(placementStart, placementStart.plusDays(4)),
                 )
             )
@@ -1152,14 +1080,7 @@ class PlacementControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach
         val newStart = placementStart.plusDays(2)
 
         val body = PlacementUpdateRequestBody(startDate = newStart, endDate = placementEnd)
-        val (_, res, _) =
-            http
-                .put("/employee/placements/${testPlacement.id}")
-                .objectBody(bodyObject = body, mapper = jackson2JsonMapper)
-                .asUser(unitSupervisor)
-                .response()
-
-        assertEquals(200, res.statusCode)
+        updatePlacement(testPlacement.id, body)
 
         val backupCares = db.transaction { it.getBackupCaresForChild(childId) }
         assertEquals(1, backupCares.size)
@@ -1180,7 +1101,7 @@ class PlacementControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach
             tx.insert(
                 DevBackupCare(
                     childId = childId,
-                    unitId = testDaycare2.id,
+                    unitId = daycare2.id,
                     period =
                         FiniteDateRange(placementStart.minusDays(8), placementStart.plusDays(4)),
                 )
@@ -1190,14 +1111,7 @@ class PlacementControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach
         val newEnd = placementStart.plusDays(2)
 
         val body = PlacementUpdateRequestBody(startDate = placementStart, endDate = newEnd)
-        val (_, res, _) =
-            http
-                .put("/employee/placements/${testPlacement.id}")
-                .objectBody(bodyObject = body, mapper = jackson2JsonMapper)
-                .asUser(unitSupervisor)
-                .response()
-
-        assertEquals(200, res.statusCode)
+        updatePlacement(testPlacement.id, body)
 
         val backupCares = db.transaction { it.getBackupCaresForChild(childId) }
         assertEquals(1, backupCares.size)
@@ -1210,30 +1124,55 @@ class PlacementControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach
             tx.insert(
                 DevBackupCare(
                     childId = childId,
-                    unitId = testDaycare2.id,
+                    unitId = daycare2.id,
                     period = FiniteDateRange(placementStart.plusDays(1), placementStart.plusDays(5)),
                 )
             )
         }
 
-        val (_, res, _) =
-            http.delete("/employee/placements/${testPlacement.id}").asUser(serviceWorker).response()
-
-        assertEquals(200, res.statusCode)
+        deletePlacement(testPlacement.id, serviceWorker)
 
         val backupCares = db.transaction { it.getBackupCaresForChild(childId) }
         assertEquals(0, backupCares.size)
     }
 
+    private fun getChildPlacements(
+        childId: ChildId = this.childId,
+        user: AuthenticatedUser.Employee = serviceWorker,
+    ) = placementController.getChildPlacements(dbInstance(), user, mockClock, childId)
+
     private fun createGroupPlacement(
         placementId: PlacementId,
-        groupPlacement: GroupPlacementRequestBody,
-    ): ResponseResultOf<ByteArray> {
-        return http
-            .post("/employee/placements/$placementId/group-placements")
-            .asUser(unitSupervisor)
-            .objectBody(bodyObject = groupPlacement, mapper = jackson2JsonMapper)
-            .response()
+        body: GroupPlacementRequestBody,
+        user: AuthenticatedUser.Employee = unitSupervisor,
+    ) = placementController.createGroupPlacement(dbInstance(), user, mockClock, placementId, body)
+
+    private fun deleteGroupPlacement(
+        groupPlacementId: GroupPlacementId,
+        user: AuthenticatedUser.Employee = unitSupervisor,
+    ) = placementController.deleteGroupPlacement(dbInstance(), user, mockClock, groupPlacementId)
+
+    private fun updatePlacement(
+        placementId: PlacementId,
+        body: PlacementUpdateRequestBody,
+        user: AuthenticatedUser.Employee = unitSupervisor,
+    ) = placementController.updatePlacementById(dbInstance(), user, mockClock, placementId, body)
+
+    private fun deletePlacement(
+        placementId: PlacementId,
+        user: AuthenticatedUser.Employee = admin,
+    ) = placementController.deletePlacement(dbInstance(), user, mockClock, placementId)
+
+    private fun getGroupPlacements(
+        childId: ChildId,
+        daycareId: DaycareId,
+    ): List<DaycareGroupPlacement> {
+        return getChildPlacements(childId)
+            .placements
+            .filter { it.daycare.id == daycareId }
+            .first { it.id == testPlacement.id }
+            .groupPlacements
+            .filter { it.id != null }
     }
 
     private fun createPlacementAndGroupPlacement(
@@ -1271,23 +1210,6 @@ class PlacementControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach
         assertNotNull(groupPlacementId)
 
         return placement
-    }
-
-    private fun getGroupPlacements(
-        childId: ChildId,
-        daycareId: DaycareId,
-    ): List<DaycareGroupPlacement> {
-        return http
-            .get("/employee/children/$childId/placements")
-            .asUser(serviceWorker)
-            .responseObject<PlacementResponse>(jackson2JsonMapper)
-            .third
-            .get()
-            .placements
-            .filter { it.daycare.id == daycareId }
-            .first { it.id == testPlacement.id }
-            .groupPlacements
-            .filter { it.id != null }
     }
 
     private fun getAbsencesOfChildByRange(range: DateRange) =

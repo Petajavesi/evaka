@@ -27,6 +27,7 @@ import fi.espoo.evaka.shared.auth.CitizenAuthLevel
 import fi.espoo.evaka.shared.auth.UserRole
 import fi.espoo.evaka.shared.dev.DevCareArea
 import fi.espoo.evaka.shared.dev.DevChildDocument
+import fi.espoo.evaka.shared.dev.DevChildDocumentPublishedVersion
 import fi.espoo.evaka.shared.dev.DevDaycare
 import fi.espoo.evaka.shared.dev.DevDocumentTemplate
 import fi.espoo.evaka.shared.dev.DevEmployee
@@ -577,18 +578,15 @@ class MigrationTest : FullApplicationTest(resetDbBeforeEach = true) {
         val document =
             DevChildDocument(
                 childId = child.id,
-                created = created,
+                createdAt = created,
                 createdBy = employee.evakaUserId,
                 templateId = template.id,
                 status = DocumentStatus.DRAFT,
                 content = DocumentContent(emptyList()),
-                publishedContent = null,
                 modifiedAt = created,
                 modifiedBy = employee.evakaUserId,
                 contentLockedAt = created,
                 contentLockedBy = employee.id,
-                publishedAt = null,
-                publishedBy = null,
             )
 
         db.transaction { tx ->
@@ -638,19 +636,25 @@ class MigrationTest : FullApplicationTest(resetDbBeforeEach = true) {
         val document =
             DevChildDocument(
                 childId = child.id,
-                created = created,
+                createdAt = created,
                 createdBy = employee.evakaUserId,
                 templateId = template.id,
                 status = DocumentStatus.COMPLETED,
                 content = DocumentContent(emptyList()),
-                publishedContent = DocumentContent(emptyList()),
                 modifiedAt = modified,
                 modifiedBy = employee.evakaUserId,
                 contentLockedAt = modified,
                 contentLockedBy = employee.id,
-                publishedAt = modified,
-                publishedBy = employee.evakaUserId,
-                documentKey = "foobar123",
+                publishedVersions =
+                    listOf(
+                        DevChildDocumentPublishedVersion(
+                            versionNumber = 1,
+                            createdAt = modified,
+                            createdBy = employee.evakaUserId,
+                            publishedContent = DocumentContent(emptyList()),
+                            documentKey = "foobar123",
+                        )
+                    ),
             )
 
         db.transaction { tx ->

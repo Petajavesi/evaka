@@ -11,22 +11,23 @@ import { resetServiceState } from '../../generated/api-clients'
 import type { DevEmployee } from '../../generated/api-types'
 import { DocumentTemplatesListPage } from '../../pages/employee/documents/document-templates'
 import EmployeeNav from '../../pages/employee/employee-nav'
-import { Page } from '../../utils/page'
+import { test, expect } from '../../playwright'
+import type { Page } from '../../utils/page'
 import { employeeLogin } from '../../utils/user'
 
-let admin: DevEmployee
-let page: Page
+test.describe('Employee - Document templates', () => {
+  let admin: DevEmployee
+  let page: Page
 
-beforeEach(async () => {
-  await resetServiceState()
+  test.beforeEach(async ({ evaka }) => {
+    await resetServiceState()
 
-  admin = await Fixture.employee().admin().save()
-  page = await Page.open()
-  await employeeLogin(page, admin)
-  await page.goto(config.employeeUrl)
-})
+    admin = await Fixture.employee().admin().save()
+    page = evaka
+    await employeeLogin(page, admin)
+    await page.goto(config.employeeUrl)
+  })
 
-describe('Employee - Document templates', () => {
   test('A document template can be exported and imported', async () => {
     const template = await Fixture.documentTemplate({
       content: {
@@ -64,5 +65,40 @@ describe('Employee - Document templates', () => {
     await modal.confirmCreateButton.click()
 
     await templates.templateRow(name).waitUntilVisible()
+  })
+
+  test('Duplicating a template copies archive metadata fields', async () => {
+    const template = await Fixture.documentTemplate({
+      name: 'Original Template',
+      processDefinitionNumber: '12.34.56',
+      archiveDurationMonths: 240,
+      confidentiality: {
+        durationYears: 50,
+        basis: 'Test legal basis'
+      },
+      content: {
+        sections: [
+          {
+            id: 's1',
+            label: 'osio 1',
+            infoText: '',
+            questions: []
+          }
+        ]
+      }
+    }).save()
+
+    const nav = new EmployeeNav(page)
+    await nav.openAndClickDropdownMenuItem('document-templates')
+    const templates = new DocumentTemplatesListPage(page)
+
+    await templates.templateRow(template.name).duplicateButton.click()
+    const modal = templates.templateModal
+    await modal.waitUntilVisible()
+
+    await modal.processDefinitionNumberInput.assertValueEquals('12.34.56')
+    await modal.archiveDurationMonthsInput.assertValueEquals('240')
+    await modal.confidentialityDurationYearsInput.assertValueEquals('50')
+    await modal.confidentialityBasisInput.assertValueEquals('Test legal basis')
   })
 })

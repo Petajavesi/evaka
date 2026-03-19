@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2017-2022 City of Espoo
+// SPDX-FileCopyrightText: 2017-2026 City of Espoo
 //
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
@@ -10,6 +10,8 @@ export const fi = {
     noIDoNot: 'En',
     loadingFailed: 'Tietojen haku epäonnistui',
     noAccess: 'Oikeudet puuttuvat',
+    endpointDisabled:
+      'eVakassa on käynnissä osittainen huoltokatko. Osa toiminnoista ei ole tällä hetkellä käytettävissä. Yritä hetken kuluttua uudelleen.',
     add: 'Lisää',
     cancel: 'Peruuta',
     confirm: 'Vahvista',
@@ -533,6 +535,11 @@ export const fi = {
     }
   },
   settings: {
+    language: {
+      title: 'Kieli',
+      fi: 'Suomi',
+      sv: 'Svenska'
+    },
     notifications: {
       title: 'Ilmoitusasetukset',
       permission: {

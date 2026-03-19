@@ -33,15 +33,18 @@ import { appCommit, enableDevApi, titaniaConfig } from './shared/config.ts'
 import { toRequestHandler } from './shared/express.ts'
 import { cacheControl } from './shared/middleware/cache-control.ts'
 import { csrf } from './shared/middleware/csrf.ts'
+import { createEndpointDisablingMiddleware } from './shared/middleware/endpoint-disabling.ts'
 import { errorHandler } from './shared/middleware/error-handler.ts'
 import { createProxy } from './shared/proxy-utils.ts'
 import type { RedisClient } from './shared/redis-client.ts'
 import { handleCspReport } from './shared/routes/csp.ts'
 import type { SamlIntegration } from './shared/routes/saml.ts'
 import { validateRelayStateUrl } from './shared/saml/index.ts'
-import { sessionSupport } from './shared/session.ts'
+import { sessionCookie, sessionSupport } from './shared/session.ts'
 
 export function apiRouter(config: Config, redisClient: RedisClient) {
+  const { middleware: endpointDisabling } =
+    createEndpointDisablingMiddleware(redisClient)
   const router = express.Router()
   router.use((req, _, next) => {
     if (req.url.startsWith('/internal/integration/titania/')) {
@@ -129,7 +132,11 @@ export function apiRouter(config: Config, redisClient: RedisClient) {
       citizenSessions,
       config.sfi.saml,
       redisClient,
-      config.citizen.cookieSecret
+      config.citizen.cookieSecret,
+      {
+        cookieName: sessionCookie('employee'),
+        cookieSecret: config.employee.cookieSecret
+      }
     )
     router.use('/citizen/auth/sfi', citizenSfiIntegration.router)
   }
@@ -156,7 +163,11 @@ export function apiRouter(config: Config, redisClient: RedisClient) {
     employeeSfiIntegration = createEmployeeSuomiFiIntegration(
       employeeSessions,
       config.sfi.saml,
-      redisClient
+      redisClient,
+      {
+        cookieName: sessionCookie('citizen'),
+        cookieSecret: config.citizen.cookieSecret
+      }
     )
     router.use('/employee/auth/sfi', employeeSfiIntegration.router)
   }
@@ -245,6 +256,9 @@ export function apiRouter(config: Config, redisClient: RedisClient) {
       res.redirect('/employee')
     })
   )
+
+  // Reject requests matching disabled endpoint patterns stored in Valkey
+  router.use(endpointDisabling)
 
   // CSRF checks apply to all the API endpoints that frontend uses
   router.use(csrf)

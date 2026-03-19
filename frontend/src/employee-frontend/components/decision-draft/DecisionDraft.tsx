@@ -4,13 +4,10 @@
 
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import React, { Fragment, useEffect, useMemo, useState } from 'react'
+import React, { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import styled from 'styled-components'
 import { useLocation } from 'wouter'
 
-import type { Result } from 'lib-common/api'
-import { Loading, wrapResult } from 'lib-common/api'
-import type { DecisionDraftGroup } from 'lib-common/generated/api-types/application'
 import type {
   DecisionDraft,
   DecisionDraftUpdate,
@@ -19,6 +16,7 @@ import type {
 } from 'lib-common/generated/api-types/decision'
 import type { ApplicationId } from 'lib-common/generated/api-types/shared'
 import { formatPersonName } from 'lib-common/names'
+import { useMutationResult, useQueryResult } from 'lib-common/query'
 import { useIdRouteParam } from 'lib-common/useRouteParams'
 import Title from 'lib-components/atoms/Title'
 import { AsyncButton } from 'lib-components/atoms/buttons/AsyncButton'
@@ -37,19 +35,16 @@ import colors from 'lib-customizations/common'
 import { featureFlags } from 'lib-customizations/employee'
 import { faEnvelope } from 'lib-icons'
 
-import {
-  getDecisionDrafts,
-  updateDecisionDrafts
-} from '../../generated/api-clients/application'
-import { getDecisionUnits } from '../../generated/api-clients/decision'
 import type { Translations } from '../../state/i18n'
 import { useTranslation } from '../../state/i18n'
 import { useTitle } from '../../utils/useTitle'
 import { renderResult } from '../async-rendering'
 
-const getDecisionUnitsResult = wrapResult(getDecisionUnits)
-const updateDecisionDraftsResult = wrapResult(updateDecisionDrafts)
-const getDecisionDraftsResult = wrapResult(getDecisionDrafts)
+import {
+  decisionDraftsQuery,
+  decisionUnitsQuery,
+  updateDecisionDraftsMutation
+} from './queries'
 
 const ColumnTitle = styled.div`
   font-weight: ${fontWeights.semibold};
@@ -67,15 +62,15 @@ const Heading = styled(Title)`
   margin-top: 0.5rem;
 `
 
-const WarningContainer = styled.div<{ visible: boolean }>`
-  visibility: ${({ visible }) => (visible ? 'visible' : 'hidden')};
+const WarningContainer = styled.div<{ $visible: boolean }>`
+  visibility: ${({ $visible }) => ($visible ? 'visible' : 'hidden')};
 `
 
-const WarningText = styled.span<{ smaller?: boolean }>`
+const WarningText = styled.span<{ $smaller?: boolean }>`
   color: ${colors.grayscale.g70};
   font-style: italic;
   margin-left: 12px;
-  font-size: ${(props) => (props.smaller === true ? '0.8em' : '1em')};
+  font-size: ${(props) => (props.$smaller === true ? '0.8em' : '1em')};
 `
 
 const WarningIcon = () => (
@@ -153,28 +148,29 @@ export default React.memo(function Decision() {
   const applicationId = useIdRouteParam<ApplicationId>('id')
   const { i18n } = useTranslation()
   const [, navigate] = useLocation()
-  const [decisionDraftGroup, setDecisionDraftGroup] = useState<
-    Result<DecisionDraftGroup>
-  >(Loading.of())
+  const decisionDraftGroup = useQueryResult(
+    decisionDraftsQuery({ applicationId })
+  )
+  const { mutateAsync: updateDecisionDrafts } = useMutationResult(
+    updateDecisionDraftsMutation
+  )
   const [decisions, setDecisions] = useState<DecisionDraft[]>([])
-  const [units, setUnits] = useState<Result<DecisionUnit[]>>(Loading.of())
+  const units = useQueryResult(decisionUnitsQuery())
+  const initialized = useRef(false)
+  useEffect(() => {
+    initialized.current = false
+  }, [applicationId])
 
   useEffect(() => {
-    setDecisionDraftGroup(Loading.of())
-    void getDecisionDraftsResult({ applicationId: applicationId }).then(
-      (result) => {
-        setDecisionDraftGroup(result)
-        if (result.isSuccess) {
-          setDecisions(result.value.decisions)
-        }
-
-        // Application has already changed its status
-        if (result.isFailure && result.statusCode === 409) {
-          redirectToMainPage(navigate)
-        }
-      }
-    )
-  }, [applicationId, navigate])
+    if (decisionDraftGroup.isSuccess && !initialized.current) {
+      initialized.current = true
+      setDecisions(decisionDraftGroup.value.decisions)
+    }
+    // Application has already changed its status
+    if (decisionDraftGroup.isFailure && decisionDraftGroup.statusCode === 409) {
+      redirectToMainPage(navigate)
+    }
+  }, [decisionDraftGroup, navigate])
 
   useTitle(
     decisionDraftGroup.map(
@@ -182,10 +178,6 @@ export default React.memo(function Decision() {
         `${formatPersonName(value.child, 'Last First')} | ${i18n.titles.decision}`
     )
   )
-
-  useEffect(() => {
-    void getDecisionUnitsResult().then(setUnits)
-  }, [setUnits])
 
   const unitOptions = useMemo(
     (): DecisionUnit[] => units.getOrElse([]),
@@ -253,7 +245,7 @@ export default React.memo(function Decision() {
 
   return (
     <Container>
-      <ContentArea opaque>
+      <ContentArea $opaque>
         <Title size={1}>{i18n.decisionDraft.title}</Title>
         <InfoContainer>
           <InfoParagraph>{i18n.decisionDraft.info1}</InfoParagraph>
@@ -400,13 +392,13 @@ export default React.memo(function Decision() {
                                   />
                                 )}
                                 <WarningContainer
-                                  visible={
+                                  $visible={
                                     decisionDraftGroup.unit.id !==
                                     decision.unitId
                                   }
                                 >
                                   <WarningIcon />
-                                  <WarningText smaller>
+                                  <WarningText $smaller>
                                     {i18n.decisionDraft.differentUnit}
                                   </WarningText>
                                 </WarningContainer>
@@ -581,7 +573,7 @@ export default React.memo(function Decision() {
                         planned: decisionDraft.planned
                       })
                     )
-                    return updateDecisionDraftsResult({
+                    return updateDecisionDrafts({
                       applicationId,
                       body: updatedDrafts
                     })

@@ -3,9 +3,12 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
 import DateRange from 'lib-common/date-range'
+import FiniteDateRange from 'lib-common/finite-date-range'
 import type { DocumentContent } from 'lib-common/generated/api-types/document'
+import type { PersonId } from 'lib-common/generated/api-types/shared'
 import HelsinkiDateTime from 'lib-common/helsinki-date-time'
-import { evakaUserId } from 'lib-common/id-type'
+import { evakaUserId, randomId } from 'lib-common/id-type'
+import LocalDate from 'lib-common/local-date'
 
 import config from '../../config'
 import {
@@ -37,22 +40,27 @@ import {
 import EmployeeNav from '../../pages/employee/employee-nav'
 import ReportsPage, { ChildDocumentsReport } from '../../pages/employee/reports'
 import { UnitPage } from '../../pages/employee/units/unit'
+import { expect, test } from '../../playwright'
+import type { NewEvakaPage } from '../../playwright'
 import { waitUntilEqual } from '../../utils'
-import { Page } from '../../utils/page'
+import type { Page } from '../../utils/page'
 import { employeeLogin } from '../../utils/user'
 
 const now = HelsinkiDateTime.of(2023, 2, 1, 12, 10, 0)
 
-beforeEach(async () => await resetServiceState())
+test.beforeEach(async () => {
+  await resetServiceState()
+})
 
-describe('Employee - Child documents', () => {
+test.describe('Employee - Child documents', () => {
+  test.use({ evakaOptions: { mockedTime: now } })
+
   let admin: DevEmployee
   let unitSupervisor: DevEmployee
   let director: DevEmployee
-  let page: Page
   let placement: DevPlacement
 
-  beforeEach(async () => {
+  test.beforeEach(async () => {
     await testCareArea.save()
     await testDaycare.save()
     await testAdult.saveAdult()
@@ -76,10 +84,11 @@ describe('Employee - Child documents', () => {
       type: 'PRESCHOOL'
     }).save()
   })
-  test('Full basic workflow for hojks', async () => {
+
+  test('Full basic workflow for hojks', async ({ newEvakaPage }) => {
     // Admin creates a template
 
-    page = await Page.open({ mockedTime: now })
+    let page = await newEvakaPage()
     await employeeLogin(page, admin)
     await page.goto(config.employeeUrl)
     const nav = new EmployeeNav(page)
@@ -114,11 +123,10 @@ describe('Employee - Child documents', () => {
     await templateEditor.publishCheckbox.check()
     await templateEditor.saveButton.click()
     await templateEditor.saveButton.waitUntilHidden()
-    await page.close()
     // End of admin creates a template
 
     // Unit supervisor creates a child document
-    page = await Page.open({ mockedTime: now })
+    page = await newEvakaPage()
     await employeeLogin(page, unitSupervisor)
     await page.goto(`${config.employeeUrl}/child-information/${testChild2.id}`)
     let childInformationPage = new ChildInformationPage(page)
@@ -169,11 +177,10 @@ describe('Employee - Child documents', () => {
     row = childDocumentsSection.internalChildDocuments(0)
     await row.status.assertTextEquals('Luonnos')
     await row.published.assertTextEquals(now.format())
-    await page.close()
 
     // go to next status twice
     const later = now.addHours(1)
-    page = await Page.open({ mockedTime: later })
+    page = await newEvakaPage({ mockedTime: later })
     await employeeLogin(page, unitSupervisor)
     await page.goto(documentUrl)
     childDocument = new ChildDocumentPage(page)
@@ -182,7 +189,7 @@ describe('Employee - Child documents', () => {
     await childDocument.goToCompletedStatus()
     await childDocument.status.assertTextEquals('Valmis')
 
-    // Assert status and new publish time
+    // Assert status and times
     await childDocument.returnButton.click()
     childInformationPage = new ChildInformationPage(page)
     childDocumentsSection =
@@ -190,17 +197,19 @@ describe('Employee - Child documents', () => {
     await waitUntilEqual(childDocumentsSection.internalChildDocumentsCount, 1)
     row = childDocumentsSection.internalChildDocuments(0)
     await row.status.assertTextEquals('Valmis')
-    await row.published.assertTextEquals(later.format())
+    await row.modified.assertTextEquals(later.format())
+    // Content has not changed since last publishing so published time remains the same
+    await row.published.assertTextEquals(now.format())
   })
 
-  test('Pedagogical report only has two states', async () => {
+  test('Pedagogical report only has two states', async ({ newEvakaPage }) => {
     await Fixture.documentTemplate({
       type: 'PEDAGOGICAL_REPORT',
       published: true
     }).save()
 
     // Unit supervisor creates a child document
-    page = await Page.open({ mockedTime: now })
+    const page = await newEvakaPage()
     await employeeLogin(page, unitSupervisor)
     await page.goto(`${config.employeeUrl}/child-information/${testChild2.id}`)
     const childInformationPage = new ChildInformationPage(page)
@@ -217,7 +226,9 @@ describe('Employee - Child documents', () => {
     await childDocument.status.assertTextEquals('Valmis')
   })
 
-  test('Accepting, editing validity, and annulling decision', async () => {
+  test('Accepting, editing validity, and annulling decision', async ({
+    newEvakaPage
+  }) => {
     await Fixture.documentTemplate({
       type: 'OTHER_DECISION',
       endDecisionWhenUnitChanges: true,
@@ -225,7 +236,7 @@ describe('Employee - Child documents', () => {
     }).save()
 
     // Unit supervisor creates a decision document
-    page = await Page.open({ mockedTime: now })
+    let page = await newEvakaPage()
     await employeeLogin(page, unitSupervisor)
     await page.goto(`${config.employeeUrl}/child-information/${testChild2.id}`)
     let childInformationPage = new ChildInformationPage(page)
@@ -243,10 +254,9 @@ describe('Employee - Child documents', () => {
 
     // only the assigned decision maker can accept the decision
     await childDocument.acceptDecisionButton.waitUntilHidden()
-    await page.close()
 
     // Director makes a decision
-    const directorPage = await Page.open({ mockedTime: now })
+    const directorPage = await newEvakaPage()
     await employeeLogin(directorPage, director)
     await directorPage.goto(config.employeeUrl)
     const nav = new EmployeeNav(directorPage)
@@ -272,7 +282,7 @@ describe('Employee - Child documents', () => {
 
     // Admin edits the validity date range
     const editTime = now.withDate(now.toLocalDate().addDays(1))
-    page = await Page.open({ mockedTime: editTime })
+    page = await newEvakaPage({ mockedTime: editTime })
     await employeeLogin(page, admin)
     await page.goto(`${config.employeeUrl}/child-information/${testChild2.id}`)
     childInformationPage = new ChildInformationPage(page)
@@ -286,7 +296,6 @@ describe('Employee - Child documents', () => {
     await row.validity.assertTextEquals(
       new DateRange(newStart, newEnd).format()
     )
-    await page.close()
 
     // Director annuls the decision
     await childDocument.annulDecision('Perustelut mitätöinnille')
@@ -294,7 +303,7 @@ describe('Employee - Child documents', () => {
     await childDocument.annulReason.assertTextEquals('Perustelut mitätöinnille')
   })
 
-  test('Rejecting decision', async () => {
+  test('Rejecting decision', async ({ newEvakaPage }) => {
     await Fixture.documentTemplate({
       type: 'OTHER_DECISION',
       endDecisionWhenUnitChanges: true,
@@ -302,7 +311,7 @@ describe('Employee - Child documents', () => {
     }).save()
 
     // Unit supervisor creates a decision document
-    page = await Page.open({ mockedTime: now })
+    let page = await newEvakaPage()
     await employeeLogin(page, unitSupervisor)
     await page.goto(`${config.employeeUrl}/child-information/${testChild2.id}`)
     const childInformationPage = new ChildInformationPage(page)
@@ -314,10 +323,9 @@ describe('Employee - Child documents', () => {
     let childDocument = new ChildDocumentPage(page)
     await childDocument.proposeDecision(director)
     const documentUrl = page.url
-    await page.close()
 
     // Director makes a rejected decision
-    page = await Page.open({ mockedTime: now })
+    page = await newEvakaPage()
     await employeeLogin(page, director)
     await page.goto(documentUrl)
     childDocument = new ChildDocumentPage(page)
@@ -325,7 +333,7 @@ describe('Employee - Child documents', () => {
     await childDocument.status.assertTextEquals('Ei myönnetty')
   })
 
-  test('Staff cannot create decision documents', async () => {
+  test('Staff cannot create decision documents', async ({ newEvakaPage }) => {
     const group1: DevDaycareGroup = await Fixture.daycareGroup({
       daycareId: testDaycare.id
     }).save()
@@ -348,9 +356,7 @@ describe('Employee - Child documents', () => {
       endDate: placement.endDate
     }).save()
 
-    const page = await Page.open({
-      mockedTime: now
-    })
+    const page = await newEvakaPage()
 
     // Staff employee opens child information page
     await employeeLogin(page, staffEmployee)
@@ -364,14 +370,229 @@ describe('Employee - Child documents', () => {
     await childDocumentsSection.createDecisionDocumentButton.waitUntilHidden()
   })
 
-  test('Edit mode cannot be entered for 15 minutes after another use has edited the document content', async () => {
+  test('Staff can create CITIZEN_BASIC document for child with placement starting in less than 30 days', async ({
+    newEvakaPage
+  }) => {
+    const group1: DevDaycareGroup = await Fixture.daycareGroup({
+      daycareId: testDaycare.id
+    }).save()
+
+    const staffEmployee = await Fixture.employee()
+      .staff(testDaycare.id)
+      .groupAcl(group1.id)
+      .save()
+
+    const childFuture = await Fixture.person({
+      id: randomId<PersonId>(),
+      ssn: '080214A9257',
+      firstName: 'Future',
+      lastName: 'Child',
+      dateOfBirth: LocalDate.of(2014, 2, 8)
+    }).saveChild()
+
+    await Fixture.guardian(childFuture, testAdult).save()
+
+    // Create a placement that starts in 20 days (within the 30-day window)
+    const futurePlacement = await Fixture.placement({
+      childId: childFuture.id,
+      unitId: testDaycare.id,
+      startDate: now.toLocalDate().addDays(20),
+      endDate: now.toLocalDate().addYears(1),
+      type: 'DAYCARE'
+    }).save()
+
+    await Fixture.groupPlacement({
+      daycareGroupId: group1.id,
+      daycarePlacementId: futurePlacement.id,
+      startDate: futurePlacement.startDate,
+      endDate: futurePlacement.endDate
+    }).save()
+    const documentName = 'Huoltajan kanssa täytettävä lomake'
+    await Fixture.documentTemplate({
+      type: 'CITIZEN_BASIC',
+      name: documentName,
+      published: true
+    }).save()
+
+    const page = await newEvakaPage({
+      employeeCustomizations: {
+        featureFlags: { citizenChildDocumentTypes: true }
+      }
+    })
+
+    // Staff employee opens child information page
+    await employeeLogin(page, staffEmployee)
+    await page.goto(`${config.employeeUrl}/child-information/${childFuture.id}`)
+    const childInformationPage = new ChildInformationPage(page)
+    const childDocumentsSection =
+      await childInformationPage.openCollapsible('childDocuments')
+
+    // Verify the create external document button is visible and enabled
+    await childDocumentsSection.externalHeader.waitUntilVisible()
+    await childDocumentsSection.createExternalDocumentButton.waitUntilVisible()
+
+    // Create the document
+    await childDocumentsSection.createExternalDocumentButton.click()
+
+    await childDocumentsSection.createModalTemplateSelect.assertTextEquals(
+      documentName
+    )
+    await childDocumentsSection.modalOk.click()
+
+    // Verify document was created successfully
+    const childDocument = new ChildDocumentPage(page)
+    await childDocument.status.assertTextEquals('Luonnos')
+  })
+
+  test('Staff cannot see child documents section for child with placement starting in more than 30 days', async ({
+    newEvakaPage
+  }) => {
+    const group1: DevDaycareGroup = await Fixture.daycareGroup({
+      daycareId: testDaycare.id
+    }).save()
+
+    const staffEmployee = await Fixture.employee()
+      .staff(testDaycare.id)
+      .groupAcl(group1.id)
+      .save()
+
+    const childFuture = await Fixture.person({
+      id: randomId<PersonId>(),
+      ssn: '080214A9257',
+      firstName: 'Future',
+      lastName: 'Child',
+      dateOfBirth: LocalDate.of(2014, 2, 8)
+    }).saveChild()
+
+    await Fixture.guardian(childFuture, testAdult).save()
+
+    // Create a placement that starts in 40 days (outside the 30-day window)
+    const futurePlacement = await Fixture.placement({
+      childId: childFuture.id,
+      unitId: testDaycare.id,
+      startDate: now.toLocalDate().addDays(40),
+      endDate: now.toLocalDate().addYears(1),
+      type: 'DAYCARE'
+    }).save()
+
+    await Fixture.groupPlacement({
+      daycareGroupId: group1.id,
+      daycarePlacementId: futurePlacement.id,
+      startDate: futurePlacement.startDate,
+      endDate: futurePlacement.endDate
+    }).save()
+
+    const page = await newEvakaPage({
+      employeeCustomizations: {
+        featureFlags: { citizenChildDocumentTypes: true }
+      }
+    })
+
+    // Staff employee opens child information page
+    await employeeLogin(page, staffEmployee)
+    await page.goto(`${config.employeeUrl}/child-information/${childFuture.id}`)
+    const childInformationPage = new ChildInformationPage(page)
+
+    await childInformationPage.assertSomeCollapsiblesVisible({
+      childDocuments: false
+    })
+  })
+
+  test('Staff can see child documents section for child with backup care in their group', async ({
+    newEvakaPage
+  }) => {
+    const primaryGroup: DevDaycareGroup = await Fixture.daycareGroup({
+      daycareId: testDaycare.id
+    }).save()
+
+    const backupCareDaycare: DevDaycare = await Fixture.daycare({
+      areaId: testCareArea.id,
+      name: 'Backup Care Daycare',
+      enabledPilotFeatures: [
+        'VASU_AND_PEDADOC',
+        'OTHER_DECISION',
+        'CITIZEN_BASIC_DOCUMENT'
+      ]
+    }).save()
+
+    const backupCareGroup: DevDaycareGroup = await Fixture.daycareGroup({
+      daycareId: backupCareDaycare.id,
+      name: 'Backup Care Group'
+    }).save()
+
+    const backupCareStaff = await Fixture.employee({
+      firstName: 'Kaarlo',
+      lastName: 'Kasvattaja'
+    })
+      .staff(backupCareDaycare.id)
+      .groupAcl(backupCareGroup.id)
+      .save()
+
+    const child = await Fixture.person({
+      id: randomId<PersonId>(),
+      ssn: '050115A975B',
+      firstName: 'Tesmi',
+      lastName: 'Lapsinen',
+      dateOfBirth: LocalDate.of(2015, 1, 1)
+    }).saveChild()
+
+    await Fixture.guardian(child, testAdult).save()
+
+    const primaryPlacement = await Fixture.placement({
+      childId: child.id,
+      unitId: testDaycare.id,
+      startDate: now.toLocalDate().subMonths(6),
+      endDate: now.toLocalDate().addYears(1),
+      type: 'DAYCARE'
+    }).save()
+
+    await Fixture.groupPlacement({
+      daycareGroupId: primaryGroup.id,
+      daycarePlacementId: primaryPlacement.id,
+      startDate: primaryPlacement.startDate,
+      endDate: primaryPlacement.endDate
+    }).save()
+
+    await Fixture.backupCare({
+      childId: child.id,
+      unitId: backupCareDaycare.id,
+      groupId: backupCareGroup.id,
+      period: new FiniteDateRange(
+        now.toLocalDate(),
+        now.toLocalDate().addDays(1)
+      )
+    }).save()
+
+    await Fixture.documentTemplate({
+      type: 'PEDAGOGICAL_REPORT',
+      published: true
+    }).save()
+
+    const page = await newEvakaPage()
+    await employeeLogin(page, backupCareStaff)
+    await page.goto(`${config.employeeUrl}/child-information/${child.id}`)
+
+    const childInformationPage = new ChildInformationPage(page)
+
+    await childInformationPage.assertSomeCollapsiblesVisible({
+      childDocuments: true
+    })
+
+    const childDocumentsSection =
+      await childInformationPage.openCollapsible('childDocuments')
+    await childDocumentsSection.createInternalDocumentButton.waitUntilVisible()
+  })
+
+  test('Edit mode cannot be entered for 15 minutes after another use has edited the document content', async ({
+    newEvakaPage
+  }) => {
     await Fixture.documentTemplate({
       type: 'PEDAGOGICAL_REPORT',
       published: true
     }).save()
 
     // Unit supervisor creates a child document
-    page = await Page.open({ mockedTime: now })
+    let page = await newEvakaPage()
     await employeeLogin(page, unitSupervisor)
     await page.goto(`${config.employeeUrl}/child-information/${testChild2.id}`)
     let childInformationPage = new ChildInformationPage(page)
@@ -384,10 +605,9 @@ describe('Employee - Child documents', () => {
     await childDocument.editButton.click()
     await childDocument.status.assertTextEquals('Luonnos')
     await childDocument.savingIndicator.waitUntilHidden()
-    await page.close()
 
     // Admin tries to open the document in edit mode too soon
-    page = await Page.open({ mockedTime: now.addMinutes(3) })
+    page = await newEvakaPage({ mockedTime: now.addMinutes(3) })
     await employeeLogin(page, admin)
     await page.goto(`${config.employeeUrl}/child-information/${testChild2.id}`)
     childInformationPage = new ChildInformationPage(page)
@@ -399,10 +619,9 @@ describe('Employee - Child documents', () => {
     await childDocument.editButton.click()
     await childDocument.closeConcurrentEditErrorModal()
     await childDocument.editButton.waitUntilVisible() // back in read mode
-    await page.close()
 
     // Admin opens the document in edit mode after lock expires
-    page = await Page.open({ mockedTime: now.addMinutes(6) })
+    page = await newEvakaPage({ mockedTime: now.addMinutes(6) })
     await employeeLogin(page, admin)
     await page.goto(`${config.employeeUrl}/child-information/${testChild2.id}`)
     childInformationPage = new ChildInformationPage(page)
@@ -415,7 +634,9 @@ describe('Employee - Child documents', () => {
     await childDocument.previewButton.click()
   })
 
-  test('Child documents report shows document status', async () => {
+  test('Child documents report shows document status', async ({
+    newEvakaPage
+  }) => {
     const daycareGroup = await Fixture.daycareGroup({
       daycareId: testDaycare.id
     }).save()
@@ -464,7 +685,7 @@ describe('Employee - Child documents', () => {
       status: 'DRAFT'
     }).save()
 
-    page = await Page.open({ mockedTime: now })
+    const page = await newEvakaPage()
     await employeeLogin(page, unitSupervisor)
     await page.goto(`${config.employeeUrl}/reports/child-documents`)
 
@@ -493,10 +714,11 @@ describe('Employee - Child documents', () => {
     await groupRow.noDocuments.assertTextEquals('1')
     await groupRow.total.assertTextEquals('2')
   })
-  test('Document archiving', async () => {
+
+  test('Document archiving', async ({ newEvakaPage }) => {
     // Admin creates a template
 
-    page = await Page.open({ mockedTime: now })
+    let page = await newEvakaPage()
     await employeeLogin(page, admin)
     await page.goto(config.employeeUrl)
     const nav = new EmployeeNav(page)
@@ -533,11 +755,10 @@ describe('Employee - Child documents', () => {
     await templateEditor.publishCheckbox.check()
     await templateEditor.saveButton.click()
     await templateEditor.saveButton.waitUntilHidden()
-    await page.close()
     // End of admin creates a template
 
     // Unit supervisor creates a child document
-    page = await Page.open({ mockedTime: now })
+    page = await newEvakaPage()
     await employeeLogin(page, unitSupervisor)
     await page.goto(`${config.employeeUrl}/child-information/${testChild2.id}`)
     const childInformationPage = new ChildInformationPage(page)
@@ -566,7 +787,7 @@ describe('Employee - Child documents', () => {
     // PDF-generation should be triggered by publishing
     await runJobs({ mockedTime: now })
 
-    page = await Page.open({ mockedTime: now })
+    page = await newEvakaPage()
     await employeeLogin(page, admin)
     await page.goto(`${config.employeeUrl}/child-information/${testChild2.id}`)
     const childInformationPage2 = new ChildInformationPage(page)
@@ -587,10 +808,11 @@ describe('Employee - Child documents', () => {
     )
   })
 
-  test('Citizen basic can be sent without filling the form', async () => {
+  test('Citizen basic can be sent without filling the form', async ({
+    newEvakaPage
+  }) => {
     // create document template
-    page = await Page.open({
-      mockedTime: now,
+    let page = await newEvakaPage({
       employeeCustomizations: {
         featureFlags: { citizenChildDocumentTypes: true }
       }
@@ -628,11 +850,9 @@ describe('Employee - Child documents', () => {
     await templateEditor.publishCheckbox.check()
     await templateEditor.saveButton.click()
     await templateEditor.saveButton.waitUntilHidden()
-    await page.close()
 
     // create child document and send to citizen
-    page = await Page.open({
-      mockedTime: now,
+    page = await newEvakaPage({
       employeeCustomizations: {
         featureFlags: { citizenChildDocumentTypes: true }
       }
@@ -677,7 +897,7 @@ describe('Employee - Child documents', () => {
     ])
   })
 
-  test('Citizen answered at is shown', async () => {
+  test('Citizen answered at is shown', async ({ newEvakaPage }) => {
     const template = await Fixture.documentTemplate({
       type: 'CITIZEN_BASIC',
       name: 'Lomake kuntalaiselle',
@@ -700,15 +920,18 @@ describe('Employee - Child documents', () => {
       childId: testChild2.id,
       status: 'COMPLETED',
       content,
-      publishedAt,
-      publishedBy: evakaUserId(unitSupervisor.id),
-      publishedContent: content,
       answeredAt,
       answeredBy: evakaUserId(guardian.id)
-    }).save()
+    })
+      .withPublishedVersion({
+        versionNumber: 1,
+        createdAt: publishedAt,
+        createdBy: evakaUserId(unitSupervisor.id),
+        publishedContent: content
+      })
+      .save()
 
-    page = await Page.open({
-      mockedTime: now,
+    const page = await newEvakaPage({
       employeeCustomizations: {
         featureFlags: { citizenChildDocumentTypes: true }
       }
@@ -727,10 +950,12 @@ describe('Employee - Child documents', () => {
     await row.status.assertTextEquals('Valmis')
   })
 
-  test('Citizen basic can be filled by employee', async () => {
-    // create document template
-    page = await Page.open({
-      mockedTime: now,
+  async function fillCitizenBasicDocument(
+    fillerRole: DevEmployee,
+    newEvakaPage: NewEvakaPage
+  ) {
+    // Admin creates the document template
+    let page = await newEvakaPage({
       employeeCustomizations: {
         featureFlags: { citizenChildDocumentTypes: true }
       }
@@ -768,16 +993,14 @@ describe('Employee - Child documents', () => {
     await templateEditor.publishCheckbox.check()
     await templateEditor.saveButton.click()
     await templateEditor.saveButton.waitUntilHidden()
-    await page.close()
 
-    // create child document and send to citizen
-    page = await Page.open({
-      mockedTime: now,
+    // create child document with selected role and send to citizen
+    page = await newEvakaPage({
       employeeCustomizations: {
         featureFlags: { citizenChildDocumentTypes: true }
       }
     })
-    await employeeLogin(page, unitSupervisor)
+    await employeeLogin(page, fillerRole)
     await page.goto(`${config.employeeUrl}/child-information/${testChild2.id}`)
     const childInformationPage = new ChildInformationPage(page)
     const childDocumentsSection =
@@ -806,7 +1029,7 @@ describe('Employee - Child documents', () => {
     const row = childDocumentsSection.externalChildDocuments(0)
     await row.sent.assertTextEquals(now.toLocalDate().format())
     await row.answered.assertTextEquals(
-      `${now.toLocalDate().format()}, ${unitSupervisor.lastName} ${unitSupervisor.firstName}`
+      `${now.toLocalDate().format()}, ${fillerRole.lastName} ${fillerRole.firstName}`
     )
     await row.status.assertTextEquals('Valmis')
     await runJobs({ mockedTime: now })
@@ -825,9 +1048,40 @@ describe('Employee - Child documents', () => {
           'Uusi täytettävä asiakirja eVakassa / Nytt ifyllnadsdokument i eVaka / New fillable document in eVaka'
       }
     ])
+  }
+
+  test('Citizen basic can be filled by staff employee in the same group', async ({
+    newEvakaPage
+  }) => {
+    const group1: DevDaycareGroup = await Fixture.daycareGroup({
+      daycareId: testDaycare.id
+    }).save()
+    await Fixture.groupPlacement({
+      daycareGroupId: group1.id,
+      daycarePlacementId: placement.id,
+      startDate: placement.startDate,
+      endDate: placement.endDate
+    }).save()
+    const staffEmployee = await Fixture.employee({
+      firstName: 'Kaija',
+      lastName: 'Kasvattaja'
+    })
+      .staff(testDaycare.id)
+      .groupAcl(group1.id)
+      .save()
+
+    await fillCitizenBasicDocument(staffEmployee, newEvakaPage)
   })
 
-  test('English citizen basic document can be sent irrespective of unit language', async () => {
+  test('Citizen basic can be filled by unitSuperVisor', async ({
+    newEvakaPage
+  }) => {
+    await fillCitizenBasicDocument(unitSupervisor, newEvakaPage)
+  })
+
+  test('English citizen basic document can be sent irrespective of unit language', async ({
+    newEvakaPage
+  }) => {
     const child1 = await Fixture.person({ ssn: '240190-5442' }).saveChild()
     const child2 = await Fixture.person({ ssn: '210390-383J' }).saveChild()
     const careArea = await Fixture.careArea().save()
@@ -873,8 +1127,7 @@ describe('Employee - Child documents', () => {
       language: 'EN'
     }).save()
 
-    page = await Page.open({
-      mockedTime: now,
+    const page = await newEvakaPage({
       employeeCustomizations: {
         featureFlags: { citizenChildDocumentTypes: true }
       }
@@ -899,7 +1152,9 @@ describe('Employee - Child documents', () => {
     await childDocumentsSection.modalOk.click()
   })
 
-  test('checkbox group answers are ordered correctly', async () => {
+  test('checkbox group answers are ordered correctly', async ({
+    newEvakaPage
+  }) => {
     const child = await Fixture.person().saveChild()
     const template = await Fixture.documentTemplate({
       content: {
@@ -945,7 +1200,7 @@ describe('Employee - Child documents', () => {
       }
     }).save()
 
-    const page = await Page.open({ mockedTime: now })
+    const page = await newEvakaPage()
     await employeeLogin(page, admin)
     await page.goto(`${config.employeeUrl}/child-information/${child.id}`)
     const childInformationPage = new ChildInformationPage(page)
@@ -963,7 +1218,9 @@ describe('Employee - Child documents', () => {
     )
   })
 
-  test('checkbox answers are localized in the template language', async () => {
+  test('checkbox answers are localized in the template language', async ({
+    newEvakaPage
+  }) => {
     const childSv = await Fixture.person({
       firstName: 'Sven',
       lastName: 'Svensson',
@@ -1066,7 +1323,7 @@ describe('Employee - Child documents', () => {
         ]
       }
     }).save()
-    const page = await Page.open({ mockedTime: now })
+    const page = await newEvakaPage()
     await employeeLogin(page, admin)
     await page.goto(`${config.employeeUrl}/child-information/${childSv.id}`)
     const cipSv = new ChildInformationPage(page)
@@ -1097,7 +1354,9 @@ describe('Employee - Child documents', () => {
     await answer4.assertTextEquals('Ei')
   })
 
-  test('Employee needs to decide if other decisions are ended when accepting a new decision', async () => {
+  test('Employee needs to decide if other decisions are ended when accepting a new decision', async ({
+    newEvakaPage
+  }) => {
     const template1 = await Fixture.documentTemplate({
       type: 'OTHER_DECISION',
       name: 'Päätösasiakirja 1',
@@ -1126,13 +1385,16 @@ describe('Employee - Child documents', () => {
       content: {
         answers: []
       },
-      publishedAt: now,
-      publishedBy: evakaUserId(director.id),
-      publishedContent: {
-        answers: []
-      },
       decisionMaker: director.id
     })
+      .withPublishedVersion({
+        versionNumber: 1,
+        createdAt: now,
+        createdBy: evakaUserId(director.id),
+        publishedContent: {
+          answers: []
+        }
+      })
       .withDecision({
         status: 'ACCEPTED',
         validity: new DateRange(
@@ -1151,13 +1413,16 @@ describe('Employee - Child documents', () => {
       content: {
         answers: []
       },
-      publishedAt: now,
-      publishedBy: evakaUserId(director.id),
-      publishedContent: {
-        answers: []
-      },
       decisionMaker: director.id
     })
+      .withPublishedVersion({
+        versionNumber: 1,
+        createdAt: now,
+        createdBy: evakaUserId(director.id),
+        publishedContent: {
+          answers: []
+        }
+      })
       .withDecision({
         status: 'ACCEPTED',
         validity: new DateRange(
@@ -1170,7 +1435,7 @@ describe('Employee - Child documents', () => {
       .save()
 
     // Unit supervisor creates a new decision draft
-    let page = await Page.open({ mockedTime: now })
+    let page = await newEvakaPage()
     await employeeLogin(page, unitSupervisor)
     let childInformationPage = new ChildInformationPage(page)
     await childInformationPage.navigateToChild(testChild2.id)
@@ -1189,10 +1454,9 @@ describe('Employee - Child documents', () => {
     await childDocumentPage.proposeDecision(director)
     await childDocumentPage.status.assertTextEquals('Päätösesitys')
     await childDocumentPage.acceptDecisionButton.waitUntilHidden()
-    await page.close()
 
     // Director opens the decision proposal
-    page = await Page.open({ mockedTime: now })
+    page = await newEvakaPage()
     await employeeLogin(page, director)
     await page.goto(config.employeeUrl)
     const nav = new EmployeeNav(page)
@@ -1218,10 +1482,9 @@ describe('Employee - Child documents', () => {
     await childDocument.confirmOtherDecisionsButton.click()
     await childDocument.clickModalOkButton()
     await childDocument.status.assertTextEquals('Myönnetty')
-    await page.close()
 
     // Unit supervisor checks old and new decisions
-    page = await Page.open({ mockedTime: now })
+    page = await newEvakaPage()
     await employeeLogin(page, unitSupervisor)
     childInformationPage = new ChildInformationPage(page)
     await childInformationPage.navigateToChild(testChild2.id)
@@ -1240,7 +1503,9 @@ describe('Employee - Child documents', () => {
       .validity.assertTextEquals('02.02.2023 - 08.02.2023')
   })
 
-  test('Other decisions made with the same template are ended automatically when accepting a new decision', async () => {
+  test('Other decisions made with the same template are ended automatically when accepting a new decision', async ({
+    newEvakaPage
+  }) => {
     const template = await Fixture.documentTemplate({
       type: 'OTHER_DECISION',
       name: 'Päätösasiakirja',
@@ -1255,13 +1520,16 @@ describe('Employee - Child documents', () => {
       content: {
         answers: []
       },
-      publishedAt: now,
-      publishedBy: evakaUserId(director.id),
-      publishedContent: {
-        answers: []
-      },
       decisionMaker: director.id
     })
+      .withPublishedVersion({
+        versionNumber: 1,
+        createdAt: now,
+        createdBy: evakaUserId(director.id),
+        publishedContent: {
+          answers: []
+        }
+      })
       .withDecision({
         status: 'ACCEPTED',
         validity: new DateRange(now.toLocalDate(), null),
@@ -1271,7 +1539,7 @@ describe('Employee - Child documents', () => {
       .save()
 
     // Unit supervisor creates a new decision draft
-    let page = await Page.open({ mockedTime: now })
+    let page = await newEvakaPage()
     await employeeLogin(page, unitSupervisor)
     let childInformationPage = new ChildInformationPage(page)
     await childInformationPage.navigateToChild(testChild2.id)
@@ -1290,10 +1558,9 @@ describe('Employee - Child documents', () => {
     await childDocumentPage.proposeDecision(director)
     await childDocumentPage.status.assertTextEquals('Päätösesitys')
     await childDocumentPage.acceptDecisionButton.waitUntilHidden()
-    await page.close()
 
     // Director opens the decision proposal
-    page = await Page.open({ mockedTime: now })
+    page = await newEvakaPage()
     await employeeLogin(page, director)
     await page.goto(config.employeeUrl)
     const nav = new EmployeeNav(page)
@@ -1315,10 +1582,9 @@ describe('Employee - Child documents', () => {
     )
     await childDocument.acceptDecision(validity)
     await childDocument.status.assertTextEquals('Myönnetty')
-    await page.close()
 
     // Unit supervisor checks old and new decisions
-    page = await Page.open({ mockedTime: now })
+    page = await newEvakaPage()
     await employeeLogin(page, unitSupervisor)
     childInformationPage = new ChildInformationPage(page)
     await childInformationPage.navigateToChild(testChild2.id)
@@ -1333,7 +1599,9 @@ describe('Employee - Child documents', () => {
       .validity.assertTextEquals('02.02.2023 - 08.02.2023')
   })
 
-  test('Error is shown when accepting decision with conflicting validity period', async () => {
+  test('Error is shown when accepting decision with conflicting validity period', async ({
+    newEvakaPage
+  }) => {
     const template = await Fixture.documentTemplate({
       type: 'OTHER_DECISION',
       endDecisionWhenUnitChanges: true,
@@ -1348,13 +1616,16 @@ describe('Employee - Child documents', () => {
       content: {
         answers: []
       },
-      publishedAt: now,
-      publishedBy: evakaUserId(director.id),
-      publishedContent: {
-        answers: []
-      },
       decisionMaker: director.id
     })
+      .withPublishedVersion({
+        versionNumber: 1,
+        createdAt: now,
+        createdBy: evakaUserId(director.id),
+        publishedContent: {
+          answers: []
+        }
+      })
       .withDecision({
         status: 'ACCEPTED',
         validity: new DateRange(now.toLocalDate(), null),
@@ -1364,7 +1635,7 @@ describe('Employee - Child documents', () => {
       .save()
 
     // Unit supervisor creates a second decision document
-    page = await Page.open({ mockedTime: now })
+    let page = await newEvakaPage()
     await employeeLogin(page, unitSupervisor)
     await page.goto(`${config.employeeUrl}/child-information/${testChild2.id}`)
     const childInformationPage = new ChildInformationPage(page)
@@ -1376,10 +1647,9 @@ describe('Employee - Child documents', () => {
     let childDocument = new ChildDocumentPage(page)
     await childDocument.proposeDecision(director)
     const documentUrl = page.url
-    await page.close()
 
     // Director attempts to accept the second decision with same start date
-    page = await Page.open({ mockedTime: now })
+    page = await newEvakaPage()
     await employeeLogin(page, director)
     await page.goto(documentUrl)
     childDocument = new ChildDocumentPage(page)
@@ -1406,7 +1676,9 @@ describe('Employee - Child documents', () => {
   })
 })
 
-describe('Employee - Child documents - unit groups page', () => {
+test.describe('Employee - Child documents - unit groups page', () => {
+  test.use({ evakaOptions: { mockedTime: now } })
+
   let template: DevDocumentTemplate
   let unit1: DevDaycare
   let group1: DevDaycareGroup
@@ -1442,7 +1714,7 @@ describe('Employee - Child documents - unit groups page', () => {
     return placement
   }
 
-  beforeEach(async () => {
+  test.beforeEach(async () => {
     await Fixture.serviceNeedOption({
       validPlacementType: 'PRESCHOOL',
       defaultOption: true
@@ -1547,11 +1819,12 @@ describe('Employee - Child documents - unit groups page', () => {
     }).save()
   })
 
-  test('unit supervisor can create child documents for any group', async () => {
+  test('unit supervisor can create child documents for any group', async ({
+    newEvakaPage
+  }) => {
     const user = await Fixture.employee().unitSupervisor(unit1.id).save()
 
-    const page = await Page.open({
-      mockedTime: now,
+    const page = await newEvakaPage({
       employeeCustomizations: {
         featureFlags: { citizenChildDocumentTypes: true }
       }
@@ -1605,14 +1878,15 @@ describe('Employee - Child documents - unit groups page', () => {
     ).toEqual([expectedEmail, expectedEmail])
   })
 
-  test('staff can create child documents for only own group', async () => {
+  test('staff can create child documents for only own group', async ({
+    newEvakaPage
+  }) => {
     const user = await Fixture.employee()
       .staff(unit1.id)
       .groupAcl(group2.id)
       .save()
 
-    const page = await Page.open({
-      mockedTime: now,
+    const page = await newEvakaPage({
       employeeCustomizations: {
         featureFlags: { citizenChildDocumentTypes: true }
       }
@@ -1661,14 +1935,15 @@ describe('Employee - Child documents - unit groups page', () => {
     ).toEqual([expectedEmail])
   })
 
-  test('Unit supervisor can return a sent unanswered document to draft state', async () => {
+  test('Unit supervisor can return a sent unanswered document to draft state', async ({
+    newEvakaPage
+  }) => {
     // create child document, send to citizen and return to draft
     const unitSupervisor = await Fixture.employee()
       .unitSupervisor(unit1.id)
       .save()
 
-    const page = await Page.open({
-      mockedTime: now,
+    const page = await newEvakaPage({
       employeeCustomizations: {
         featureFlags: { citizenChildDocumentTypes: true }
       }
@@ -1680,15 +1955,16 @@ describe('Employee - Child documents - unit groups page', () => {
     await assertReturningToDraftForUser(page, unitSupervisor)
   })
 
-  test('Staff member can return a sent unanswered document to draft state', async () => {
+  test('Staff member can return a sent unanswered document to draft state', async ({
+    newEvakaPage
+  }) => {
     // create child document, send to citizen and return to draft
     const staffMember = await Fixture.employee()
       .staff(unit1.id)
       .groupAcl(group1.id)
       .save()
 
-    const page = await Page.open({
-      mockedTime: now,
+    const page = await newEvakaPage({
       employeeCustomizations: {
         featureFlags: { citizenChildDocumentTypes: true }
       }

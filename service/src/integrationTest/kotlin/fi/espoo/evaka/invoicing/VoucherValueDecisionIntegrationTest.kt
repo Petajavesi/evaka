@@ -4,31 +4,30 @@
 
 package fi.espoo.evaka.invoicing
 
-import com.github.kittinunf.fuel.core.extensions.jsonBody
-import com.github.kittinunf.fuel.jackson.objectBody
-import com.github.kittinunf.fuel.jackson.responseObject
 import fi.espoo.evaka.EmailEnv
 import fi.espoo.evaka.FullApplicationTest
 import fi.espoo.evaka.caseprocess.CaseProcessState
 import fi.espoo.evaka.caseprocess.ProcessMetadataController
 import fi.espoo.evaka.caseprocess.getCaseProcessByVoucherValueDecisionId
+import fi.espoo.evaka.daycare.domain.ProviderType
 import fi.espoo.evaka.emailclient.Email
 import fi.espoo.evaka.emailclient.IEmailMessageProvider
 import fi.espoo.evaka.emailclient.MockEmailClient
 import fi.espoo.evaka.feeThresholds
 import fi.espoo.evaka.insertServiceNeedOptionVoucherValues
 import fi.espoo.evaka.insertServiceNeedOptions
+import fi.espoo.evaka.invoicing.controller.SearchVoucherValueDecisionRequest
+import fi.espoo.evaka.invoicing.controller.VoucherValueDecisionController
+import fi.espoo.evaka.invoicing.controller.VoucherValueDecisionDistinctiveParams
 import fi.espoo.evaka.invoicing.data.PagedVoucherValueDecisionSummaries
 import fi.espoo.evaka.invoicing.data.approveValueDecisionDraftsForSending
 import fi.espoo.evaka.invoicing.domain.FinanceDecisionType
 import fi.espoo.evaka.invoicing.domain.VoucherValueDecision
 import fi.espoo.evaka.invoicing.domain.VoucherValueDecisionStatus
-import fi.espoo.evaka.invoicing.domain.VoucherValueDecisionType
 import fi.espoo.evaka.pis.EmailMessageType
 import fi.espoo.evaka.pis.controllers.ParentshipController
-import fi.espoo.evaka.placement.Placement
+import fi.espoo.evaka.placement.PlacementController
 import fi.espoo.evaka.placement.PlacementCreateRequestBody
-import fi.espoo.evaka.placement.PlacementResponse
 import fi.espoo.evaka.placement.PlacementType
 import fi.espoo.evaka.placement.PlacementUpdateRequestBody
 import fi.espoo.evaka.sficlient.MockSfiMessagesClient
@@ -37,7 +36,6 @@ import fi.espoo.evaka.sficlient.getSfiMessageEventsByMessageId
 import fi.espoo.evaka.sficlient.rest.EventType
 import fi.espoo.evaka.shared.ChildId
 import fi.espoo.evaka.shared.DaycareId
-import fi.espoo.evaka.shared.ParentshipId
 import fi.espoo.evaka.shared.PersonId
 import fi.espoo.evaka.shared.PlacementId
 import fi.espoo.evaka.shared.VoucherValueDecisionId
@@ -45,39 +43,26 @@ import fi.espoo.evaka.shared.async.AsyncJob
 import fi.espoo.evaka.shared.async.AsyncJobRunner
 import fi.espoo.evaka.shared.auth.AuthenticatedUser
 import fi.espoo.evaka.shared.auth.UserRole
-import fi.espoo.evaka.shared.auth.asUser
 import fi.espoo.evaka.shared.db.Database
+import fi.espoo.evaka.shared.dev.DevCareArea
+import fi.espoo.evaka.shared.dev.DevDaycare
 import fi.espoo.evaka.shared.dev.DevEmployee
 import fi.espoo.evaka.shared.dev.DevParentship
 import fi.espoo.evaka.shared.dev.DevPerson
 import fi.espoo.evaka.shared.dev.DevPersonType
 import fi.espoo.evaka.shared.dev.insert
 import fi.espoo.evaka.shared.dev.insertTestPartnership
+import fi.espoo.evaka.shared.domain.BadRequest
+import fi.espoo.evaka.shared.domain.Forbidden
 import fi.espoo.evaka.shared.domain.HelsinkiDateTime
 import fi.espoo.evaka.shared.domain.MockEvakaClock
-import fi.espoo.evaka.testAdult_1
-import fi.espoo.evaka.testAdult_2
-import fi.espoo.evaka.testAdult_3
-import fi.espoo.evaka.testAdult_4
-import fi.espoo.evaka.testAdult_5
-import fi.espoo.evaka.testAdult_6
-import fi.espoo.evaka.testAdult_7
-import fi.espoo.evaka.testArea
-import fi.espoo.evaka.testChild_1
-import fi.espoo.evaka.testChild_2
-import fi.espoo.evaka.testDaycare
-import fi.espoo.evaka.testDecisionMaker_1
-import fi.espoo.evaka.testDecisionMaker_2
-import fi.espoo.evaka.testVoucherDaycare
-import fi.espoo.evaka.testVoucherDaycare2
-import fi.espoo.evaka.withMockedTime
 import java.time.LocalDate
 import java.time.LocalTime
-import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
 
 class VoucherValueDecisionIntegrationTest : FullApplicationTest(resetDbBeforeEach = true) {
@@ -86,8 +71,91 @@ class VoucherValueDecisionIntegrationTest : FullApplicationTest(resetDbBeforeEac
     @Autowired lateinit var emailEnv: EmailEnv
     @Autowired lateinit var processMetadataController: ProcessMetadataController
     @Autowired private lateinit var sfiAsyncJobs: SfiAsyncJobs
+    @Autowired private lateinit var placementController: PlacementController
+    @Autowired private lateinit var parentshipController: ParentshipController
+    @Autowired private lateinit var voucherValueDecisionController: VoucherValueDecisionController
 
+    private val area = DevCareArea()
+    private val daycare = DevDaycare(areaId = area.id, name = "Municipal Daycare")
+    private val decisionMaker = DevEmployee()
+    private val decisionMaker2 = DevEmployee()
     private val admin = DevEmployee(roles = setOf(UserRole.ADMIN))
+    private val voucherDaycare =
+        DevDaycare(
+            areaId = area.id,
+            name = "Voucher Daycare",
+            providerType = ProviderType.PRIVATE_SERVICE_VOUCHER,
+            financeDecisionHandler = decisionMaker2.id,
+        )
+    private val voucherDaycare2 =
+        DevDaycare(
+            areaId = area.id,
+            name = "Voucher Daycare 2",
+            providerType = ProviderType.PRIVATE_SERVICE_VOUCHER,
+        )
+
+    // Head of family — needs SSN and address for PDF generation
+    private val adult1 =
+        DevPerson(
+            ssn = "010180-1232",
+            firstName = "John",
+            lastName = "Doe",
+            streetAddress = "Kamreerintie 2",
+            postalCode = "02770",
+            postOffice = "Espoo",
+        )
+    private val adult2 =
+        DevPerson(
+            ssn = "010280-952L",
+            firstName = "Joan",
+            lastName = "Doe",
+            streetAddress = "Kamreerintie 2",
+            postalCode = "02770",
+            postOffice = "Espoo",
+        )
+
+    // Has email but no SSN/address — triggers manual sending
+    private val adult3 =
+        DevPerson(firstName = "Mark", lastName = "Foo", email = "mark.foo@example.com")
+    private val adult4 = DevPerson()
+
+    // Alternative head of family — needs SSN and address for PDF
+    private val adult5 =
+        DevPerson(
+            ssn = "070644-937X",
+            streetAddress = "Kamreerintie 1",
+            postalCode = "00340",
+            postOffice = "Espoo",
+        )
+
+    // Restricted details enabled — needs SSN and address
+    private val adult7 =
+        DevPerson(
+            ssn = "010180-969B",
+            streetAddress = "Suojatie 112",
+            postalCode = "02230",
+            postOffice = "Espoo",
+            restrictedDetailsEnabled = true,
+        )
+
+    private val child1 =
+        DevPerson(
+            dateOfBirth = LocalDate.of(2017, 6, 1),
+            ssn = "010617A123U",
+            firstName = "Ricky",
+            lastName = "Doe",
+            streetAddress = "Kamreerintie 2",
+            postalCode = "02770",
+            postOffice = "Espoo",
+        )
+    private val child2 =
+        DevPerson(
+            dateOfBirth = LocalDate.of(2016, 3, 1),
+            ssn = "010316A1235",
+            streetAddress = "Kamreerintie 2",
+            postalCode = "02770",
+            postOffice = "Espoo",
+        )
 
     @BeforeEach
     fun beforeEach() {
@@ -96,39 +164,33 @@ class VoucherValueDecisionIntegrationTest : FullApplicationTest(resetDbBeforeEac
 
         db.transaction { tx ->
             tx.insert(admin)
-            tx.insert(testDecisionMaker_1)
-            tx.insert(testDecisionMaker_2)
-            tx.insert(testArea)
-            tx.insert(testDaycare)
-            tx.insert(testVoucherDaycare.copy(financeDecisionHandler = testDecisionMaker_2.id))
-            tx.insert(testVoucherDaycare2)
-            listOf(
-                    testAdult_1,
-                    testAdult_2,
-                    testAdult_3,
-                    testAdult_4,
-                    testAdult_5,
-                    testAdult_6,
-                    testAdult_7,
-                )
-                .forEach { tx.insert(it, DevPersonType.ADULT) }
-            listOf(testChild_1, testChild_2).forEach { tx.insert(it, DevPersonType.CHILD) }
+            tx.insert(decisionMaker)
+            tx.insert(decisionMaker2)
+            tx.insert(area)
+            tx.insert(daycare)
+            tx.insert(voucherDaycare)
+            tx.insert(voucherDaycare2)
+            listOf(adult1, adult2, adult3, adult4, adult5, adult7).forEach {
+                tx.insert(it, DevPersonType.ADULT)
+            }
+            listOf(child1, child2).forEach { tx.insert(it, DevPersonType.CHILD) }
             tx.insert(feeThresholds)
             tx.insertServiceNeedOptions()
             tx.insertServiceNeedOptionVoucherValues()
             tx.insert(
                 DevParentship(
-                    childId = testChild_1.id,
-                    headOfChildId = testAdult_1.id,
-                    startDate = testChild_1.dateOfBirth,
-                    endDate = testChild_1.dateOfBirth.plusYears(18).minusDays(1),
+                    childId = child1.id,
+                    headOfChildId = adult1.id,
+                    startDate = child1.dateOfBirth,
+                    endDate = child1.dateOfBirth.plusYears(18).minusDays(1),
                 )
             )
-            tx.insertTestPartnership(adult1 = testAdult_1.id, adult2 = testAdult_2.id)
+            tx.insertTestPartnership(adult1 = adult1.id, adult2 = adult2.id)
         }
     }
 
     private val now = HelsinkiDateTime.of(LocalDate.of(2022, 1, 1), LocalTime.of(9, 0))
+    private val clock = MockEvakaClock(now)
     private val startDate = now.toLocalDate().minusMonths(1)
     private val endDate = now.toLocalDate().plusMonths(6)
 
@@ -159,7 +221,9 @@ class VoucherValueDecisionIntegrationTest : FullApplicationTest(resetDbBeforeEac
             now.toLocalDate().plusDays(evakaEnv.nrOfDaysVoucherValueDecisionCanBeSentInAdvance + 1)
         val endDate = startDate.plusMonths(6)
         createPlacement(startDate, endDate)
-        sendAllValueDecisions(400, "voucherValueDecisions.confirmation.tooFarInFuture")
+
+        val ex = assertThrows<BadRequest> { sendAllValueDecisions() }
+        assertEquals("voucherValueDecisions.confirmation.tooFarInFuture", ex.errorCode)
 
         getAllValueDecisions().let { decisions ->
             assertEquals(1, decisions.size)
@@ -211,7 +275,7 @@ class VoucherValueDecisionIntegrationTest : FullApplicationTest(resetDbBeforeEac
                 processMetadataController.getVoucherValueDecisionMetadata(
                     dbInstance(),
                     admin.user,
-                    MockEvakaClock(now),
+                    clock,
                     decision.id,
                 )
             assertEquals(process.caseIdentifier, metadata.data?.process?.caseIdentifier)
@@ -248,52 +312,151 @@ class VoucherValueDecisionIntegrationTest : FullApplicationTest(resetDbBeforeEac
         getAllValueDecisions().let { decisions ->
             assertEquals(1, decisions.size)
             assertEquals(VoucherValueDecisionStatus.SENT, decisions.first().status)
-            assertEquals(testAdult_1.id, decisions.first().headOfFamilyId)
+            assertEquals(adult1.id, decisions.first().headOfFamilyId)
         }
 
-        changeHeadOfFamily(testChild_1, testAdult_5.id)
+        changeHeadOfFamily(child1, adult5.id)
         sendAllValueDecisions()
 
         getAllValueDecisions().let { decisions ->
             assertEquals(2, decisions.size)
             val annulled = decisions.find { it.status == VoucherValueDecisionStatus.ANNULLED }
             assertNotNull(annulled)
-            assertEquals(testAdult_1.id, annulled.headOfFamilyId)
+            assertEquals(adult1.id, annulled.headOfFamilyId)
             val sent = decisions.find { it.status == VoucherValueDecisionStatus.SENT }
             assertNotNull(sent)
-            assertEquals(testAdult_5.id, sent.headOfFamilyId)
+            assertEquals(adult5.id, sent.headOfFamilyId)
         }
     }
 
     @Test
     fun `value decision handler is set to approver for relief decision`() {
-        createPlacement(startDate, endDate)
-        db.transaction {
-            val decisionType = VoucherValueDecisionType.RELIEF_ACCEPTED
-            val childId = testChild_1.id
-            it.execute {
-                sql(
-                    "UPDATE voucher_value_decision d SET decision_type = ${bind(decisionType)} WHERE child_id = ${bind(childId)}"
-                )
-            }
+        val approvedDecision = createReliefDecision(false)
+        assertEquals(decisionMaker.id.raw, approvedDecision.decisionHandler)
+    }
 
-            it.execute {
-                sql(
-                    "UPDATE daycare SET finance_decision_handler = ${bind(testDecisionMaker_2.id)} WHERE id = ${bind(testVoucherDaycare.id)}"
-                )
-            }
-        }
+    @Test
+    fun `value decision handler is set to the daycare handler when forced when decision is not normal`() {
+        val approvedDecision = createReliefDecision(true)
+        assertEquals(decisionMaker2.id.raw, approvedDecision.decisionHandler)
+    }
 
-        sendAllValueDecisions()
-
-        getAllValueDecisions().let { decisions ->
-            assertEquals(1, decisions.size)
-            assertEquals(
-                VoucherValueDecisionStatus.WAITING_FOR_MANUAL_SENDING,
-                decisions.first().status,
+    @Test
+    fun `Email notification is sent to hof when decision in WAITING_FOR_SENDING is set to SENT`() {
+        val optInAdult =
+            DevPerson(
+                ssn = "291090-9986",
+                email = "optin@test.com",
+                forceManualFeeDecisions = false,
+                streetAddress = "Toistie 33",
+                postalCode = "02230",
+                postOffice = "Espoo",
             )
-            assertEquals(financeWorker.id.raw, decisions.first().decisionHandler)
+        db.transaction {
+            it.insert(optInAdult, DevPersonType.RAW_ROW)
+            it.insert(
+                DevParentship(
+                    childId = child2.id,
+                    headOfChildId = optInAdult.id,
+                    startDate = child2.dateOfBirth,
+                    endDate = child2.dateOfBirth.plusYears(18).minusDays(1),
+                )
+            )
+            it.insertTestPartnership(adult1 = optInAdult.id, adult2 = adult7.id)
         }
+        createPlacement(startDate, endDate, childId = child2.id)
+        val decisionId = sendAllValueDecisions().first()
+        db.transaction { it.setDocumentContainsContactInfo(decisionId) }
+
+        asyncJobRunner.runPendingJobsSync(clock)
+
+        val emailContent =
+            emailMessageProvider.financeDecisionNotification(
+                FinanceDecisionType.VOUCHER_VALUE_DECISION
+            )
+
+        assertEquals(
+            setOfNotNull(optInAdult.email),
+            MockEmailClient.emails.map { it.toAddress }.toSet(),
+        )
+        assertEquals(emailContent.subject, getEmailFor(optInAdult).content.subject)
+        assertEquals(
+            "${emailEnv.senderNameFi} <${emailEnv.senderAddress}>",
+            getEmailFor(optInAdult).fromAddress.address,
+        )
+    }
+
+    @Test
+    fun `Email notification is sent to hof when decision in WAITING_FOR_MANUAL_SENDING is set to SENT`() {
+        db.transaction {
+            it.insert(
+                DevParentship(
+                    childId = child2.id,
+                    headOfChildId = adult3.id,
+                    startDate = child2.dateOfBirth,
+                    endDate = child2.dateOfBirth.plusYears(18).minusDays(1),
+                )
+            )
+            it.insertTestPartnership(adult1 = adult3.id, adult2 = adult4.id)
+        }
+        createPlacement(startDate, endDate, childId = child2.id)
+        val decisionId = sendAllValueDecisions().first()
+        db.transaction { it.setDocumentContainsContactInfo(decisionId) }
+
+        asyncJobRunner.runPendingJobsSync(clock)
+
+        assertEquals(emptySet(), MockEmailClient.emails.map { it.toAddress }.toSet())
+
+        markValueDecisionsSent(listOf(decisionId))
+        asyncJobRunner.runPendingJobsSync(clock)
+
+        val emailContent =
+            emailMessageProvider.financeDecisionNotification(
+                FinanceDecisionType.VOUCHER_VALUE_DECISION
+            )
+
+        assertEquals(
+            setOfNotNull(adult3.email),
+            MockEmailClient.emails.map { it.toAddress }.toSet(),
+        )
+        assertEquals(emailContent.subject, getEmailFor(adult3).content.subject)
+        assertEquals(
+            "${emailEnv.senderNameFi} <${emailEnv.senderAddress}>",
+            getEmailFor(adult3).fromAddress.address,
+        )
+    }
+
+    @Test
+    fun `Email notification is not sent to hof when opted out of decision emails`() {
+        val optOutAdult =
+            DevPerson(
+                ssn = "291090-9986",
+                email = "optout@test.com",
+                forceManualFeeDecisions = false,
+                disabledEmailTypes = setOf(EmailMessageType.DECISION_NOTIFICATION),
+                streetAddress = "Toistie 33",
+                postalCode = "02230",
+                postOffice = "Espoo",
+            )
+        db.transaction {
+            it.insert(optOutAdult, DevPersonType.RAW_ROW)
+            it.insert(
+                DevParentship(
+                    childId = child2.id,
+                    headOfChildId = optOutAdult.id,
+                    startDate = child2.dateOfBirth,
+                    endDate = child2.dateOfBirth.plusYears(18).minusDays(1),
+                )
+            )
+            it.insertTestPartnership(adult1 = optOutAdult.id, adult2 = adult7.id)
+        }
+        createPlacement(startDate, endDate, childId = child2.id)
+        val decisionId = sendAllValueDecisions().first()
+        db.transaction { it.setDocumentContainsContactInfo(decisionId) }
+
+        asyncJobRunner.runPendingJobsSync(clock)
+
+        assertEquals(emptySet(), MockEmailClient.emails.map { it.toAddress }.toSet())
     }
 
     @Test
@@ -325,7 +488,7 @@ class VoucherValueDecisionIntegrationTest : FullApplicationTest(resetDbBeforeEac
         }
 
         val newStartDate = now.toLocalDate().minusDays(1)
-        createPlacement(newStartDate, endDate, testVoucherDaycare2.id)
+        createPlacement(newStartDate, endDate, voucherDaycare2.id)
 
         sendAllValueDecisions()
         getAllValueDecisions()
@@ -355,7 +518,7 @@ class VoucherValueDecisionIntegrationTest : FullApplicationTest(resetDbBeforeEac
         }
 
         val newStartDate = now.toLocalDate().minusDays(1)
-        createPlacement(newStartDate, endDate, testDaycare.id)
+        createPlacement(newStartDate, endDate, daycare.id)
         sendAllValueDecisions()
 
         getAllValueDecisions().let { decisions ->
@@ -373,7 +536,7 @@ class VoucherValueDecisionIntegrationTest : FullApplicationTest(resetDbBeforeEac
         getAllValueDecisions().let { decisions ->
             assertEquals(1, decisions.size)
             assertEquals(VoucherValueDecisionStatus.SENT, decisions.first().status)
-            assertEquals(testAdult_1.id, decisions.first().headOfFamilyId)
+            assertEquals(adult1.id, decisions.first().headOfFamilyId)
         }
 
         deletePlacement(placementId)
@@ -382,7 +545,7 @@ class VoucherValueDecisionIntegrationTest : FullApplicationTest(resetDbBeforeEac
         getAllValueDecisions().let { decisions ->
             assertEquals(1, decisions.size)
             assertEquals(VoucherValueDecisionStatus.ANNULLED, decisions.first().status)
-            assertEquals(testAdult_1.id, decisions.first().headOfFamilyId)
+            assertEquals(adult1.id, decisions.first().headOfFamilyId)
         }
     }
 
@@ -412,27 +575,42 @@ class VoucherValueDecisionIntegrationTest : FullApplicationTest(resetDbBeforeEac
     fun `value decision search`() {
         createPlacement(startDate, endDate)
 
-        assertEquals(1, searchValueDecisions(status = "DRAFT").total)
+        assertEquals(1, searchValueDecisions(status = VoucherValueDecisionStatus.DRAFT).total)
         assertEquals(
             1,
-            searchValueDecisions(status = "DRAFT", searchTerms = "Ricky").total,
-        ) // child
-        assertEquals(1, searchValueDecisions(status = "DRAFT", searchTerms = "John").total) // head
+            searchValueDecisions(status = VoucherValueDecisionStatus.DRAFT, searchTerms = "Ricky")
+                .total,
+        )
         assertEquals(
             1,
-            searchValueDecisions(status = "DRAFT", searchTerms = "Joan").total,
-        ) // partner
+            searchValueDecisions(status = VoucherValueDecisionStatus.DRAFT, searchTerms = "John")
+                .total,
+        )
+        assertEquals(
+            1,
+            searchValueDecisions(status = VoucherValueDecisionStatus.DRAFT, searchTerms = "Joan")
+                .total,
+        )
         assertEquals(
             0,
-            searchValueDecisions(status = "DRAFT", searchTerms = "Foobar").total,
-        ) // no match
-        assertEquals(0, searchValueDecisions(status = "SENT").total)
+            searchValueDecisions(status = VoucherValueDecisionStatus.DRAFT, searchTerms = "Foobar")
+                .total,
+        )
+        assertEquals(0, searchValueDecisions(status = VoucherValueDecisionStatus.SENT).total)
 
         sendAllValueDecisions()
-        assertEquals(0, searchValueDecisions(status = "DRAFT").total)
-        assertEquals(1, searchValueDecisions(status = "SENT").total)
-        assertEquals(1, searchValueDecisions(status = "SENT", searchTerms = "Ricky").total)
-        assertEquals(0, searchValueDecisions(status = "SENT", searchTerms = "Foobar").total)
+        assertEquals(0, searchValueDecisions(status = VoucherValueDecisionStatus.DRAFT).total)
+        assertEquals(1, searchValueDecisions(status = VoucherValueDecisionStatus.SENT).total)
+        assertEquals(
+            1,
+            searchValueDecisions(status = VoucherValueDecisionStatus.SENT, searchTerms = "Ricky")
+                .total,
+        )
+        assertEquals(
+            0,
+            searchValueDecisions(status = VoucherValueDecisionStatus.SENT, searchTerms = "Foobar")
+                .total,
+        )
     }
 
     @Test
@@ -442,9 +620,11 @@ class VoucherValueDecisionIntegrationTest : FullApplicationTest(resetDbBeforeEac
 
         sendAllValueDecisions()
 
-        searchValueDecisions("SENT", "", """["NO_STARTING_PLACEMENTS"]""").let { decisions ->
-            assertEquals(1, decisions.data.size)
-        }
+        searchValueDecisions(
+                VoucherValueDecisionStatus.SENT,
+                distinctions = listOf(VoucherValueDecisionDistinctiveParams.NO_STARTING_PLACEMENTS),
+            )
+            .let { decisions -> assertEquals(1, decisions.data.size) }
 
         db.transaction {
             it.execute {
@@ -454,9 +634,11 @@ class VoucherValueDecisionIntegrationTest : FullApplicationTest(resetDbBeforeEac
             }
         }
 
-        searchValueDecisions("SENT", "", """["NO_STARTING_PLACEMENTS"]""").let { decisions ->
-            assertEquals(0, decisions.data.size)
-        }
+        searchValueDecisions(
+                VoucherValueDecisionStatus.SENT,
+                distinctions = listOf(VoucherValueDecisionDistinctiveParams.NO_STARTING_PLACEMENTS),
+            )
+            .let { decisions -> assertEquals(0, decisions.data.size) }
     }
 
     @Test
@@ -464,7 +646,7 @@ class VoucherValueDecisionIntegrationTest : FullApplicationTest(resetDbBeforeEac
         createPlacement(startDate, endDate)
         val decisionId = sendAllValueDecisions().first()
 
-        assertEquals(200, getPdfStatus(decisionId, financeWorker))
+        getVoucherValueDecisionPdf(decisionId, financeWorker)
     }
 
     @Test
@@ -473,31 +655,29 @@ class VoucherValueDecisionIntegrationTest : FullApplicationTest(resetDbBeforeEac
         val decisionId = sendAllValueDecisions().first()
         db.transaction { it.setDocumentContainsContactInfo(decisionId) }
 
-        assertEquals(200, getPdfStatus(decisionId, financeWorker))
+        getVoucherValueDecisionPdf(decisionId, financeWorker)
     }
 
     @Test
     fun `Legacy PDF can not be downloaded if head of family has restricted details but sfi message is sent`() {
         db.transaction {
-            // testAdult_7 has restricted details on
             it.insert(
                 DevParentship(
-                    childId = testChild_2.id,
-                    headOfChildId = testAdult_7.id,
-                    startDate = testChild_2.dateOfBirth,
-                    endDate = testChild_2.dateOfBirth.plusYears(18).minusDays(1),
+                    childId = child2.id,
+                    headOfChildId = adult7.id,
+                    startDate = child2.dateOfBirth,
+                    endDate = child2.dateOfBirth.plusYears(18).minusDays(1),
                 )
             )
-            it.insertTestPartnership(adult1 = testAdult_7.id, adult2 = testAdult_3.id)
+            it.insertTestPartnership(adult1 = adult7.id, adult2 = adult3.id)
         }
-        createPlacement(startDate, endDate, childId = testChild_2.id)
+        createPlacement(startDate, endDate, childId = child2.id)
         val decisionId = sendAllValueDecisions().first()
         db.transaction { it.setDocumentContainsContactInfo(decisionId) }
 
-        assertEquals(403, getPdfStatus(decisionId, financeWorker))
+        assertThrows<Forbidden> { getVoucherValueDecisionPdf(decisionId, financeWorker) }
 
-        // Check that message is still sent via sfi
-        asyncJobRunner.runPendingJobsSync(MockEvakaClock(now))
+        asyncJobRunner.runPendingJobsSync(clock)
         assertEquals(1, MockSfiMessagesClient.getMessages().size)
 
         val messageId = MockSfiMessagesClient.getMessages().first().messageId
@@ -512,234 +692,112 @@ class VoucherValueDecisionIntegrationTest : FullApplicationTest(resetDbBeforeEac
 
     @Test
     fun `Legacy PDF can not be downloaded if child has restricted details`() {
-        val testChildRestricted =
-            testChild_1.copy(
-                id = PersonId(UUID.randomUUID()),
+        val childRestricted =
+            DevPerson(
+                dateOfBirth = child1.dateOfBirth,
                 ssn = "010617A125W",
                 restrictedDetailsEnabled = true,
+                streetAddress = "Kamreerintie 2",
+                postalCode = "02770",
+                postOffice = "Espoo",
             )
 
         db.transaction {
-            it.insert(testChildRestricted, DevPersonType.RAW_ROW)
+            it.insert(childRestricted, DevPersonType.RAW_ROW)
             it.insert(
                 DevParentship(
-                    childId = testChildRestricted.id,
-                    headOfChildId = testAdult_3.id,
-                    startDate = testChildRestricted.dateOfBirth,
-                    endDate = testChildRestricted.dateOfBirth.plusYears(18).minusDays(1),
+                    childId = childRestricted.id,
+                    headOfChildId = adult3.id,
+                    startDate = childRestricted.dateOfBirth,
+                    endDate = childRestricted.dateOfBirth.plusYears(18).minusDays(1),
                 )
             )
         }
-        createPlacement(startDate, endDate, childId = testChildRestricted.id)
+        createPlacement(startDate, endDate, childId = childRestricted.id)
         val decisionId = sendAllValueDecisions().first()
         db.transaction { it.setDocumentContainsContactInfo(decisionId) }
 
-        assertEquals(403, getPdfStatus(decisionId, financeWorker))
+        assertThrows<Forbidden> { getVoucherValueDecisionPdf(decisionId, financeWorker) }
     }
 
     @Test
     fun `PDF without contact info can be downloaded even if head of family has restricted details`() {
         db.transaction {
-            // testAdult_7 has restricted details on
             it.insert(
                 DevParentship(
-                    childId = testChild_2.id,
-                    headOfChildId = testAdult_7.id,
-                    startDate = testChild_2.dateOfBirth,
-                    endDate = testChild_2.dateOfBirth.plusYears(18).minusDays(1),
+                    childId = child2.id,
+                    headOfChildId = adult7.id,
+                    startDate = child2.dateOfBirth,
+                    endDate = child2.dateOfBirth.plusYears(18).minusDays(1),
                 )
             )
-            it.insertTestPartnership(adult1 = testAdult_7.id, adult2 = testAdult_3.id)
+            it.insertTestPartnership(adult1 = adult7.id, adult2 = adult3.id)
         }
-        createPlacement(startDate, endDate, childId = testChild_2.id)
+        createPlacement(startDate, endDate, childId = child2.id)
         val decisionId = sendAllValueDecisions().first()
 
-        assertEquals(200, getPdfStatus(decisionId, financeWorker))
+        getVoucherValueDecisionPdf(decisionId, financeWorker)
     }
 
     @Test
     fun `PDF without contact info can be downloaded even if child has restricted details`() {
-        val testChildRestricted =
-            testChild_1.copy(
-                id = PersonId(UUID.randomUUID()),
+        val childRestricted =
+            DevPerson(
+                dateOfBirth = child1.dateOfBirth,
                 ssn = "010617A125W",
                 restrictedDetailsEnabled = true,
+                streetAddress = "Kamreerintie 2",
+                postalCode = "02770",
+                postOffice = "Espoo",
             )
 
         db.transaction {
-            it.insert(testChildRestricted, DevPersonType.RAW_ROW)
+            it.insert(childRestricted, DevPersonType.RAW_ROW)
             it.insert(
                 DevParentship(
-                    childId = testChildRestricted.id,
-                    headOfChildId = testAdult_3.id,
-                    startDate = testChildRestricted.dateOfBirth,
-                    endDate = testChildRestricted.dateOfBirth.plusYears(18).minusDays(1),
+                    childId = childRestricted.id,
+                    headOfChildId = adult3.id,
+                    startDate = childRestricted.dateOfBirth,
+                    endDate = childRestricted.dateOfBirth.plusYears(18).minusDays(1),
                 )
             )
         }
-        createPlacement(startDate, endDate, childId = testChildRestricted.id)
+        createPlacement(startDate, endDate, childId = childRestricted.id)
         val decisionId = sendAllValueDecisions().first()
 
-        assertEquals(200, getPdfStatus(decisionId, financeWorker))
+        getVoucherValueDecisionPdf(decisionId, financeWorker)
     }
 
     @Test
     fun `Legacy PDF can be downloaded by admin even if someone in the family has restricted details`() {
         db.transaction {
-            // testAdult_7 has restricted details on
             it.insert(
                 DevParentship(
-                    childId = testChild_2.id,
-                    headOfChildId = testAdult_7.id,
-                    startDate = testChild_2.dateOfBirth,
-                    endDate = testChild_2.dateOfBirth.plusYears(18).minusDays(1),
+                    childId = child2.id,
+                    headOfChildId = adult7.id,
+                    startDate = child2.dateOfBirth,
+                    endDate = child2.dateOfBirth.plusYears(18).minusDays(1),
                 )
             )
-            it.insertTestPartnership(adult1 = testAdult_7.id, adult2 = testAdult_3.id)
+            it.insertTestPartnership(adult1 = adult7.id, adult2 = adult3.id)
         }
-        createPlacement(startDate, endDate, childId = testChild_2.id)
+        createPlacement(startDate, endDate, childId = child2.id)
         val decisionId = sendAllValueDecisions().first()
         db.transaction { it.setDocumentContainsContactInfo(decisionId) }
 
-        assertEquals(200, getPdfStatus(decisionId, adminUser))
+        getVoucherValueDecisionPdf(decisionId, adminUser)
     }
 
     @Test
     fun `VoucherValueDecision handler is set to the user when decision is not normal`() {
         val approvedDecision = createReliefDecision(false)
-        assertEquals(testDecisionMaker_1.id.raw, approvedDecision.decisionHandler)
+        assertEquals(decisionMaker.id.raw, approvedDecision.decisionHandler)
     }
 
     @Test
     fun `VoucherValueDecision handler is set to the daycare handler when forced when decision is not normal`() {
         val approvedDecision = createReliefDecision(true)
-        assertEquals(testDecisionMaker_2.id.raw, approvedDecision.decisionHandler)
-    }
-
-    @Test
-    fun `Email notification is sent to hof when decision in WAITING_FOR_SENDING is set to SENT`() {
-        // optInAdult has an email address, and does not require manual sending of PDF decision
-        val optInAdult =
-            testAdult_6.copy(
-                id = PersonId(UUID.randomUUID()),
-                email = "optin@test.com",
-                forceManualFeeDecisions = false,
-                ssn = "291090-9986",
-            )
-        db.transaction {
-            it.insert(optInAdult, DevPersonType.RAW_ROW)
-            it.insert(
-                DevParentship(
-                    ParentshipId(UUID.randomUUID()),
-                    testChild_2.id,
-                    optInAdult.id,
-                    testChild_2.dateOfBirth,
-                    testChild_2.dateOfBirth.plusYears(18).minusDays(1),
-                    HelsinkiDateTime.now(),
-                )
-            )
-            it.insertTestPartnership(adult1 = optInAdult.id, adult2 = testAdult_7.id)
-        }
-        createPlacement(startDate, endDate, childId = testChild_2.id)
-        val decisionId = sendAllValueDecisions().first()
-        db.transaction { it.setDocumentContainsContactInfo(decisionId) }
-
-        asyncJobRunner.runPendingJobsSync(MockEvakaClock(now))
-
-        val emailContent =
-            emailMessageProvider.financeDecisionNotification(
-                FinanceDecisionType.VOUCHER_VALUE_DECISION
-            )
-
-        assertEquals(
-            setOfNotNull(optInAdult.email),
-            MockEmailClient.emails.map { it.toAddress }.toSet(),
-        )
-        assertEquals(emailContent.subject, getEmailFor(optInAdult).content.subject)
-        assertEquals(
-            "${emailEnv.senderNameFi} <${emailEnv.senderAddress}>",
-            getEmailFor(optInAdult).fromAddress.address,
-        )
-    }
-
-    @Test
-    fun `Email notification is sent to hof when decision in WAITING_FOR_MANUAL_SENDING is set to SENT`() {
-        db.transaction {
-            // testAdult_3 has an email address, but no mail address -> marked for manual sending
-            it.insert(
-                DevParentship(
-                    ParentshipId(UUID.randomUUID()),
-                    testChild_2.id,
-                    testAdult_3.id,
-                    testChild_2.dateOfBirth,
-                    testChild_2.dateOfBirth.plusYears(18).minusDays(1),
-                    HelsinkiDateTime.now(),
-                )
-            )
-            it.insertTestPartnership(adult1 = testAdult_3.id, adult2 = testAdult_4.id)
-        }
-        createPlacement(startDate, endDate, childId = testChild_2.id)
-        val decisionId = sendAllValueDecisions().first()
-        db.transaction { it.setDocumentContainsContactInfo(decisionId) }
-
-        asyncJobRunner.runPendingJobsSync(MockEvakaClock(now))
-
-        // assert that no emails sent yet
-        assertEquals(emptySet(), MockEmailClient.emails.map { it.toAddress }.toSet())
-
-        markValueDecisionsSent(listOf(decisionId))
-        asyncJobRunner.runPendingJobsSync(MockEvakaClock(now))
-
-        val emailContent =
-            emailMessageProvider.financeDecisionNotification(
-                FinanceDecisionType.VOUCHER_VALUE_DECISION
-            )
-
-        assertEquals(
-            setOfNotNull(testAdult_3.email),
-            MockEmailClient.emails.map { it.toAddress }.toSet(),
-        )
-        assertEquals(emailContent.subject, getEmailFor(testAdult_3).content.subject)
-        assertEquals(
-            "${emailEnv.senderNameFi} <${emailEnv.senderAddress}>",
-            getEmailFor(testAdult_3).fromAddress.address,
-        )
-    }
-
-    @Test
-    fun `Email notification is not sent to hof when opted out of decision emails`() {
-        // optOutAdult is eligible, but has elected to not receive decision emails
-        val optOutAdult =
-            testAdult_6.copy(
-                id = PersonId(UUID.randomUUID()),
-                ssn = "291090-9986",
-                email = "optout@test.com",
-                forceManualFeeDecisions = false,
-                disabledEmailTypes = setOf(EmailMessageType.DECISION_NOTIFICATION),
-            )
-        db.transaction {
-            it.insert(optOutAdult, DevPersonType.RAW_ROW)
-
-            // optOutAdult has an email address, and does not require manual sending of PDF decision
-            it.insert(
-                DevParentship(
-                    ParentshipId(UUID.randomUUID()),
-                    testChild_2.id,
-                    optOutAdult.id,
-                    testChild_2.dateOfBirth,
-                    testChild_2.dateOfBirth.plusYears(18).minusDays(1),
-                    HelsinkiDateTime.now(),
-                )
-            )
-            it.insertTestPartnership(adult1 = optOutAdult.id, adult2 = testAdult_7.id)
-        }
-        createPlacement(startDate, endDate, childId = testChild_2.id)
-        val decisionId = sendAllValueDecisions().first()
-        db.transaction { it.setDocumentContainsContactInfo(decisionId) }
-
-        asyncJobRunner.runPendingJobsSync(MockEvakaClock(now))
-
-        assertEquals(emptySet(), MockEmailClient.emails.map { it.toAddress }.toSet())
+        assertEquals(decisionMaker2.id.raw, approvedDecision.decisionHandler)
     }
 
     fun createReliefDecision(forceDaycareHandler: Boolean): VoucherValueDecision {
@@ -757,7 +815,7 @@ class VoucherValueDecisionIntegrationTest : FullApplicationTest(resetDbBeforeEac
         db.transaction {
             it.approveValueDecisionDraftsForSending(
                 listOf(decision.id),
-                testDecisionMaker_1.id,
+                decisionMaker.id,
                 HelsinkiDateTime.now(),
                 null,
                 forceDaycareHandler,
@@ -768,20 +826,22 @@ class VoucherValueDecisionIntegrationTest : FullApplicationTest(resetDbBeforeEac
     }
 
     private val serviceWorker =
-        AuthenticatedUser.Employee(testDecisionMaker_1.id, setOf(UserRole.SERVICE_WORKER))
+        AuthenticatedUser.Employee(decisionMaker.id, setOf(UserRole.SERVICE_WORKER))
     private val financeWorker =
-        AuthenticatedUser.Employee(testDecisionMaker_1.id, setOf(UserRole.FINANCE_ADMIN))
-    private val adminUser =
-        AuthenticatedUser.Employee(testDecisionMaker_1.id, setOf(UserRole.ADMIN))
+        AuthenticatedUser.Employee(decisionMaker.id, setOf(UserRole.FINANCE_ADMIN))
+    private val adminUser = AuthenticatedUser.Employee(decisionMaker.id, setOf(UserRole.ADMIN))
 
     private fun createPlacement(
         startDate: LocalDate,
         endDate: LocalDate,
-        unitId: DaycareId = testVoucherDaycare.id,
-        childId: ChildId = testChild_1.id,
+        unitId: DaycareId = voucherDaycare.id,
+        childId: ChildId = child1.id,
         type: PlacementType = PlacementType.DAYCARE,
     ): PlacementId {
-        val body =
+        placementController.createPlacement(
+            dbInstance(),
+            serviceWorker,
+            clock,
             PlacementCreateRequestBody(
                 type = type,
                 childId = childId,
@@ -789,50 +849,33 @@ class VoucherValueDecisionIntegrationTest : FullApplicationTest(resetDbBeforeEac
                 startDate = startDate,
                 endDate = endDate,
                 placeGuarantee = false,
-            )
+            ),
+        )
 
-        http
-            .post("/employee/placements")
-            .asUser(serviceWorker)
-            .withMockedTime(now)
-            .objectBody(body, mapper = jackson2JsonMapper)
-            .response()
-            .also { (_, res, _) -> assertEquals(200, res.statusCode) }
+        val placements =
+            placementController.getChildPlacements(dbInstance(), serviceWorker, clock, childId)
 
-        val (_, _, data) =
-            http
-                .get("/employee/children/$childId/placements")
-                .asUser(serviceWorker)
-                .responseObject<PlacementResponse>(jackson2JsonMapper)
+        asyncJobRunner.runPendingJobsSync(clock)
 
-        asyncJobRunner.runPendingJobsSync(MockEvakaClock(now))
-
-        return data.get().placements.first().id
+        return placements.placements.first().id
     }
 
     private fun updatePlacement(id: PlacementId, startDate: LocalDate, endDate: LocalDate) {
-        val body = PlacementUpdateRequestBody(startDate = startDate, endDate = endDate)
+        placementController.updatePlacementById(
+            dbInstance(),
+            serviceWorker,
+            clock,
+            id,
+            PlacementUpdateRequestBody(startDate = startDate, endDate = endDate),
+        )
 
-        http
-            .put("/employee/placements/$id")
-            .asUser(serviceWorker)
-            .withMockedTime(now)
-            .objectBody(body, mapper = jackson2JsonMapper)
-            .responseObject<Placement>(jackson2JsonMapper)
-            .also { (_, res, _) -> assertEquals(200, res.statusCode) }
-
-        asyncJobRunner.runPendingJobsSync(MockEvakaClock(now))
+        asyncJobRunner.runPendingJobsSync(clock)
     }
 
     private fun deletePlacement(id: PlacementId) {
-        http
-            .delete("/employee/placements/$id")
-            .asUser(serviceWorker)
-            .withMockedTime(now)
-            .response()
-            .also { (_, res, _) -> assertEquals(200, res.statusCode) }
+        placementController.deletePlacement(dbInstance(), serviceWorker, clock, id)
 
-        asyncJobRunner.runPendingJobsSync(MockEvakaClock(now))
+        asyncJobRunner.runPendingJobsSync(clock)
     }
 
     private fun changeHeadOfFamily(child: DevPerson, headOfFamilyId: PersonId) {
@@ -840,71 +883,79 @@ class VoucherValueDecisionIntegrationTest : FullApplicationTest(resetDbBeforeEac
             it.execute { sql("DELETE FROM fridge_child WHERE child_id = ${bind(child.id)}") }
         }
 
-        val body =
+        parentshipController.createParentship(
+            dbInstance(),
+            serviceWorker,
+            clock,
             ParentshipController.ParentshipRequest(
                 childId = child.id,
                 headOfChildId = headOfFamilyId,
                 startDate = child.dateOfBirth,
                 endDate = child.dateOfBirth.plusYears(18).minusDays(1),
-            )
+            ),
+        )
 
-        http
-            .post("/employee/parentships")
-            .asUser(serviceWorker)
-            .withMockedTime(now)
-            .objectBody(body, mapper = jackson2JsonMapper)
-            .response()
-
-        asyncJobRunner.runPendingJobsSync(MockEvakaClock(now))
+        asyncJobRunner.runPendingJobsSync(clock)
     }
 
     private fun searchValueDecisions(
-        status: String,
+        status: VoucherValueDecisionStatus,
         searchTerms: String = "",
-        distinctionsString: String = "[]",
+        distinctions: List<VoucherValueDecisionDistinctiveParams> = emptyList(),
     ): PagedVoucherValueDecisionSummaries {
-        val (_, _, data) =
-            http
-                .post("/employee/value-decisions/search")
-                .jsonBody(
-                    """{"page": 0, "pageSize": 100, "statuses": ["$status"], "searchTerms": "$searchTerms", "distinctions": $distinctionsString}"""
-                )
-                .withMockedTime(now)
-                .asUser(financeWorker)
-                .responseObject<PagedVoucherValueDecisionSummaries>(jackson2JsonMapper)
-        return data.get()
+        return voucherValueDecisionController.searchVoucherValueDecisions(
+            dbInstance(),
+            financeWorker,
+            clock,
+            SearchVoucherValueDecisionRequest(
+                page = 0,
+                sortBy = null,
+                sortDirection = null,
+                statuses = listOf(status),
+                area = null,
+                unit = null,
+                distinctions = distinctions,
+                searchTerms = searchTerms,
+                financeDecisionHandlerId = null,
+                difference = null,
+                startDate = null,
+                endDate = null,
+            ),
+        )
     }
 
-    private fun sendAllValueDecisions(
-        expectedStatusCode: Int = 200,
-        expectedErrorCode: String? = null,
-    ): List<VoucherValueDecisionId> {
-        val (_, _, data) =
-            http
-                .post("/employee/value-decisions/search")
-                .jsonBody("""{"page": 0, "pageSize": 100, "statuses": ["DRAFT"]}""")
-                .withMockedTime(now)
-                .asUser(financeWorker)
-                .responseObject<PagedVoucherValueDecisionSummaries>(jackson2JsonMapper)
-                .also { (_, res, _) -> assertEquals(200, res.statusCode) }
+    private fun sendAllValueDecisions(): List<VoucherValueDecisionId> {
+        val data =
+            voucherValueDecisionController.searchVoucherValueDecisions(
+                dbInstance(),
+                financeWorker,
+                clock,
+                SearchVoucherValueDecisionRequest(
+                    page = 0,
+                    sortBy = null,
+                    sortDirection = null,
+                    statuses = listOf(VoucherValueDecisionStatus.DRAFT),
+                    area = null,
+                    unit = null,
+                    distinctions = null,
+                    searchTerms = null,
+                    financeDecisionHandlerId = null,
+                    difference = null,
+                    startDate = null,
+                    endDate = null,
+                ),
+            )
 
-        val decisionIds = data.get().data.map { it.id }
-        http
-            .post("/employee/value-decisions/send")
-            .objectBody(decisionIds, mapper = jackson2JsonMapper)
-            .withMockedTime(now)
-            .asUser(financeWorker)
-            .response()
-            .also { (_, res, _) ->
-                assertEquals(expectedStatusCode, res.statusCode)
-                if (expectedStatusCode == 400) {
-                    val responseJson = res.body().asString("application/json")
-                    val errorCode = jsonMapper.readTree(responseJson).get("errorCode").asString()
-                    assertEquals(expectedErrorCode, errorCode)
-                }
-            }
+        val decisionIds = data.data.map { it.id }
+        voucherValueDecisionController.sendVoucherValueDecisionDrafts(
+            dbInstance(),
+            financeWorker,
+            clock,
+            decisionIds,
+            null,
+        )
 
-        asyncJobRunner.runPendingJobsSync(MockEvakaClock(now))
+        asyncJobRunner.runPendingJobsSync(clock)
         return decisionIds
     }
 
@@ -913,16 +964,19 @@ class VoucherValueDecisionIntegrationTest : FullApplicationTest(resetDbBeforeEac
                 it.createQuery { sql("SELECT * FROM voucher_value_decision") }
                     .toList<VoucherValueDecision>()
             }
-            .shuffled() // randomize order to expose assumptions
+            .shuffled()
     }
 
-    private fun getPdfStatus(
+    private fun getVoucherValueDecisionPdf(
         decisionId: VoucherValueDecisionId,
         user: AuthenticatedUser.Employee,
-    ): Int {
-        val (_, response, _) =
-            http.get("/employee/value-decisions/pdf/$decisionId").asUser(user).response()
-        return response.statusCode
+    ) {
+        voucherValueDecisionController.getVoucherValueDecisionPdf(
+            dbInstance(),
+            user,
+            clock,
+            decisionId,
+        )
     }
 
     private fun Database.Transaction.setDocumentContainsContactInfo(id: VoucherValueDecisionId) =
@@ -936,25 +990,13 @@ class VoucherValueDecisionIntegrationTest : FullApplicationTest(resetDbBeforeEac
             )
         }
 
-    private fun markValueDecisionsSent(
-        decisionIds: List<VoucherValueDecisionId>,
-        expectedStatusCode: Int = 200,
-        expectedErrorCode: String? = null,
-    ) {
-        http
-            .post("/employee/value-decisions/mark-sent")
-            .objectBody(decisionIds, mapper = jackson2JsonMapper)
-            .withMockedTime(now)
-            .asUser(financeWorker)
-            .response()
-            .also { (_, res, _) ->
-                assertEquals(expectedStatusCode, res.statusCode)
-                if (expectedStatusCode == 400) {
-                    val responseJson = res.body().asString("application/json")
-                    val errorCode = jsonMapper.readTree(responseJson).get("errorCode").asString()
-                    assertEquals(expectedErrorCode, errorCode)
-                }
-            }
+    private fun markValueDecisionsSent(decisionIds: List<VoucherValueDecisionId>) {
+        voucherValueDecisionController.markVoucherValueDecisionSent(
+            dbInstance(),
+            financeWorker,
+            clock,
+            decisionIds,
+        )
     }
 
     private fun getEmailFor(person: DevPerson): Email {

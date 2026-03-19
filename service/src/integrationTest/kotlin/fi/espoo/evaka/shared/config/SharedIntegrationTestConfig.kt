@@ -29,7 +29,6 @@ import fi.espoo.evaka.invoicing.service.InvoiceNumberProvider
 import fi.espoo.evaka.invoicing.service.InvoiceProductProvider
 import fi.espoo.evaka.mealintegration.DefaultMealTypeMapper
 import fi.espoo.evaka.mealintegration.MealTypeMapper
-import fi.espoo.evaka.reports.patu.PatuIntegrationClient
 import fi.espoo.evaka.shared.ArchiveProcessConfig
 import fi.espoo.evaka.shared.ArchiveProcessType
 import fi.espoo.evaka.shared.FeatureConfig
@@ -191,10 +190,6 @@ class SharedIntegrationTestConfig {
     @Bean
     fun invoiceIntegrationClient(s3Client: S3Client, jsonMapper: JsonMapper, bucketEnv: BucketEnv): InvoiceIntegrationClient =
         InvoiceIntegrationClient.MockClient(s3Client, jsonMapper, bucketEnv)
-
-    @Bean
-    fun patuIntegrationClient(jsonMapper: JsonMapper): PatuIntegrationClient =
-        PatuIntegrationClient.MockPatuClient(jsonMapper)
 
     @Bean fun invoiceGenerationLogicChooser() = DefaultInvoiceGenerationLogic
 

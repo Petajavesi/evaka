@@ -4,6 +4,7 @@
 
 package fi.espoo.evaka.shared
 
+import fi.espoo.evaka.varda.ensureTrailingSlash
 import java.net.URI
 import java.time.Duration
 import okhttp3.OkHttpClient
@@ -23,6 +24,7 @@ fun buildHttpClient(
     interceptors: List<okhttp3.Interceptor> = emptyList(),
     rootUrl: URI? = null,
     jsonMapper: JsonMapper? = null,
+    customize: (OkHttpClient.Builder) -> Unit = {},
 ): ConfiguredHttpClient {
     val builder =
         OkHttpClient.Builder()
@@ -34,9 +36,11 @@ fun buildHttpClient(
 
     interceptors.forEach { builder.addInterceptor(it) }
 
+    customize(builder)
+
     return ConfiguredHttpClient(
         client = builder.build(),
-        rootUrl = rootUrl,
+        rootUrl = rootUrl?.ensureTrailingSlash(),
         jsonMapper = jsonMapper,
     )
 }

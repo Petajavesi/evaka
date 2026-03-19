@@ -74,6 +74,26 @@ export type DaycareAclRole = Extract<
   | 'EARLY_CHILDHOOD_EDUCATION_SECRETARY'
 >
 
+function isUpdateAclPermitted(
+  permittedActions: Action.Unit[],
+  role: UserRole
+): boolean {
+  switch (role) {
+    case 'UNIT_SUPERVISOR':
+      return permittedActions.includes('UPDATE_ACL_UNIT_SUPERVISOR')
+    case 'SPECIAL_EDUCATION_TEACHER':
+      return permittedActions.includes('UPDATE_ACL_SPECIAL_EDUCATION_TEACHER')
+    case 'EARLY_CHILDHOOD_EDUCATION_SECRETARY':
+      return permittedActions.includes(
+        'UPDATE_ACL_EARLY_CHILDHOOD_EDUCATION_SECRETARY'
+      )
+    case 'STAFF':
+      return permittedActions.includes('UPDATE_ACL_STAFF')
+    default:
+      return false
+  }
+}
+
 const roleOrder = (role: UserRole) => {
   switch (role) {
     case 'UNIT_SUPERVISOR':
@@ -186,7 +206,7 @@ function AclRow({
         </FixedSpaceRow>
       </Td>
       <Td>
-        <FixedSpaceColumn spacing="zero">
+        <FixedSpaceColumn $spacing="zero">
           <span data-qa="name">
             <PersonName person={row.employee} format="First Last" />
           </span>
@@ -207,7 +227,7 @@ function AclRow({
         {roleChangeDate ? `${roleChangeDate.format()}*` : row.endDate?.format()}
       </Td>
       <Td>
-        <FixedSpaceRow justifyContent="flex-end">
+        <FixedSpaceRow $justifyContent="flex-end">
           {isEditable && (
             <IconOnlyButton
               icon={faPen}
@@ -275,31 +295,8 @@ function AclTable({
     [rows]
   )
 
-  const editPermitted = useMemo(
-    () =>
-      permittedActions.includes('UPDATE_STAFF_GROUP_ACL') ||
-      permittedActions.includes('UPSERT_STAFF_OCCUPANCY_COEFFICIENTS'),
-    [permittedActions]
-  )
-  const deletePermitted = useCallback(
-    (role: UserRole) => {
-      switch (role) {
-        case 'UNIT_SUPERVISOR':
-          return permittedActions.includes('DELETE_ACL_UNIT_SUPERVISOR')
-        case 'SPECIAL_EDUCATION_TEACHER':
-          return permittedActions.includes(
-            'DELETE_ACL_SPECIAL_EDUCATION_TEACHER'
-          )
-        case 'EARLY_CHILDHOOD_EDUCATION_SECRETARY':
-          return permittedActions.includes(
-            'DELETE_ACL_EARLY_CHILDHOOD_EDUCATION_SECRETARY'
-          )
-        case 'STAFF':
-          return permittedActions.includes('DELETE_ACL_STAFF')
-        default:
-          return false
-      }
-    },
+  const updatePermitted = useCallback(
+    (role: UserRole) => isUpdateAclPermitted(permittedActions, role),
     [permittedActions]
   )
   const coefficientPermitted = useMemo(
@@ -327,9 +324,17 @@ function AclTable({
             row={row}
             scheduledRow={scheduledRows.find((sr) => sr.id === row.employee.id)}
             isDeletable={
-              deletePermitted(row.role) && row.employee.id !== user?.id
+              updatePermitted(row.role) && row.employee.id !== user?.id
             }
-            isEditable={!!(editPermitted && unitGroups)}
+            isEditable={
+              !!(
+                (permittedActions.includes('UPDATE_STAFF_GROUP_ACL') ||
+                  permittedActions.includes(
+                    'UPSERT_STAFF_OCCUPANCY_COEFFICIENTS'
+                  )) &&
+                unitGroups
+              )
+            }
             coefficientPermitted={coefficientPermitted}
             onClickEdit={() => onClickEdit(row)}
           />
@@ -386,7 +391,7 @@ function ScheduledAclTable({
                 <span data-qa="role">{i18n.roles.adRoles[row.role]}</span>
               </Td>
               <Td>
-                <FixedSpaceColumn spacing="zero">
+                <FixedSpaceColumn $spacing="zero">
                   <span data-qa="name">
                     <PersonName person={row} format="First Last" />
                   </span>
@@ -404,7 +409,7 @@ function ScheduledAclTable({
               </Td>
               <Td>{row.endDate?.format()}</Td>
               <Td>
-                {permittedActions.includes('DELETE_ACL_SCHEDULED') && (
+                {permittedActions.includes('UPDATE_ACL_SCHEDULED') && (
                   <ConfirmedMutation
                     buttonStyle="ICON"
                     icon={faTrash}
@@ -504,7 +509,7 @@ function TemporaryEmployeesTable({
               </Td>
             )}
             <Td>
-              <FixedSpaceRow justifyContent="flex-end">
+              <FixedSpaceRow $justifyContent="flex-end">
                 {editPermitted && (
                   <IconOnlyButton
                     icon={faPen}
@@ -572,7 +577,7 @@ function PreviousTemporaryEmployeesTable({
               <PersonName person={row} format="First Last" />
             </Td>
             <StyledTd $width="400px">
-              <FixedSpaceRow justifyContent="flex-end">
+              <FixedSpaceRow $justifyContent="flex-end">
                 {editPermitted && (
                   <MutateButton
                     appearance="inline"
@@ -703,6 +708,10 @@ export default React.memo(function UnitAccessControl({
           <EditAclModal
             onClose={() => setEditedAclRow(null)}
             permittedActions={permittedActions}
+            endDateEditable={
+              isUpdateAclPermitted(permittedActions, editedAclRow.role) &&
+              editedAclRow.employee.id !== user?.id
+            }
             row={editedAclRow}
             unitId={unitId}
             groups={groups}
@@ -736,11 +745,11 @@ export default React.memo(function UnitAccessControl({
         />
       )}
 
-      <ContentArea opaque>
+      <ContentArea $opaque>
         <H2>{i18n.unit.accessControl.aclRoles}</H2>
 
-        <FixedSpaceRow justifyContent="space-between" alignItems="center">
-          <H3 noMargin>{i18n.unit.accessControl.activeAclRoles}</H3>
+        <FixedSpaceRow $justifyContent="space-between" $alignItems="center">
+          <H3 $noMargin>{i18n.unit.accessControl.activeAclRoles}</H3>
           {canInsertAcl && (
             <AddButton
               text={i18n.unit.accessControl.addDaycareAclModal.title}
@@ -765,12 +774,12 @@ export default React.memo(function UnitAccessControl({
             </>
           )
         )}
-        <Gap size="xs" />
+        <Gap $size="xs" />
         <span>*{i18n.unit.accessControl.roleChange}</span>
 
-        <Gap size="XL" />
+        <Gap $size="XL" />
 
-        <H3 noMargin>{i18n.unit.accessControl.scheduledAclRoles}</H3>
+        <H3 $noMargin>{i18n.unit.accessControl.scheduledAclRoles}</H3>
         {renderResult(
           combine(daycareAclRows, scheduledDaycareAclRows),
           ([daycareAclRows, scheduledDaycareAclRows]) => (
@@ -783,10 +792,10 @@ export default React.memo(function UnitAccessControl({
           )
         )}
 
-        <Gap size="XL" />
+        <Gap $size="XL" />
 
-        <FixedSpaceRow justifyContent="space-between" alignItems="center">
-          <H3 noMargin>{i18n.unit.accessControl.temporaryEmployees.title}</H3>
+        <FixedSpaceRow $justifyContent="space-between" $alignItems="center">
+          <H3 $noMargin>{i18n.unit.accessControl.temporaryEmployees.title}</H3>
           {permittedActions.includes('CREATE_TEMPORARY_EMPLOYEE') && (
             <AddButton
               text={i18n.unit.accessControl.addTemporaryEmployeeModal.title}
@@ -819,8 +828,8 @@ export default React.memo(function UnitAccessControl({
           renderResult(candidateTemporaryEmployees, (employees) =>
             employees.length > 0 ? (
               <>
-                <Gap size="XL" />
-                <H3 noMargin>
+                <Gap $size="XL" />
+                <H3 $noMargin>
                   {
                     i18n.unit.accessControl.temporaryEmployees
                       .previousEmployeesTitle

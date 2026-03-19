@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2017-2023 City of Espoo
+// SPDX-FileCopyrightText: 2017-2026 City of Espoo
 //
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
@@ -56,6 +56,7 @@ const features: Features = {
     showMetadataToCitizen: false, // Petäjävesi: changed true -> false
     placementDesktop: true,
     hideClubApplication: true, // Petäjävesi: added
+    employeeLanguageSelection: true
   },
   test: { // Petäjävesi: renamed from staging
     environmentLabel: 'Test', // Petäjävesi: renamed from 'Staging'
@@ -101,6 +102,7 @@ const features: Features = {
     showMetadataToCitizen: true, // Petäjävesi: changed true -> false
     placementDesktop: true,
     hideClubApplication: true, // Petäjävesi: added
+    employeeLanguageSelection: true
   },
   prod: {
     environmentLabel: null,
@@ -137,7 +139,7 @@ const features: Features = {
     archiveIntegration: {
       childDocuments: true
     },
-    aromiIntegration: false,
+    aromiIntegration: true,
     citizenChildDocumentTypes: true,
     decisionChildDocumentTypes: false, // Petäjävesi: changed true -> false
     showCitizenApplicationPreschoolTerms: false,

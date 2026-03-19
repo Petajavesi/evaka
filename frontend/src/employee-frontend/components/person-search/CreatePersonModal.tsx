@@ -6,9 +6,9 @@ import { set } from 'lodash/fp'
 import React, { useState } from 'react'
 import styled from 'styled-components'
 
-import { wrapResult } from 'lib-common/api'
 import type { CreatePersonBody } from 'lib-common/generated/api-types/pis'
 import LocalDate from 'lib-common/local-date'
+import { useMutationResult } from 'lib-common/query'
 import { getAge } from 'lib-common/utils/local-date'
 import InputField from 'lib-components/atoms/form/InputField'
 import ListGrid from 'lib-components/layout/ListGrid'
@@ -18,10 +18,9 @@ import { Label } from 'lib-components/typography'
 import { Gap } from 'lib-components/white-space'
 import { faPlus } from 'lib-icons'
 
-import { createPerson } from '../../generated/api-clients/pis'
 import { useTranslation } from '../../state/i18n'
 
-const createPersonResult = wrapResult(createPerson)
+import { createPersonMutation } from './queries'
 
 type Form = Omit<CreatePersonBody, 'dateOfBirth'> & {
   dateOfBirth: LocalDate | null
@@ -33,6 +32,7 @@ export default React.memo(function CreatePersonModal({
   closeModal: () => void
 }) {
   const { i18n, lang } = useTranslation()
+  const { mutateAsync: createPerson } = useMutationResult(createPersonMutation)
   const [form, setForm] = useState<Form>({
     firstName: '',
     lastName: '',
@@ -51,7 +51,7 @@ export default React.memo(function CreatePersonModal({
     if (validForm !== undefined) {
       setRequestInFlight(true)
       setSaveError(false)
-      createPersonResult({ body: validForm })
+      createPerson({ body: validForm })
         .then((result) => {
           if (result.isSuccess) {
             closeModal()
@@ -80,7 +80,7 @@ export default React.memo(function CreatePersonModal({
       rejectLabel={i18n.common.cancel}
     >
       <ModalContent>
-        <ListGrid labelWidth="min-content">
+        <ListGrid $labelWidth="min-content">
           <Label>{i18n.personSearch.createNewPerson.form.firstName}*</Label>
           <InputField
             value={form.firstName}
@@ -119,7 +119,7 @@ export default React.memo(function CreatePersonModal({
               width="full"
               data-qa="street-address-input"
             />
-            <Gap size="xs" />
+            <Gap $size="xs" />
             <PostalCodeAndOfficeContainer>
               <PostalCodeContainer>
                 <InputField
@@ -166,7 +166,7 @@ export default React.memo(function CreatePersonModal({
         </ListGrid>
         {saveError ? (
           <>
-            <Gap size="m" />
+            <Gap $size="m" />
             <ErrorText>{i18n.common.error.unknown}</ErrorText>
           </>
         ) : null}

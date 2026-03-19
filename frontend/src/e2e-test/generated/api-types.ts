@@ -380,18 +380,15 @@ export interface DevChildDocument {
   content: DocumentContent
   contentLockedAt: HelsinkiDateTime
   contentLockedBy: EmployeeId | null
-  created: HelsinkiDateTime | null
+  createdAt: HelsinkiDateTime | null
   createdBy: EvakaUserId
   decision: DevChildDocumentDecision | null
   decisionMaker: EmployeeId | null
-  documentKey: string | null
   id: ChildDocumentId
   modifiedAt: HelsinkiDateTime
   modifiedBy: EvakaUserId
   processId: CaseProcessId | null
-  publishedAt: HelsinkiDateTime | null
-  publishedBy: EvakaUserId | null
-  publishedContent: DocumentContent | null
+  publishedVersions: DevChildDocumentPublishedVersion[]
   status: DocumentStatus
   templateId: DocumentTemplateId
 }
@@ -408,6 +405,17 @@ export interface DevChildDocumentDecision {
   modifiedBy: EmployeeId
   status: ChildDocumentDecisionStatus
   validity: DateRange | null
+}
+
+/**
+* Generated from fi.espoo.evaka.shared.dev.DevChildDocumentPublishedVersion
+*/
+export interface DevChildDocumentPublishedVersion {
+  createdAt: HelsinkiDateTime
+  createdBy: EvakaUserId
+  documentKey: string | null
+  publishedContent: DocumentContent
+  versionNumber: number
 }
 
 /**
@@ -1182,9 +1190,9 @@ export type StaffAttendancePlanId = Id<'StaffAttendancePlan'>
 */
 export interface UpdateIncomeStatementHandledBody {
   employeeId: EmployeeId
-  handled: boolean
   incomeStatementId: IncomeStatementId
   note: string
+  status: IncomeStatementStatus
 }
 
 /**
@@ -1358,11 +1366,10 @@ export function deserializeJsonDevChildDocument(json: JsonOf<DevChildDocument>):
     answeredAt: (json.answeredAt != null) ? HelsinkiDateTime.parseIso(json.answeredAt) : null,
     content: deserializeJsonDocumentContent(json.content),
     contentLockedAt: HelsinkiDateTime.parseIso(json.contentLockedAt),
-    created: (json.created != null) ? HelsinkiDateTime.parseIso(json.created) : null,
+    createdAt: (json.createdAt != null) ? HelsinkiDateTime.parseIso(json.createdAt) : null,
     decision: (json.decision != null) ? deserializeJsonDevChildDocumentDecision(json.decision) : null,
     modifiedAt: HelsinkiDateTime.parseIso(json.modifiedAt),
-    publishedAt: (json.publishedAt != null) ? HelsinkiDateTime.parseIso(json.publishedAt) : null,
-    publishedContent: (json.publishedContent != null) ? deserializeJsonDocumentContent(json.publishedContent) : null
+    publishedVersions: json.publishedVersions.map(e => deserializeJsonDevChildDocumentPublishedVersion(e))
   }
 }
 
@@ -1373,6 +1380,15 @@ export function deserializeJsonDevChildDocumentDecision(json: JsonOf<DevChildDoc
     createdAt: HelsinkiDateTime.parseIso(json.createdAt),
     modifiedAt: HelsinkiDateTime.parseIso(json.modifiedAt),
     validity: (json.validity != null) ? DateRange.parseJson(json.validity) : null
+  }
+}
+
+
+export function deserializeJsonDevChildDocumentPublishedVersion(json: JsonOf<DevChildDocumentPublishedVersion>): DevChildDocumentPublishedVersion {
+  return {
+    ...json,
+    createdAt: HelsinkiDateTime.parseIso(json.createdAt),
+    publishedContent: deserializeJsonDocumentContent(json.publishedContent)
   }
 }
 

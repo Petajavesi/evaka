@@ -28,32 +28,23 @@ class SchemaConventionsTest : PureJdbiTest(resetDbBeforeEach = false) {
         val permittedViolations =
             setOf(
                 "care_area",
-                "child_daily_note",
-                "child_document",
                 "child_images",
-                "child_sticky_note",
                 "club_term",
                 "daily_service_time",
                 "daycare_acl",
-                "daycare_assistance",
                 "daycare_caretaker",
                 "daycare",
                 "daycare_group_acl",
                 "daycare_group_placement",
                 "decision",
-                "document_template",
                 "dvv_modification_token",
                 "employee",
                 "employee_pin",
                 "fee_decision_child",
                 "fee_decision",
                 "fee_thresholds",
-                "group_note",
                 "guardian_blocklist",
                 "guardian",
-                "holiday_period",
-                "holiday_period_questionnaire",
-                "holiday_questionnaire_answer",
                 "income_notification",
                 "koski_study_right",
                 "message_account",
@@ -64,26 +55,14 @@ class SchemaConventionsTest : PureJdbiTest(resetDbBeforeEach = false) {
                 "message_thread",
                 "message_thread_folder",
                 "message_thread_participant",
-                "mobile_device",
-                "mobile_device_push_subscription",
-                "other_assistance_measure",
-                "pairing",
                 "payment",
                 "person",
                 "placement_plan",
-                "preschool_assistance",
                 "preschool_term",
                 "service_need",
                 "service_need_option",
                 "service_need_option_fee",
                 "service_need_option_voucher_value",
-                "setting",
-                "staff_attendance",
-                "staff_attendance_external",
-                "staff_attendance_plan",
-                "staff_attendance_realtime",
-                "staff_occupancy_coefficient",
-                "vapid_jwt",
                 "voucher_value_decision",
                 "voucher_value_report_snapshot",
             )
@@ -97,20 +76,15 @@ class SchemaConventionsTest : PureJdbiTest(resetDbBeforeEach = false) {
         val permittedViolations =
             setOf(
                 "care_area",
-                "child_daily_note",
-                "child_document",
                 "child_images",
-                "child_sticky_note",
                 "club_term",
                 "daily_service_time",
                 "daycare",
                 "daycare_acl",
-                "daycare_assistance",
                 "daycare_caretaker",
                 "daycare_group_acl",
                 "daycare_group_placement",
                 "decision",
-                "document_template",
                 "employee",
                 "employee_pin",
                 "fee_decision",
@@ -118,11 +92,7 @@ class SchemaConventionsTest : PureJdbiTest(resetDbBeforeEach = false) {
                 "fee_thresholds",
                 "fridge_child",
                 "fridge_partner",
-                "group_note",
                 "guardian_blocklist",
-                "holiday_period",
-                "holiday_period_questionnaire",
-                "holiday_questionnaire_answer",
                 "income_notification",
                 "koski_study_right",
                 "message",
@@ -133,26 +103,14 @@ class SchemaConventionsTest : PureJdbiTest(resetDbBeforeEach = false) {
                 "message_thread_children",
                 "message_thread_folder",
                 "message_thread_participant",
-                "mobile_device",
-                "mobile_device_push_subscription",
-                "other_assistance_measure",
-                "pairing",
                 "payment",
                 "person",
                 "placement_plan",
-                "preschool_assistance",
                 "preschool_term",
                 "service_need",
                 "service_need_option",
                 "service_need_option_fee",
                 "service_need_option_voucher_value",
-                "setting",
-                "staff_attendance",
-                "staff_attendance_external",
-                "staff_attendance_plan",
-                "staff_attendance_realtime",
-                "staff_occupancy_coefficient",
-                "vapid_jwt",
                 "voucher_value_decision",
             )
         val violations =
@@ -209,59 +167,7 @@ class SchemaConventionsTest : PureJdbiTest(resetDbBeforeEach = false) {
 
     @Test
     fun `creation timestamp should be 'timestamp with time zone' and NOT NULL`() {
-        val permittedViolations =
-            setOf(
-                Column(
-                    ColumnRef("daycare_group_placement", "created"),
-                    "timestamp with time zone",
-                    nullable = true,
-                ),
-                Column(
-                    ColumnRef("decision", "created"),
-                    "timestamp with time zone",
-                    nullable = true,
-                ),
-                Column(
-                    ColumnRef("fridge_child", "created_at"),
-                    "timestamp with time zone",
-                    nullable = true,
-                ),
-                Column(
-                    ColumnRef("guardian", "created"),
-                    "timestamp with time zone",
-                    nullable = true,
-                ),
-                Column(
-                    ColumnRef("invoice", "created_at"),
-                    "timestamp with time zone",
-                    nullable = true,
-                ),
-                Column(
-                    ColumnRef("mobile_device_push_group", "created_at"),
-                    "timestamp with time zone",
-                    nullable = true,
-                ),
-                Column(
-                    ColumnRef("placement_plan", "created"),
-                    "timestamp with time zone",
-                    nullable = true,
-                ),
-                Column(
-                    ColumnRef("staff_attendance", "created"),
-                    "timestamp with time zone",
-                    nullable = true,
-                ),
-                Column(
-                    ColumnRef("voucher_value_decision", "created"),
-                    "timestamp with time zone",
-                    nullable = true,
-                ),
-                Column(
-                    ColumnRef("voucher_value_report_snapshot", "created"),
-                    "timestamp with time zone",
-                    nullable = true,
-                ),
-            )
+        val permittedViolations = emptySet<Column>()
         val violations =
             columns
                 .filter { it.ref.columnName == "created" || it.ref.columnName == "created_at" }
@@ -272,39 +178,7 @@ class SchemaConventionsTest : PureJdbiTest(resetDbBeforeEach = false) {
 
     @Test
     fun `update timestamp should be 'timestamp with time zone' and NOT NULL`() {
-        val permittedViolations =
-            setOf(
-                Column(
-                    ColumnRef("daycare_group_placement", "updated"),
-                    dataType = "timestamp with time zone",
-                    nullable = true,
-                ),
-                Column(
-                    ColumnRef("decision", "updated"),
-                    dataType = "timestamp with time zone",
-                    nullable = true,
-                ),
-                Column(
-                    ColumnRef("fridge_child", "updated"),
-                    dataType = "timestamp with time zone",
-                    nullable = true,
-                ),
-                Column(
-                    ColumnRef("fridge_partner", "updated"),
-                    dataType = "timestamp with time zone",
-                    nullable = true,
-                ),
-                Column(
-                    ColumnRef("placement_plan", "updated"),
-                    dataType = "timestamp with time zone",
-                    nullable = true,
-                ),
-                Column(
-                    ColumnRef("staff_occupancy_coefficient", "updated"),
-                    dataType = "timestamp with time zone",
-                    nullable = true,
-                ),
-            )
+        val permittedViolations = emptySet<Column>()
         val violations =
             columns
                 .filter { it.ref.columnName == "updated" || it.ref.columnName == "updated_at" }
@@ -320,17 +194,17 @@ class SchemaConventionsTest : PureJdbiTest(resetDbBeforeEach = false) {
                 Column(
                     ColumnRef("fridge_partner", "modified_at"),
                     "timestamp with time zone",
-                    nullable = true,
+                    nullable = true, // lots, no default, different semantics than other tables?
                 ),
                 Column(
                     ColumnRef("fridge_child", "modified_at"),
                     "timestamp with time zone",
-                    nullable = true,
+                    nullable = true, // lots, no default, different semantics than other tables?
                 ),
                 Column(
                     ColumnRef("placement", "modified_at"),
                     "timestamp with time zone",
-                    nullable = true,
+                    nullable = true, // lots, no default, different semantics than other tables?
                 ),
             )
         val violations =
@@ -345,19 +219,35 @@ class SchemaConventionsTest : PureJdbiTest(resetDbBeforeEach = false) {
     fun `'created_by' column should be 'uuid' and NOT NULL`() {
         val permittedViolations =
             setOf(
+                // deprecated table, to be dropped
                 Column(
                     ColumnRef("assistance_need_decision", "created_by"),
                     "uuid",
                     nullable = true,
                 ),
+                // deprecated table, to be dropped
                 Column(
                     ColumnRef("assistance_need_preschool_decision", "created_by"),
                     "uuid",
                     nullable = true,
                 ),
-                Column(ColumnRef("child_document", "created_by"), "uuid", nullable = true),
-                Column(ColumnRef("fridge_partner", "created_by"), "uuid", nullable = true),
-                Column(ColumnRef("placement", "created_by"), "uuid", nullable = true),
+                Column(
+                    ColumnRef("child_document", "created_by"),
+                    "uuid",
+                    nullable = true, // no new ones after 09/2024
+                ),
+                Column(
+                    ColumnRef("fridge_partner", "created_by"),
+                    "uuid",
+                    // allowed to be null when created_from_application is not null,
+                    // no new ones where both are null after 04/2024
+                    nullable = true,
+                ),
+                Column(
+                    ColumnRef("placement", "created_by"),
+                    "uuid",
+                    nullable = true, // allowed to be null when created by non-user
+                ),
             )
         val violations =
             columns
@@ -391,6 +281,7 @@ class SchemaConventionsTest : PureJdbiTest(resetDbBeforeEach = false) {
 
     @Test
     fun `'created_by' column should have a foreign key to evaka_user`() {
+        // both tables deprecated and waiting to be dropped
         val permittedViolations =
             setOf(
                 ColumnsRef("assistance_need_decision", "created_by") to
@@ -471,6 +362,7 @@ class SchemaConventionsTest : PureJdbiTest(resetDbBeforeEach = false) {
     fun `every daterange and datemultirange column should have a constraint that limits its bound(s)`() {
         val permittedViolations =
             setOf(
+                // deprecated table, to be dropped
                 ColumnRef("assistance_need_decision", "validity_period"),
                 ColumnRef("calendar_event", "period"),
                 ColumnRef("daily_service_time", "validity_period"),
@@ -608,6 +500,7 @@ LEFT JOIN information_schema.tables t USING (table_name)
 WHERE t.table_schema = 'public'
 AND t.table_name != 'flyway_schema_history'
 AND t.table_type != 'VIEW'
+AND is_generated = 'NEVER'
 """
                         )
                     }

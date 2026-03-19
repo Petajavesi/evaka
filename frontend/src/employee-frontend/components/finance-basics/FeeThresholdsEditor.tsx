@@ -6,13 +6,13 @@ import React, { useState } from 'react'
 import styled from 'styled-components'
 
 import type { Failure, Result } from 'lib-common/api'
-import { wrapResult } from 'lib-common/api'
 import DateRange from 'lib-common/date-range'
 import { throwIfNull } from 'lib-common/form-validation'
 import type { FeeThresholds } from 'lib-common/generated/api-types/invoicing'
 import type { FeeThresholdsId } from 'lib-common/generated/api-types/shared'
 import LocalDate from 'lib-common/local-date'
 import { isValidCents, parseCents, parseCentsOrThrow } from 'lib-common/money'
+import { useMutationResult } from 'lib-common/query'
 import { AsyncButton } from 'lib-components/atoms/buttons/AsyncButton'
 import { LegacyButton } from 'lib-components/atoms/buttons/LegacyButton'
 import InputField from 'lib-components/atoms/form/InputField'
@@ -29,10 +29,6 @@ import { defaultMargins } from 'lib-components/white-space'
 import colors from 'lib-customizations/common'
 import { faQuestion } from 'lib-icons'
 
-import {
-  createFeeThresholds,
-  updateFeeThresholds
-} from '../../generated/api-clients/invoicing'
 import type { Translations } from '../../state/i18n'
 import type {
   FamilySize,
@@ -41,9 +37,10 @@ import type {
 import { familySizes } from '../../types/finance-basics'
 
 import type { FormState } from './FeesSection'
-
-const createFeeThresholdsResult = wrapResult(createFeeThresholds)
-const updateFeeThresholdsResult = wrapResult(updateFeeThresholds)
+import {
+  createFeeThresholdsMutation,
+  updateFeeThresholdsMutation
+} from './queries'
 
 interface FeeThresholdsWithId {
   id: string
@@ -55,16 +52,20 @@ export default React.memo(function FeeThresholdsEditor({
   id,
   initialState,
   close,
-  reloadData,
   existingThresholds
 }: {
   i18n: Translations
   id: FeeThresholdsId | undefined
   initialState: FormState
   close: () => void
-  reloadData: () => void
   existingThresholds: Result<FeeThresholdsWithId[]>
 }) {
+  const { mutateAsync: createFeeThresholds } = useMutationResult(
+    createFeeThresholdsMutation
+  )
+  const { mutateAsync: updateFeeThresholds } = useMutationResult(
+    updateFeeThresholdsMutation
+  )
   const [editorState, setEditorState] = useState<FormState>(initialState)
   const validationResult = validateForm(
     i18n,
@@ -99,7 +100,7 @@ export default React.memo(function FeeThresholdsEditor({
   return (
     <>
       <div className="separator large" />
-      <RowWithMargin alignItems="center" spacing="xs">
+      <RowWithMargin $alignItems="center" $spacing="xs">
         <H3>{i18n.financeBasics.fees.validDuring}</H3>
         <DatePicker
           locale="fi"
@@ -135,8 +136,8 @@ export default React.memo(function FeeThresholdsEditor({
         </ErrorDescription>
       ) : null}
       <H4>{i18n.financeBasics.fees.thresholds}</H4>
-      <RowWithMargin spacing="XL">
-        <FixedSpaceColumn spacing="xxs">
+      <RowWithMargin $spacing="XL">
+        <FixedSpaceColumn $spacing="xxs">
           <Label htmlFor="maxFee">{i18n.financeBasics.fees.maxFee}</Label>
           <InputField
             id="maxFee"
@@ -155,7 +156,7 @@ export default React.memo(function FeeThresholdsEditor({
             data-qa="max-fee"
           />
         </FixedSpaceColumn>
-        <FixedSpaceColumn spacing="xxs">
+        <FixedSpaceColumn $spacing="xxs">
           <Label htmlFor="minFee">{i18n.financeBasics.fees.minFee}</Label>
           <InputField
             id="minFee"
@@ -266,7 +267,7 @@ export default React.memo(function FeeThresholdsEditor({
           })}
         </Tbody>
       </TableWithMargin>
-      <ColumnWithMargin spacing="xxs">
+      <ColumnWithMargin $spacing="xxs">
         <ExpandingInfo info={i18n.financeBasics.fees.thresholdIncreaseInfo}>
           <Label htmlFor="thresholdIncrease">
             {i18n.financeBasics.fees.thresholdIncrease}
@@ -290,8 +291,8 @@ export default React.memo(function FeeThresholdsEditor({
         />
       </ColumnWithMargin>
       <H4>{i18n.financeBasics.fees.siblingDiscounts}</H4>
-      <RowWithMargin spacing="XL">
-        <FixedSpaceColumn spacing="xxs">
+      <RowWithMargin $spacing="XL">
+        <FixedSpaceColumn $spacing="xxs">
           <Label htmlFor="siblingDiscount2">
             {i18n.financeBasics.fees.siblingDiscount2}
           </Label>
@@ -310,7 +311,7 @@ export default React.memo(function FeeThresholdsEditor({
             data-qa="sibling-discount-2"
           />
         </FixedSpaceColumn>
-        <FixedSpaceColumn spacing="xxs">
+        <FixedSpaceColumn $spacing="xxs">
           <Label htmlFor="siblingDiscount2Plus">
             {i18n.financeBasics.fees.siblingDiscount2Plus}
           </Label>
@@ -332,8 +333,8 @@ export default React.memo(function FeeThresholdsEditor({
       </RowWithMargin>
 
       <H4>{i18n.financeBasics.fees.temporaryFees}</H4>
-      <RowWithMargin spacing="XL">
-        <FixedSpaceColumn spacing="xxs">
+      <RowWithMargin $spacing="XL">
+        <FixedSpaceColumn $spacing="xxs">
           <Label htmlFor="temporaryFee">
             {i18n.financeBasics.fees.temporaryFee}
           </Label>
@@ -352,7 +353,7 @@ export default React.memo(function FeeThresholdsEditor({
             data-qa="temporary-fee"
           />
         </FixedSpaceColumn>
-        <FixedSpaceColumn spacing="xxs">
+        <FixedSpaceColumn $spacing="xxs">
           <Label htmlFor="temporaryFeePartDay">
             {i18n.financeBasics.fees.temporaryFeePartDay}
           </Label>
@@ -371,7 +372,7 @@ export default React.memo(function FeeThresholdsEditor({
             data-qa="temporary-fee-part-day"
           />
         </FixedSpaceColumn>
-        <FixedSpaceColumn spacing="xxs">
+        <FixedSpaceColumn $spacing="xxs">
           <Label htmlFor="temporaryFeeSibling">
             {i18n.financeBasics.fees.temporaryFeeSibling}
           </Label>
@@ -390,7 +391,7 @@ export default React.memo(function FeeThresholdsEditor({
             data-qa="temporary-fee-sibling"
           />
         </FixedSpaceColumn>
-        <FixedSpaceColumn spacing="xxs">
+        <FixedSpaceColumn $spacing="xxs">
           <Label htmlFor="temporaryFeeSiblingPartDay">
             {i18n.financeBasics.fees.temporaryFeeSiblingPartDay}
           </Label>
@@ -436,16 +437,13 @@ export default React.memo(function FeeThresholdsEditor({
             }
 
             return id === undefined
-              ? createFeeThresholdsResult({ body: validationResult.payload })
-              : updateFeeThresholdsResult({
+              ? createFeeThresholds({ body: validationResult.payload })
+              : updateFeeThresholds({
                   id,
                   body: validationResult.payload
                 })
           }}
-          onSuccess={() => {
-            close()
-            reloadData()
-          }}
+          onSuccess={close}
           onFailure={handleSaveErrors}
           disabled={'errors' in validationResult}
           data-qa="save"
@@ -469,13 +467,12 @@ export default React.memo(function FeeThresholdsEditor({
                 return
               }
               await (id === undefined
-                ? createFeeThresholdsResult({ body: validationResult.payload })
-                : updateFeeThresholdsResult({
+                ? createFeeThresholds({ body: validationResult.payload })
+                : updateFeeThresholds({
                     id,
                     body: validationResult.payload
                   }))
               close()
-              reloadData()
             },
             label: i18n.financeBasics.fees.modals.saveRetroactive.resolve
           }}

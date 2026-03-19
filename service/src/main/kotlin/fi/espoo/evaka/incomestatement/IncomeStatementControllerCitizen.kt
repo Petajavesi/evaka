@@ -354,9 +354,12 @@ class IncomeStatementControllerCitizen(private val accessControl: AccessControl)
                 if (
                     (original !is IncomeStatement.Income &&
                         original !is IncomeStatement.ChildIncome) ||
-                        original.status != IncomeStatementStatus.SENT
+                        (original.status != IncomeStatementStatus.SENT &&
+                            original.status != IncomeStatementStatus.HANDLING)
                 ) {
-                    throw Forbidden("Only sent income statements can be updated")
+                    throw Forbidden(
+                        "Only income statements with status SENT or HANDLING can be updated"
+                    )
                 }
 
                 tx.updateIncomeStatementOtherInfo(
@@ -431,6 +434,9 @@ class IncomeStatementControllerCitizen(private val accessControl: AccessControl)
     ) {
         val incomeStatement =
             tx.readIncomeStatement(user, id) ?: throw NotFound("Income statement not found")
+        if (incomeStatement.status == IncomeStatementStatus.HANDLING) {
+            throw Forbidden("Income statement cannot be removed while being handled")
+        }
         if (incomeStatement.status == IncomeStatementStatus.HANDLED) {
             throw Forbidden("Handled income statement cannot be removed")
         }

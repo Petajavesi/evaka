@@ -8,14 +8,17 @@ import { Fixture } from '../../dev-api/fixtures'
 import { resetServiceState } from '../../generated/api-clients'
 import type { DevEmployee } from '../../generated/api-types'
 import CitizenHeader from '../../pages/citizen/citizen-header'
+import { test } from '../../playwright'
 import { Page } from '../../utils/page'
 import { employeeSfiLogin, enduserLogin } from '../../utils/user'
 
-beforeEach(async () => resetServiceState())
-
-describe('SFI authentication', () => {
+test.describe('SFI authentication', () => {
   let ssnEmployee: DevEmployee
-  beforeEach(async () => {
+  let citizenTab: Page
+
+  test.beforeEach(async ({ evaka }) => {
+    await resetServiceState()
+    citizenTab = evaka
     await testAdult.saveAdult({
       updateMockVtjWithDependants: []
     })
@@ -26,39 +29,36 @@ describe('SFI authentication', () => {
       .ssnEmployee(testAdult.ssn!)
       .save()
   })
-  afterAll(async () => {
-    await resetServiceState()
-  })
-  test('SFI logout invalidates all SFI sessions for the user', async () => {
-    const citizenSfiPage = await Page.open()
-    const employeeSfiPage = await Page.open()
 
+  test('SFI logout invalidates all SFI sessions for the user', async () => {
     // Login to both SFIs and logout from citizen SFI
-    await enduserLogin(citizenSfiPage, testAdult)
-    await employeeSfiLogin(employeeSfiPage, ssnEmployee)
-    const header = new CitizenHeader(citizenSfiPage)
+    await enduserLogin(citizenTab, testAdult)
+    const employeeTab = await Page.openNewTab(citizenTab)
+    await employeeTab.goto(
+      `${config.apiUrl}/employee/auth/sfi/login?RelayState=%2Femployee`
+    )
+    await employeeTab.find('[type=submit]').findText('Jatka').click()
+    await employeeTab.findByDataQa('username').waitUntilVisible()
+    const header = new CitizenHeader(citizenTab)
     await header.logout()
 
     // Verify that the employee SFI session has been logged out
-    await employeeSfiPage.findByDataQa('header').click()
-    await employeeSfiPage
-      .findByDataQa('session-expired-modal')
-      .waitUntilVisible()
+    await employeeTab.findByDataQa('header').click()
+    await employeeTab.findByDataQa('session-expired-modal').waitUntilVisible()
 
     // Login again to both SFIs and logout from employee SFI
-    await employeeSfiPage.goto(
-      `${config.apiUrl}/employee/auth/sfi/login?RelayState=%2Femployee`
+    await employeeSfiLogin(employeeTab, ssnEmployee)
+    await citizenTab.goto(
+      `${config.apiUrl}/citizen/auth/sfi/login?RelayState=%2F`
     )
-    await employeeSfiPage.find('[type=submit]').findText('Jatka').click()
-    await employeeSfiPage.findByDataQa('username').waitUntilVisible()
-    await enduserLogin(citizenSfiPage, testAdult)
-    await employeeSfiPage.findByDataQa('username').click()
-    await employeeSfiPage.findByDataQa('logout-btn').click()
+    await citizenTab.find('[type=submit]').findText('Jatka').click()
+    await citizenTab.findByDataQa('header-city-logo').waitUntilVisible()
+    await employeeTab.findByDataQa('username').click()
+    await employeeTab.findByDataQa('logout-btn').click()
 
     // Verify that the citizen SFI session has been logged out
-    await citizenSfiPage.findByDataQa('desktop-nav').click()
-    await citizenSfiPage
-      .findByDataQa('session-expired-modal')
-      .waitUntilVisible()
+    await citizenTab.findByDataQa('desktop-nav').click()
+    await citizenTab.bringToFront()
+    await citizenTab.findByDataQa('session-expired-modal').waitUntilVisible()
   })
 })

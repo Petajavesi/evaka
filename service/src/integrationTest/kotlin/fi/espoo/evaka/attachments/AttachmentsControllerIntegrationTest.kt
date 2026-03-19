@@ -4,18 +4,19 @@
 
 package fi.espoo.evaka.attachments
 
-import com.github.kittinunf.fuel.core.FileDataPart
-import com.github.kittinunf.fuel.core.isSuccessful
 import fi.espoo.evaka.FullApplicationTest
 import fi.espoo.evaka.application.ApplicationAttachmentType
 import fi.espoo.evaka.application.ApplicationStatus
 import fi.espoo.evaka.application.ApplicationType
+import fi.espoo.evaka.application.persistence.daycare.Adult
+import fi.espoo.evaka.application.persistence.daycare.Apply
+import fi.espoo.evaka.application.persistence.daycare.Child
 import fi.espoo.evaka.application.persistence.daycare.DaycareFormV0
+import fi.espoo.evaka.attachment.AttachmentsController
 import fi.espoo.evaka.incomestatement.IncomeStatementBody
 import fi.espoo.evaka.shared.ApplicationId
 import fi.espoo.evaka.shared.IncomeStatementId
 import fi.espoo.evaka.shared.auth.CitizenAuthLevel
-import fi.espoo.evaka.shared.auth.asUser
 import fi.espoo.evaka.shared.dev.DevCareArea
 import fi.espoo.evaka.shared.dev.DevDaycare
 import fi.espoo.evaka.shared.dev.DevIncomeStatement
@@ -23,16 +24,21 @@ import fi.espoo.evaka.shared.dev.DevPerson
 import fi.espoo.evaka.shared.dev.DevPersonType
 import fi.espoo.evaka.shared.dev.insert
 import fi.espoo.evaka.shared.dev.insertTestApplication
-import fi.espoo.evaka.test.getValidDaycareApplication
-import java.io.File
+import fi.espoo.evaka.shared.domain.Forbidden
+import fi.espoo.evaka.shared.domain.MockEvakaClock
 import java.time.LocalDate
 import java.util.UUID
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.mock.web.MockMultipartFile
 
 class AttachmentsControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach = true) {
+    @Autowired private lateinit var attachmentsController: AttachmentsController
+
+    private val clock = MockEvakaClock(2020, 1, 1, 12, 0)
     private val area = DevCareArea()
     private val daycare = DevDaycare(areaId = area.id)
     private val adult = DevPerson()
@@ -62,8 +68,11 @@ class AttachmentsControllerIntegrationTest : FullApplicationTest(resetDbBeforeEa
                 confidential = true,
                 type = ApplicationType.DAYCARE,
                 document =
-                    DaycareFormV0.fromApplication2(
-                        getValidDaycareApplication(preferredUnit = daycare)
+                    DaycareFormV0(
+                        type = ApplicationType.DAYCARE,
+                        child = Child(dateOfBirth = null),
+                        guardian = Adult(),
+                        apply = Apply(preferredUnits = listOf(daycare.id)),
                     ),
             )
         }
@@ -97,35 +106,56 @@ class AttachmentsControllerIntegrationTest : FullApplicationTest(resetDbBeforeEa
         assertFalse(uploadUnparentedAttachment())
     }
 
-    private fun uploadAttachment(
-        path: String,
-        parameters: List<Pair<String, Any?>>? = null,
-    ): Boolean {
-        val (_, res, _) =
-            http
-                .upload(path, parameters = parameters)
-                .add(FileDataPart(File(pngFile.toURI()), name = "file"))
-                .asUser(adult.user(CitizenAuthLevel.STRONG))
-                .response()
-
-        return res.isSuccessful
-    }
+    private fun mockFile() =
+        MockMultipartFile("file", "evaka-logo.png", "image/png", pngFile.readBytes())
 
     private fun uploadApplicationAttachment(
         applicationId: ApplicationId,
         type: ApplicationAttachmentType = ApplicationAttachmentType.URGENCY,
     ): Boolean {
-        return uploadAttachment(
-            "/citizen/attachments/applications/$applicationId",
-            listOf("type" to type),
-        )
+        return try {
+            attachmentsController.uploadApplicationAttachmentCitizen(
+                dbInstance(),
+                adult.user(CitizenAuthLevel.STRONG),
+                clock,
+                applicationId,
+                type,
+                mockFile(),
+            )
+            true
+        } catch (_: Forbidden) {
+            false
+        }
     }
 
     private fun uploadIncomeStatementAttachment(incomeStatementId: IncomeStatementId): Boolean {
-        return uploadAttachment("/citizen/attachments/income-statements/$incomeStatementId")
+        return try {
+            attachmentsController.uploadIncomeStatementAttachmentCitizen(
+                dbInstance(),
+                adult.user(CitizenAuthLevel.STRONG),
+                clock,
+                incomeStatementId,
+                null,
+                mockFile(),
+            )
+            true
+        } catch (_: Forbidden) {
+            false
+        }
     }
 
     private fun uploadUnparentedAttachment(): Boolean {
-        return uploadAttachment("/citizen/attachments/income-statements")
+        return try {
+            attachmentsController.uploadOrphanIncomeStatementAttachmentCitizen(
+                dbInstance(),
+                adult.user(CitizenAuthLevel.STRONG),
+                clock,
+                null,
+                mockFile(),
+            )
+            true
+        } catch (_: Forbidden) {
+            false
+        }
     }
 }

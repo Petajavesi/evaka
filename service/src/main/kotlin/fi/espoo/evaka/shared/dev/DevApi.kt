@@ -73,6 +73,7 @@ import fi.espoo.evaka.holidayperiod.createOpenRangesQuestionnaire
 import fi.espoo.evaka.holidayperiod.insertHolidayPeriod
 import fi.espoo.evaka.identity.ExternalId
 import fi.espoo.evaka.identity.ExternalIdentifier
+import fi.espoo.evaka.incomestatement.IncomeStatementStatus
 import fi.espoo.evaka.incomestatement.updateIncomeStatementHandled
 import fi.espoo.evaka.invoicing.data.markVoucherValueDecisionsSent
 import fi.espoo.evaka.invoicing.data.setFeeDecisionProcessId
@@ -580,7 +581,7 @@ UPDATE placement SET end_date = ${bind(req.endDate)}, termination_requested_date
         val employeeId: EmployeeId,
         val incomeStatementId: IncomeStatementId,
         val note: String,
-        val handled: Boolean,
+        val status: IncomeStatementStatus,
     )
 
     @PostMapping("/income-statement/update-handled")
@@ -596,7 +597,7 @@ UPDATE placement SET end_date = ${bind(req.endDate)}, termination_requested_date
                     clock.now(),
                     body.incomeStatementId,
                     body.note,
-                    body.handled,
+                    body.status,
                 )
             }
         }
@@ -1496,6 +1497,7 @@ VALUES (${bind(body.id)}, ${bind(body.guardianId)})
                             CalendarEventNotificationData(
                                 HtmlSafe("Esimerkki 1"),
                                 FiniteDateRange(LocalDate.now(), LocalDate.now().plusDays(1)),
+                                listOf(HtmlSafe("Ryhmä A")),
                             ),
                             CalendarEventNotificationData(
                                 HtmlSafe("Esimerkki 2"),
@@ -1503,6 +1505,7 @@ VALUES (${bind(body.id)}, ${bind(body.guardianId)})
                                     LocalDate.now().plusDays(7),
                                     LocalDate.now().plusDays(7),
                                 ),
+                                listOf(HtmlSafe("Ryhmä B"), HtmlSafe("Ryhmä C")),
                             ),
                         ),
                     )
@@ -2145,6 +2148,9 @@ data class DevPerson(
 
     fun evakaUserId() = EvakaUserId(id.raw)
 
+    fun evakaUser() =
+        EvakaUser(id = evakaUserId(), name = "$lastName $firstName", type = EvakaUserType.CITIZEN)
+
     fun user(authLevel: CitizenAuthLevel) = AuthenticatedUser.Citizen(id, authLevel)
 }
 
@@ -2442,25 +2448,30 @@ data class DevDocumentTemplate(
 
 data class DevChildDocument(
     val id: ChildDocumentId = ChildDocumentId(UUID.randomUUID()),
-    val created: HelsinkiDateTime? = null,
+    val createdAt: HelsinkiDateTime? = null,
     val createdBy: EvakaUserId = AuthenticatedUser.SystemInternalUser.evakaUserId,
     val status: DocumentStatus,
     val childId: ChildId,
     val templateId: DocumentTemplateId,
     @Json val content: DocumentContent,
-    @Json val publishedContent: DocumentContent?,
     val modifiedAt: HelsinkiDateTime,
     val modifiedBy: EvakaUserId,
     val contentLockedAt: HelsinkiDateTime,
     val contentLockedBy: EmployeeId?,
-    val documentKey: String? = null,
-    val publishedAt: HelsinkiDateTime?,
-    val publishedBy: EvakaUserId?,
     val answeredAt: HelsinkiDateTime? = null,
     val answeredBy: EvakaUserId? = null,
     val processId: CaseProcessId? = null,
     val decisionMaker: EmployeeId? = null,
     val decision: DevChildDocumentDecision? = null,
+    val publishedVersions: List<DevChildDocumentPublishedVersion> = emptyList(),
+)
+
+data class DevChildDocumentPublishedVersion(
+    val versionNumber: Int,
+    val createdAt: HelsinkiDateTime,
+    val createdBy: EvakaUserId,
+    @Json val publishedContent: DocumentContent,
+    val documentKey: String? = null,
 )
 
 data class DevChildDocumentDecision(

@@ -71,6 +71,8 @@ export const fi = {
     and: 'Ja',
     loadingFailed: 'Tietojen haku epäonnistui',
     noAccess: 'Oikeudet puuttuvat',
+    endpointDisabled:
+      'eVakassa on käynnissä osittainen huoltokatko. Osa toiminnoista ei ole tällä hetkellä käytettävissä. Yritä hetken kuluttua uudelleen.',
     edit: 'Muokkaa',
     add: 'Lisää',
     addNew: 'Lisää uusi',
@@ -281,6 +283,7 @@ export const fi = {
     linkHref: 'https://www.petajavesi.fi/lapset-ja-nuoret/varhaiskasvatus'
   },
   language: {
+    title: 'Kieli',
     fi: 'Suomi',
     sv: 'Ruotsi',
     en: 'Englanti'
@@ -1515,7 +1518,7 @@ export const fi = {
       noteModalTitle: 'Talouden oma muistiinpano',
       noteModalInfo: 'Muistiinpano ei tule näkyviin laskulle.',
       invoiceStatusHeader: 'Tila',
-      invoiceStatus: (status: InvoiceStatus | null) =>
+      invoiceStatus: (status: InvoiceStatus | null): string =>
         status === 'DRAFT'
           ? 'Laskuluonnoksella'
           : status
@@ -1905,8 +1908,18 @@ export const fi = {
     },
     noNote: 'Tuloselvityksellä ei muistiinpanoa',
     handlerNotesForm: {
-      title: 'Käsittelijän muistiinpanot',
-      handled: 'Käsitelty',
+      title: 'Käsittely',
+      statusLabel: 'Tila',
+      status: {
+        SENT: 'Odottaa käsittelyä',
+        HANDLING: 'Käsittelyssä',
+        HANDLED: 'Käsitelty'
+      },
+      statusInfo:
+        'Kun tuloselvitys on käsittelyssä, kuntalainen ei voi perua hakemusta, mutta voi lisätä puuttuvia liitteitä.',
+      startHandlingBtn: 'Ota käsittelyyn',
+      markHandledBtn: 'Merkitse käsitellyksi',
+      returnToHandlingBtn: 'Palauta käsittelyyn',
       handlerNote: 'Muistiinpano (sisäinen)'
     },
     attachmentNames: {
@@ -2652,17 +2665,17 @@ export const fi = {
     buttons: {
       checked: (count: number) =>
         count === 1 ? `${count} lasku valittu` : `${count} laskua valittu`,
-      sendInvoice: (count: number) =>
+      sendInvoice: (count: number): string =>
         count === 1 ? 'Siirrä valittu lasku' : 'Siirrä valitut laskut',
-      resendInvoice: (count: number) =>
+      resendInvoice: (count: number): string =>
         count === 1
           ? 'Lähetä valittu lasku uudelleen'
           : 'Lähetä valitut laskut uudelleen',
       createInvoices: 'Luo laskuluonnokset',
       selectMonth: 'Valitse kuukausi',
-      deleteInvoice: (count: number) =>
+      deleteInvoice: (count: number): string =>
         count === 1 ? 'Poista valittu lasku' : 'Poista valitut laskut',
-      checkAreaInvoices: (customRange: boolean) =>
+      checkAreaInvoices: (customRange: boolean): string =>
         customRange
           ? 'Valitse laskut valitulta aikaväliltä ja alueilta'
           : 'Valitse tämän kuun laskut valituilta alueilta',
@@ -2792,7 +2805,7 @@ export const fi = {
       default: 'Yksikön tiedoissa asetettu päätöksentekijä',
       decisionCount: (count: number) =>
         count === 1 ? '1 päätös valittu' : `${count} päätöstä valittu`,
-      resolve: (count: number) =>
+      resolve: (count: number): string =>
         count === 1 ? 'Vahvista ja luo päätös' : 'Vahvista ja luo päätökset'
     }
   },
@@ -2837,10 +2850,10 @@ export const fi = {
     buttons: {
       checked: (count: number) =>
         count === 1 ? `${count} päätös valittu` : `${count} päätöstä valittu`,
-      createDecision: (count: number) =>
+      createDecision: (count: number): string =>
         count === 1 ? 'Luo päätös' : 'Luo päätökset',
       ignoreDraft: 'Ohita luonnos',
-      unignoreDrafts: (count: number) =>
+      unignoreDrafts: (count: number): string =>
         count === 1 ? 'Kumoa ohitus' : 'Kumoa ohitukset',
       markSent: 'Merkitse postitetuksi',
       close: 'Sulje tallentamatta',
@@ -2927,10 +2940,10 @@ export const fi = {
     buttons: {
       checked: (count: number) =>
         count === 1 ? `${count} päätös valittu` : `${count} päätöstä valittu`,
-      createDecision: (count: number) =>
+      createDecision: (count: number): string =>
         count === 1 ? 'Luo päätös' : 'Luo päätökset',
       ignoreDraft: 'Ohita luonnos',
-      unignoreDrafts: (count: number) =>
+      unignoreDrafts: (count: number): string =>
         count === 1 ? 'Kumoa ohitus' : 'Kumoa ohitukset',
       markSent: 'Merkitse postitetuksi',
       close: 'Sulje tallentamatta',
@@ -3151,6 +3164,11 @@ export const fi = {
     paymentFreeTextPlaceholder: 'Haku maksun numerolla',
     incomeStatementSent: 'Tuloselvitys lähetetty',
     incomeStatementPlacementValidDate: 'Sijoitus voimassa',
+    incomeStatementStatusTitle: 'Näytä tilat',
+    incomeStatementStatus: {
+      SENT: 'Odottaa käsittelyä',
+      HANDLING: 'Käsittelyssä'
+    },
     showClosedUnits: 'Näytä suljetut yksiköt',
     hideClosedUnits: 'Piilota suljetut yksiköt'
   },
@@ -3365,7 +3383,7 @@ export const fi = {
       attendancesTotal: 'Toteuma/kk'
     },
     legendTitle: 'Merkintöjen selitykset',
-    addAbsencesButton(numOfSelected: number) {
+    addAbsencesButton(numOfSelected: number): string {
       return numOfSelected === 1
         ? 'Lisää merkintä valitulle...'
         : 'Lisää merkinnät valituille...'
@@ -3517,7 +3535,7 @@ export const fi = {
       description: 'Päätöksen tekijälle lähetetyt tuen päätökset.',
       statusFilter: 'Näytettävät tilat',
       otherFilters: 'Muut valinnat',
-      includeEnded: 'Näytä päättyneet päätökset',
+      includeEnded: 'Näytä myös päättyneet päätökset',
       templateName: 'Päätös',
       childName: 'Lapsi',
       modifiedAt: 'Muokattu',

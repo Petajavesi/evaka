@@ -13,7 +13,7 @@ import { fasInfo, faTimes } from 'lib-icons'
 
 import RoundIcon from '../atoms/RoundIcon'
 import { IconOnlyButton } from '../atoms/buttons/IconOnlyButton'
-import { desktopMin } from '../breakpoints'
+import { desktopMin, zoomedMobileMax } from '../breakpoints'
 import { useTranslations } from '../i18n'
 import type { SpacingSize } from '../white-space'
 import { defaultMargins } from '../white-space'
@@ -53,6 +53,13 @@ const InfoBoxContainer = styled(Container)<{
         ? `margin: ${defaultMargins.s} 0px;`
         : `margin: ${defaultMargins.s} -${defaultMargins.L} ${defaultMargins.xs};`}
   }
+
+  @media (max-width: ${zoomedMobileMax}) {
+    width: fit-content;
+    p {
+      margin-top: 0;
+    }
+  }
 `
 
 const InfoBoxContentArea = styled(ContentArea)`
@@ -64,15 +71,20 @@ const InfoContainer = styled.div`
   color: ${(p) => p.theme.colors.grayscale.g100};
   padding: 0 ${defaultMargins.s};
   white-space: pre-wrap;
+  @media (max-width: ${zoomedMobileMax}) {
+    padding: 0;
+    margin: ${defaultMargins.L} 0 0 -${defaultMargins.s};
+    hyphens: auto;
+  }
 `
 
-const RoundIconButton = styled.button<{ margin: SpacingSize }>`
+const RoundIconButton = styled.button<{ $margin: SpacingSize }>`
   display: inline-flex;
   justify-content: center;
   align-items: center;
   padding: 0;
   margin: 0;
-  margin-top: ${({ margin }) => defaultMargins[margin]};
+  margin-top: ${({ $margin }) => defaultMargins[$margin]};
   cursor: pointer;
   background-color: ${(p) => p.theme.colors.main.m2};
   color: ${(p) => p.theme.colors.grayscale.g0};
@@ -175,7 +187,7 @@ export default React.memo(function ExpandingInfo({
       />
     </div>
   ) : (
-    <FixedSpaceRow spacing="xs" alignItems="baseline">
+    <FixedSpaceRow $spacing="xs" $alignItems="baseline">
       <div>{children}</div>
       <InfoButton
         onClick={toggleExpanded}
@@ -265,7 +277,7 @@ export const InfoButton = React.memo(function InfoButton({
     <RoundIconButton
       className={className}
       data-qa={dataQa}
-      margin={margin ?? 'zero'}
+      $margin={margin ?? 'zero'}
       color={colors.status.info}
       onClick={onClick}
       type="button"
@@ -300,7 +312,7 @@ export const ExpandingInfoBox = React.memo(function ExpandingInfoBox({
 
   return (
     <InfoBoxContainer className={className} $width={width}>
-      <InfoBoxContentArea opaque={false}>
+      <InfoBoxContentArea $opaque={false}>
         <RoundIcon content={fasInfo} color={colors.status.info} size="s" />
 
         <InfoContainer data-qa={dataQa ? `${dataQa}-text` : undefined}>

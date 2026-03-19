@@ -16,22 +16,20 @@ import fi.espoo.evaka.shared.GroupId
 import fi.espoo.evaka.shared.async.AsyncJob
 import fi.espoo.evaka.shared.async.AsyncJobRunner
 import fi.espoo.evaka.shared.auth.*
+import fi.espoo.evaka.shared.dev.DevCareArea
 import fi.espoo.evaka.shared.dev.DevDaycare
 import fi.espoo.evaka.shared.dev.DevDaycareGroup
 import fi.espoo.evaka.shared.dev.DevEmployee
 import fi.espoo.evaka.shared.dev.DevPersonalMobileDevice
 import fi.espoo.evaka.shared.dev.insert
+import fi.espoo.evaka.shared.domain.BadRequest
+import fi.espoo.evaka.shared.domain.Forbidden
 import fi.espoo.evaka.shared.domain.HelsinkiDateTime
 import fi.espoo.evaka.shared.domain.MockEvakaClock
 import fi.espoo.evaka.shared.domain.NotFound
-import fi.espoo.evaka.testArea
-import fi.espoo.evaka.testDaycare
-import fi.espoo.evaka.testDaycare2
-import fi.espoo.evaka.testDaycareGroup
 import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.LocalTime
-import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import org.assertj.core.api.Assertions.assertThat
@@ -44,18 +42,26 @@ import org.springframework.beans.factory.annotation.Autowired
 class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach = true) {
     @Autowired private lateinit var unitAclController: UnitAclController
     @Autowired private lateinit var asyncJobRunner: AsyncJobRunner<AsyncJob>
+
+    private val area = DevCareArea()
+    private val daycare = DevDaycare(areaId = area.id)
+    private val daycare2 = DevDaycare(areaId = area.id, name = "Test Daycare 2")
+    private val daycareGroup = DevDaycareGroup(daycareId = daycare.id)
+    private val adminEmployee = DevEmployee(roles = setOf(UserRole.ADMIN))
+    private val admin = adminEmployee.user
+    private val devEmployee =
+        DevEmployee(firstName = "First", lastName = "Last", email = "test@example.com")
     private val employee =
         DaycareAclRowEmployee(
-            id = EmployeeId(UUID.randomUUID()),
-            firstName = "First",
-            lastName = "Last",
-            email = "test@example.com",
+            id = devEmployee.id,
+            firstName = devEmployee.firstName,
+            lastName = devEmployee.lastName,
+            email = devEmployee.email,
             employeeNumber = null,
             temporary = false,
             hasStaffOccupancyEffect = false,
             active = true,
         )
-    private lateinit var admin: AuthenticatedUser.Employee
 
     val now = HelsinkiDateTime.of(LocalDate.of(2023, 3, 29), LocalTime.of(8, 37))
     val clock = MockEvakaClock(now)
@@ -63,30 +69,12 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
     @BeforeEach
     fun beforeEach() {
         db.transaction { tx ->
-            admin =
-                AuthenticatedUser.Employee(
-                    tx.insert(DevEmployee(roles = setOf(UserRole.ADMIN))),
-                    roles = setOf(UserRole.ADMIN),
-                )
-            tx.insert(testArea)
-            tx.insert(
-                DevDaycare(areaId = testArea.id, id = testDaycare.id, name = testDaycare.name)
-            )
-            tx.insert(
-                DevDaycare(areaId = testArea.id, id = testDaycare2.id, name = testDaycare2.name)
-            )
-            tx.insert(testDaycareGroup)
-
-            employee.also {
-                tx.insert(
-                    DevEmployee(
-                        id = it.id,
-                        firstName = it.firstName,
-                        lastName = it.lastName,
-                        email = it.email,
-                    )
-                )
-            }
+            tx.insert(adminEmployee)
+            tx.insert(area)
+            tx.insert(daycare)
+            tx.insert(daycare2)
+            tx.insert(daycareGroup)
+            tx.insert(devEmployee)
         }
     }
 
@@ -96,12 +84,12 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
 
         insertEmployee(
             UnitAclController.AclUpdate(
+                role = UserRole.UNIT_SUPERVISOR,
                 groupIds = null,
                 hasStaffOccupancyEffect = null,
                 endDate = null,
             ),
-            UserRole.UNIT_SUPERVISOR,
-            testDaycare.id,
+            daycare.id,
             employee.id,
         )
         assertEquals(
@@ -116,18 +104,18 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
             getAclRows(),
         )
 
-        deleteSupervisor(testDaycare.id)
+        deleteSupervisor(daycare.id)
         assertTrue(getAclRows().isEmpty())
 
         val endDate = now.toLocalDate().plusDays(7)
         insertEmployee(
             UnitAclController.AclUpdate(
+                role = UserRole.STAFF,
                 groupIds = null,
                 hasStaffOccupancyEffect = null,
                 endDate = endDate,
             ),
-            UserRole.STAFF,
-            testDaycare.id,
+            daycare.id,
             employee.id,
         )
 
@@ -153,26 +141,27 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
 
         val aclUpdate =
             UnitAclController.AclUpdate(
-                groupIds = listOf(testDaycareGroup.id),
+                role = UserRole.UNIT_SUPERVISOR,
+                groupIds = listOf(daycareGroup.id),
                 hasStaffOccupancyEffect = null,
                 endDate = null,
             )
 
-        insertEmployee(aclUpdate, UserRole.UNIT_SUPERVISOR, testDaycare.id, employee.id)
+        insertEmployee(aclUpdate, daycare.id, employee.id)
 
         assertEquals(
             listOf(
                 DaycareAclRow(
                     employee = employee,
                     role = UserRole.UNIT_SUPERVISOR,
-                    groupIds = listOf(testDaycareGroup.id),
+                    groupIds = listOf(daycareGroup.id),
                     endDate = null,
                 )
             ),
             getAclRows(),
         )
 
-        deleteSupervisor(testDaycare.id)
+        deleteSupervisor(daycare.id)
         assertTrue(getAclRows().isEmpty())
     }
 
@@ -182,12 +171,13 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
 
         val aclUpdate =
             UnitAclController.AclUpdate(
+                role = UserRole.UNIT_SUPERVISOR,
                 groupIds = null,
                 hasStaffOccupancyEffect = true,
                 endDate = null,
             )
 
-        insertEmployee(aclUpdate, UserRole.UNIT_SUPERVISOR, testDaycare.id, employee.id)
+        insertEmployee(aclUpdate, daycare.id, employee.id)
         assertEquals(
             listOf(
                 DaycareAclRow(
@@ -210,13 +200,13 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
             getAclRows(),
         )
 
-        val coefficientsAfterInsert = getDaycareOccupancyCoefficients(testDaycare.id)
+        val coefficientsAfterInsert = getDaycareOccupancyCoefficients(daycare.id)
 
         assertEquals(BigDecimal("7.00"), coefficientsAfterInsert[employee.id])
 
-        deleteSupervisor(testDaycare.id)
+        deleteSupervisor(daycare.id)
 
-        val coefficientsAfterDelete = getDaycareOccupancyCoefficients(testDaycare.id)
+        val coefficientsAfterDelete = getDaycareOccupancyCoefficients(daycare.id)
 
         assertEquals(BigDecimal("7.00"), coefficientsAfterDelete[employee.id])
 
@@ -230,12 +220,13 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
         val endDate1 = now.toLocalDate().plusDays(7)
         val aclUpdate =
             UnitAclController.AclUpdate(
+                role = UserRole.UNIT_SUPERVISOR,
                 groupIds = null,
                 hasStaffOccupancyEffect = true,
                 endDate = endDate1,
             )
 
-        insertEmployee(aclUpdate, UserRole.UNIT_SUPERVISOR, testDaycare.id, employee.id)
+        insertEmployee(aclUpdate, daycare.id, employee.id)
         assertEquals(
             listOf(
                 DaycareAclRow(
@@ -261,25 +252,26 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
         val endDate2 = now.toLocalDate().plusDays(14)
         val aclModification =
             UnitAclController.AclUpdate(
-                groupIds = listOf(testDaycareGroup.id),
+                role = UserRole.UNIT_SUPERVISOR,
+                groupIds = listOf(daycareGroup.id),
                 hasStaffOccupancyEffect = false,
                 endDate = endDate2,
             )
-        modifyEmployee(aclModification, testDaycare.id, employee.id)
+        modifyEmployee(aclModification, daycare.id, employee.id)
 
         assertEquals(
             listOf(
                 DaycareAclRow(
                     employee = employee,
                     role = UserRole.UNIT_SUPERVISOR,
-                    groupIds = listOf(testDaycareGroup.id),
+                    groupIds = listOf(daycareGroup.id),
                     endDate = endDate2,
                 )
             ),
             getAclRows(),
         )
 
-        val coefficientsAfterModification = getDaycareOccupancyCoefficients(testDaycare.id)
+        val coefficientsAfterModification = getDaycareOccupancyCoefficients(daycare.id)
         assertEquals(BigDecimal("0.00"), coefficientsAfterModification[employee.id])
     }
 
@@ -288,31 +280,31 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
         assertEquals(MessageAccountState.NO_ACCOUNT, employeeMessageAccountState())
         insertEmployee(
             UnitAclController.AclUpdate(
+                role = UserRole.UNIT_SUPERVISOR,
                 groupIds = null,
                 hasStaffOccupancyEffect = null,
                 endDate = null,
             ),
-            UserRole.UNIT_SUPERVISOR,
-            testDaycare.id,
+            daycare.id,
             employee.id,
         )
 
         assertEquals(MessageAccountState.ACTIVE_ACCOUNT, employeeMessageAccountState())
         insertEmployee(
             UnitAclController.AclUpdate(
+                role = UserRole.UNIT_SUPERVISOR,
                 groupIds = null,
                 hasStaffOccupancyEffect = null,
                 endDate = null,
             ),
-            UserRole.UNIT_SUPERVISOR,
-            testDaycare2.id,
+            daycare2.id,
             employee.id,
         )
 
         assertEquals(MessageAccountState.ACTIVE_ACCOUNT, employeeMessageAccountState())
-        deleteSupervisor(testDaycare.id)
+        deleteSupervisor(daycare.id)
         assertEquals(MessageAccountState.ACTIVE_ACCOUNT, employeeMessageAccountState())
-        deleteSupervisor(testDaycare2.id)
+        deleteSupervisor(daycare2.id)
         assertEquals(MessageAccountState.INACTIVE_ACCOUNT, employeeMessageAccountState())
     }
 
@@ -323,14 +315,14 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
         val supervisor2 = DevEmployee()
         val device2 = DevPersonalMobileDevice(employeeId = supervisor2.id)
         db.transaction { tx ->
-            tx.insert(supervisor1, unitRoles = mapOf(testDaycare.id to UserRole.UNIT_SUPERVISOR))
+            tx.insert(supervisor1, unitRoles = mapOf(daycare.id to UserRole.UNIT_SUPERVISOR))
             tx.insert(device1)
             tx.insert(
                 supervisor2,
                 unitRoles =
                     mapOf(
-                        testDaycare.id to UserRole.UNIT_SUPERVISOR,
-                        testDaycare2.id to UserRole.UNIT_SUPERVISOR,
+                        daycare.id to UserRole.UNIT_SUPERVISOR,
+                        daycare2.id to UserRole.UNIT_SUPERVISOR,
                     ),
             )
             tx.insert(device2)
@@ -341,14 +333,14 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
             dbInstance(),
             admin,
             MockEvakaClock(now),
-            testDaycare.id,
+            daycare.id,
             supervisor1.id,
         )
         unitAclController.deleteUnitSupervisor(
             dbInstance(),
             admin,
             MockEvakaClock(now),
-            testDaycare.id,
+            daycare.id,
             supervisor2.id,
         )
         asyncJobRunner.runPendingJobsSync(MockEvakaClock(now.plusHours(1)))
@@ -365,8 +357,8 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
     @Test
     fun temporaryEmployeeCrud() {
 
-        assertThat(getTemporaryEmployees(testDaycare.id)).isEmpty()
-        assertThat(getTemporaryEmployees(testDaycare2.id)).isEmpty()
+        assertThat(getTemporaryEmployees(daycare.id)).isEmpty()
+        assertThat(getTemporaryEmployees(daycare2.id)).isEmpty()
 
         // create
         val createdTemporary =
@@ -382,20 +374,20 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
                 dbInstance(),
                 admin,
                 clock,
-                testDaycare.id,
+                daycare.id,
                 createdTemporary,
             )
-        assertThat(getTemporaryEmployees(testDaycare.id))
+        assertThat(getTemporaryEmployees(daycare.id))
             .extracting({ it.id }, { it.firstName }, { it.lastName }, { it.temporaryInUnitId })
-            .containsExactly(Tuple(temporaryEmployeeId, "Etu1", "Suku1", testDaycare.id))
-        assertThat(getTemporaryEmployees(testDaycare2.id)).isEmpty()
-        assertThat(getTemporaryEmployee(testDaycare.id, temporaryEmployeeId))
+            .containsExactly(Tuple(temporaryEmployeeId, "Etu1", "Suku1", daycare.id))
+        assertThat(getTemporaryEmployees(daycare2.id)).isEmpty()
+        assertThat(getTemporaryEmployee(daycare.id, temporaryEmployeeId))
             .isEqualTo(createdTemporary)
-        assertThrows<NotFound> { getTemporaryEmployee(testDaycare2.id, temporaryEmployeeId) }
+        assertThrows<NotFound> { getTemporaryEmployee(daycare2.id, temporaryEmployeeId) }
         dbInstance().connect { dbc ->
             dbc.transaction { tx -> tx.deactivateInactiveEmployees(now.plusMonths(1)) }
         }
-        assertThat(getTemporaryEmployee(testDaycare.id, temporaryEmployeeId))
+        assertThat(getTemporaryEmployee(daycare.id, temporaryEmployeeId))
             .isEqualTo(createdTemporary)
 
         // update
@@ -403,7 +395,7 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
             TemporaryEmployee(
                 firstName = "Etu2",
                 lastName = "Suku2",
-                groupIds = setOf(testDaycareGroup.id),
+                groupIds = setOf(daycareGroup.id),
                 hasStaffOccupancyEffect = true,
                 pinCode = PinCode("2537"),
             )
@@ -412,7 +404,7 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
                 dbInstance(),
                 admin,
                 clock,
-                testDaycare2.id,
+                daycare2.id,
                 temporaryEmployeeId,
                 updatedTemporary,
             )
@@ -421,19 +413,19 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
             dbInstance(),
             admin,
             clock,
-            testDaycare.id,
+            daycare.id,
             temporaryEmployeeId,
             updatedTemporary,
         )
-        assertThat(getTemporaryEmployees(testDaycare.id))
+        assertThat(getTemporaryEmployees(daycare.id))
             .extracting({ it.id }, { it.firstName }, { it.lastName }, { it.temporaryInUnitId })
-            .containsExactly(Tuple(temporaryEmployeeId, "Etu2", "Suku2", testDaycare.id))
-        assertThat(getTemporaryEmployee(testDaycare.id, temporaryEmployeeId))
+            .containsExactly(Tuple(temporaryEmployeeId, "Etu2", "Suku2", daycare.id))
+        assertThat(getTemporaryEmployee(daycare.id, temporaryEmployeeId))
             .isEqualTo(updatedTemporary)
         dbInstance().connect { dbc ->
             dbc.transaction { tx -> tx.deactivateInactiveEmployees(now.plusMonths(1)) }
         }
-        assertThat(getTemporaryEmployee(testDaycare.id, temporaryEmployeeId))
+        assertThat(getTemporaryEmployee(daycare.id, temporaryEmployeeId))
             .isEqualTo(updatedTemporary)
 
         // delete acl
@@ -442,7 +434,7 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
                 dbInstance(),
                 admin,
                 clock,
-                testDaycare2.id,
+                daycare2.id,
                 temporaryEmployeeId,
             )
         }
@@ -450,13 +442,13 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
             dbInstance(),
             admin,
             clock,
-            testDaycare.id,
+            daycare.id,
             temporaryEmployeeId,
         )
-        assertThat(getTemporaryEmployees(testDaycare.id))
+        assertThat(getTemporaryEmployees(daycare.id))
             .extracting({ it.id }, { it.firstName }, { it.lastName }, { it.temporaryInUnitId })
-            .containsExactly(Tuple(temporaryEmployeeId, "Etu2", "Suku2", testDaycare.id))
-        assertThat(getTemporaryEmployee(testDaycare.id, temporaryEmployeeId))
+            .containsExactly(Tuple(temporaryEmployeeId, "Etu2", "Suku2", daycare.id))
+        assertThat(getTemporaryEmployee(daycare.id, temporaryEmployeeId))
             .isEqualTo(updatedTemporary.copy(groupIds = emptySet()))
 
         // delete
@@ -465,7 +457,7 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
                 dbInstance(),
                 admin,
                 clock,
-                testDaycare2.id,
+                daycare2.id,
                 temporaryEmployeeId,
             )
         }
@@ -473,11 +465,11 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
             dbInstance(),
             admin,
             clock,
-            testDaycare.id,
+            daycare.id,
             temporaryEmployeeId,
         )
-        assertThat(getTemporaryEmployees(testDaycare.id)).isEmpty()
-        assertThrows<NotFound> { getTemporaryEmployee(testDaycare.id, temporaryEmployeeId) }
+        assertThat(getTemporaryEmployees(daycare.id)).isEmpty()
+        assertThrows<NotFound> { getTemporaryEmployee(daycare.id, temporaryEmployeeId) }
     }
 
     @Test
@@ -487,7 +479,7 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
                 dbInstance(),
                 admin,
                 clock,
-                testDaycare.id,
+                daycare.id,
                 TemporaryEmployee(
                     firstName = "Etu1",
                     lastName = "Suku1",
@@ -498,13 +490,18 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
             )
 
         assertThrows<NotFound> {
-            unitAclController.updateGroupAclWithOccupancyCoefficient(
+            unitAclController.updateGroupAcl(
                 dbInstance(),
                 admin,
                 clock,
-                testDaycare.id,
+                daycare.id,
                 temporaryEmployeeId,
-                UnitAclController.AclUpdate(listOf(testDaycareGroup.id), false, null),
+                UnitAclController.AclUpdate(
+                    role = UserRole.STAFF,
+                    groupIds = listOf(daycareGroup.id),
+                    hasStaffOccupancyEffect = false,
+                    endDate = null,
+                ),
             )
         }
         assertThrows<NotFound> {
@@ -512,11 +509,13 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
                 dbInstance(),
                 admin,
                 clock,
-                testDaycare.id,
+                daycare.id,
                 temporaryEmployeeId,
-                UnitAclController.FullAclInfo(
-                    UserRole.STAFF,
-                    UnitAclController.AclUpdate(listOf(testDaycareGroup.id), false, null),
+                UnitAclController.AclUpdate(
+                    role = UserRole.STAFF,
+                    groupIds = listOf(daycareGroup.id),
+                    hasStaffOccupancyEffect = false,
+                    endDate = null,
                 ),
             )
         }
@@ -525,7 +524,7 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
                 dbInstance(),
                 admin,
                 clock,
-                testDaycare.id,
+                daycare.id,
                 temporaryEmployeeId,
             )
         }
@@ -534,7 +533,7 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
                 dbInstance(),
                 admin,
                 clock,
-                testDaycare.id,
+                daycare.id,
                 temporaryEmployeeId,
             )
         }
@@ -543,7 +542,7 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
                 dbInstance(),
                 admin,
                 clock,
-                testDaycare.id,
+                daycare.id,
                 temporaryEmployeeId,
             )
         }
@@ -552,7 +551,7 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
                 dbInstance(),
                 admin,
                 clock,
-                testDaycare.id,
+                daycare.id,
                 temporaryEmployeeId,
             )
         }
@@ -560,19 +559,13 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
 
     @Test
     fun groupAccessCanBeAddedAndRemoved() {
-        val group2 =
-            DevDaycareGroup(
-                daycareId = testDaycare.id,
-                id = GroupId(UUID.randomUUID()),
-                name = "Group2",
-            )
-        val unit2Group =
-            DevDaycareGroup(daycareId = testDaycare2.id, id = GroupId(UUID.randomUUID()))
+        val group2 = DevDaycareGroup(daycareId = daycare.id, name = "Group 2")
+        val unit2Group = DevDaycareGroup(daycareId = daycare2.id)
         db.transaction { tx ->
             tx.insert(group2)
             tx.insert(unit2Group)
-            tx.insertDaycareAclRow(testDaycare.id, employee.id, UserRole.STAFF)
-            tx.insertDaycareAclRow(testDaycare2.id, employee.id, UserRole.STAFF)
+            tx.insertDaycareAclRow(daycare.id, employee.id, UserRole.STAFF)
+            tx.insertDaycareAclRow(daycare2.id, employee.id, UserRole.STAFF)
         }
 
         data class DaycareGroupAcl(
@@ -590,14 +583,15 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
         // add access to two groups in daycare 1
         // daycare 2 has no groups
         val moment1 = clock.now()
-        unitAclController.updateGroupAclWithOccupancyCoefficient(
+        unitAclController.updateGroupAcl(
             dbInstance(),
             admin,
             MockEvakaClock(moment1),
-            testDaycare.id,
+            daycare.id,
             employee.id,
             UnitAclController.AclUpdate(
-                groupIds = listOf(testDaycareGroup.id, group2.id),
+                role = UserRole.STAFF,
+                groupIds = listOf(daycareGroup.id, group2.id),
                 hasStaffOccupancyEffect = null,
                 endDate = null,
             ),
@@ -607,7 +601,7 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
         assertThat(step1Acls)
             .containsExactlyInAnyOrder(
                 DaycareGroupAcl(
-                    daycareGroupId = testDaycareGroup.id,
+                    daycareGroupId = daycareGroup.id,
                     employeeId = employee.id,
                     created = moment1,
                     updated = moment1,
@@ -623,13 +617,14 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
         // add access to one group in daycare 2
         // daycare 1 still has two groups
         val moment2 = clock.now().plusMinutes(1)
-        unitAclController.updateGroupAclWithOccupancyCoefficient(
+        unitAclController.updateGroupAcl(
             dbInstance(),
             admin,
             MockEvakaClock(moment2),
-            testDaycare2.id,
+            daycare2.id,
             employee.id,
             UnitAclController.AclUpdate(
+                role = UserRole.STAFF,
                 groupIds = listOf(unit2Group.id),
                 hasStaffOccupancyEffect = null,
                 endDate = null,
@@ -640,7 +635,7 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
         assertThat(step2Acls)
             .containsExactlyInAnyOrder(
                 DaycareGroupAcl(
-                    daycareGroupId = testDaycareGroup.id,
+                    daycareGroupId = daycareGroup.id,
                     employeeId = employee.id,
                     created = moment1,
                     updated = moment1,
@@ -662,14 +657,15 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
         // remove access to group 2 in daycare 1
         // daycare 2 still has one group
         val moment3 = clock.now().plusMinutes(2)
-        unitAclController.updateGroupAclWithOccupancyCoefficient(
+        unitAclController.updateGroupAcl(
             dbInstance(),
             admin,
             MockEvakaClock(moment3),
-            testDaycare.id,
+            daycare.id,
             employee.id,
             UnitAclController.AclUpdate(
-                groupIds = listOf(testDaycareGroup.id),
+                role = UserRole.STAFF,
+                groupIds = listOf(daycareGroup.id),
                 hasStaffOccupancyEffect = null,
                 endDate = null,
             ),
@@ -679,7 +675,7 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
         assertThat(step3Acls)
             .containsExactlyInAnyOrder(
                 DaycareGroupAcl(
-                    daycareGroupId = testDaycareGroup.id,
+                    daycareGroupId = daycareGroup.id,
                     employeeId = employee.id,
                     created = moment1,
                     updated = moment1,
@@ -699,12 +695,12 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
             MockEvakaClock(HelsinkiDateTime.of(LocalDate.of(2023, 3, 29), LocalTime.of(8, 37)))
         insertEmployee(
             UnitAclController.AclUpdate(
+                role = UserRole.STAFF,
                 groupIds = null,
                 hasStaffOccupancyEffect = null,
                 endDate = null,
             ),
-            UserRole.STAFF,
-            testDaycare.id,
+            daycare.id,
             employee.id,
         )
 
@@ -713,7 +709,7 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
                 dbInstance(),
                 admin,
                 clock,
-                testDaycare.id,
+                daycare.id,
                 employee.id,
             )
         }
@@ -722,7 +718,7 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
                 dbInstance(),
                 admin,
                 clock,
-                testDaycare.id,
+                daycare.id,
                 employee.id,
                 TemporaryEmployee(
                     firstName = "Etu1",
@@ -738,7 +734,7 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
                 dbInstance(),
                 admin,
                 clock,
-                testDaycare.id,
+                daycare.id,
                 employee.id,
             )
         }
@@ -747,14 +743,146 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
                 dbInstance(),
                 admin,
                 clock,
-                testDaycare.id,
+                daycare.id,
                 employee.id,
             )
         }
     }
 
+    @Test
+    fun `unit supervisor can update staff end date but not supervisor end date`() {
+        val supervisor = DevEmployee()
+        val staffMember = DevEmployee()
+        val anotherSupervisor = DevEmployee()
+        db.transaction { tx ->
+            tx.insert(supervisor, unitRoles = mapOf(daycare.id to UserRole.UNIT_SUPERVISOR))
+            tx.insert(staffMember, unitRoles = mapOf(daycare.id to UserRole.STAFF))
+            tx.insert(anotherSupervisor, unitRoles = mapOf(daycare.id to UserRole.UNIT_SUPERVISOR))
+        }
+
+        val supervisorUser = AuthenticatedUser.Employee(supervisor.id, roles = emptySet())
+
+        val endDate = clock.today().plusDays(30)
+
+        // Supervisor can update staff end date
+        unitAclController.updateGroupAcl(
+            dbInstance(),
+            supervisorUser,
+            clock,
+            daycare.id,
+            staffMember.id,
+            UnitAclController.AclUpdate(
+                role = UserRole.STAFF,
+                groupIds = emptyList(),
+                hasStaffOccupancyEffect = null,
+                endDate = endDate,
+            ),
+        )
+        val staffAcl =
+            db.read { tx -> tx.getDaycareAclRows(daycare.id, false, false, UserRole.STAFF) }
+        assertEquals(endDate, staffAcl.first().endDate)
+
+        // Supervisor can edit another supervisor's groups without changing end date
+        unitAclController.updateGroupAcl(
+            dbInstance(),
+            supervisorUser,
+            clock,
+            daycare.id,
+            anotherSupervisor.id,
+            UnitAclController.AclUpdate(
+                role = UserRole.UNIT_SUPERVISOR,
+                groupIds = listOf(daycareGroup.id),
+                hasStaffOccupancyEffect = null,
+                endDate = null,
+            ),
+        )
+
+        // Supervisor cannot update another supervisor's end date
+        assertThrows<Forbidden> {
+            unitAclController.updateGroupAcl(
+                dbInstance(),
+                supervisorUser,
+                clock,
+                daycare.id,
+                anotherSupervisor.id,
+                UnitAclController.AclUpdate(
+                    role = UserRole.UNIT_SUPERVISOR,
+                    groupIds = emptyList(),
+                    hasStaffOccupancyEffect = null,
+                    endDate = endDate,
+                ),
+            )
+        }
+
+        // Supervisor cannot delete another supervisor
+        assertThrows<Forbidden> {
+            unitAclController.deleteUnitSupervisor(
+                dbInstance(),
+                supervisorUser,
+                clock,
+                daycare.id,
+                anotherSupervisor.id,
+            )
+        }
+
+        // Supervisor cannot bypass permission check by passing wrong role
+        assertThrows<BadRequest> {
+            unitAclController.updateGroupAcl(
+                dbInstance(),
+                supervisorUser,
+                clock,
+                daycare.id,
+                anotherSupervisor.id,
+                UnitAclController.AclUpdate(
+                    role = UserRole.STAFF,
+                    groupIds = emptyList(),
+                    hasStaffOccupancyEffect = null,
+                    endDate = endDate,
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun `user cannot modify own end date`() {
+        val supervisor = DevEmployee()
+        db.transaction { tx ->
+            tx.insert(supervisor, unitRoles = mapOf(daycare.id to UserRole.UNIT_SUPERVISOR))
+        }
+
+        val supervisorUser = AuthenticatedUser.Employee(supervisor.id, roles = emptySet())
+
+        // Cannot update own end date
+        assertThrows<Forbidden> {
+            unitAclController.updateGroupAcl(
+                dbInstance(),
+                supervisorUser,
+                clock,
+                daycare.id,
+                supervisor.id,
+                UnitAclController.AclUpdate(
+                    role = UserRole.UNIT_SUPERVISOR,
+                    groupIds = emptyList(),
+                    hasStaffOccupancyEffect = null,
+                    endDate = clock.today().plusDays(30),
+                ),
+            )
+        }
+
+        // Cannot delete own ACL
+        assertThrows<Forbidden> {
+            unitAclController.deleteUnitSupervisor(
+                dbInstance(),
+                supervisorUser,
+                clock,
+                daycare.id,
+                supervisor.id,
+            )
+        }
+    }
+
     private fun getAclRows(): List<DaycareAclRow> =
-        unitAclController.getDaycareAcl(dbInstance(), admin, clock, testDaycare.id)
+        unitAclController.getDaycareAcl(dbInstance(), admin, clock, daycare.id)
 
     private fun getTemporaryEmployees(unitId: DaycareId) =
         unitAclController.getTemporaryEmployees(dbInstance(), admin, clock, unitId)
@@ -773,7 +901,6 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
 
     private fun insertEmployee(
         update: UnitAclController.AclUpdate,
-        role: UserRole,
         daycareId: DaycareId,
         employeeId: EmployeeId,
     ) =
@@ -783,25 +910,18 @@ class UnitAclControllerIntegrationTest : FullApplicationTest(resetDbBeforeEach =
             clock,
             daycareId,
             employeeId,
-            UnitAclController.FullAclInfo(role, update),
+            update,
         )
 
     private fun modifyEmployee(
         update: UnitAclController.AclUpdate,
         daycareId: DaycareId,
         employeeId: EmployeeId,
-    ) =
-        unitAclController.updateGroupAclWithOccupancyCoefficient(
-            dbInstance(),
-            admin,
-            clock,
-            daycareId,
-            employeeId,
-            update,
-        )
+        user: AuthenticatedUser.Employee = admin,
+    ) = unitAclController.updateGroupAcl(dbInstance(), user, clock, daycareId, employeeId, update)
 
     private fun deleteStaff() =
-        unitAclController.deleteStaff(dbInstance(), admin, clock, testDaycare.id, employee.id)
+        unitAclController.deleteStaff(dbInstance(), admin, clock, daycare.id, employee.id)
 
     private enum class MessageAccountState {
         NO_ACCOUNT,

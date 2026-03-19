@@ -20,7 +20,6 @@ import fi.espoo.evaka.invoicing.domain.IncomeEffect
 import fi.espoo.evaka.serviceneed.ShiftCareType
 import fi.espoo.evaka.serviceneed.insertServiceNeed
 import fi.espoo.evaka.shared.ChildId
-import fi.espoo.evaka.shared.DaycareId
 import fi.espoo.evaka.shared.IncomeStatementId
 import fi.espoo.evaka.shared.PartnershipId
 import fi.espoo.evaka.shared.PersonId
@@ -76,26 +75,24 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
             restrictedDetailsEnabled = false,
         )
 
-    private val fridgeHeadOfChildEmail = "fridge_hoc@example.com"
-    private lateinit var fridgeHeadOfChildId: PersonId
-    private lateinit var childId: ChildId
-    private lateinit var daycareId: DaycareId
+    private val fridgeHeadOfChild = DevPerson(email = "fridge_hoc@example.com")
+    private val area = DevCareArea()
+    private val daycare = DevDaycare(areaId = area.id)
 
     @BeforeEach
     fun beforeEach() {
         db.transaction { tx ->
-            fridgeHeadOfChildId =
-                tx.insert(DevPerson(email = fridgeHeadOfChildEmail), DevPersonType.ADULT)
-            val areaId = tx.insert(DevCareArea())
-            daycareId = tx.insert(DevDaycare(areaId = areaId))
-            childId = tx.insert(testChild, DevPersonType.CHILD)
+            tx.insert(fridgeHeadOfChild, DevPersonType.ADULT)
+            tx.insert(area)
+            tx.insert(daycare)
+            tx.insert(testChild, DevPersonType.CHILD)
             val placementStart = clock.today().minusMonths(2)
             val placementEnd = clock.today().plusMonths(2)
 
             tx.insert(
                 DevFridgeChild(
-                    childId = childId,
-                    headOfChild = fridgeHeadOfChildId,
+                    childId = testChild.id,
+                    headOfChild = fridgeHeadOfChild.id,
                     startDate = placementStart,
                     endDate = placementEnd,
                 )
@@ -104,8 +101,8 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
             val placementId =
                 tx.insert(
                     DevPlacement(
-                        childId = childId,
-                        unitId = daycareId,
+                        childId = testChild.id,
+                        unitId = daycare.id,
                         startDate = placementStart,
                         endDate = placementEnd,
                     )
@@ -131,7 +128,7 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
             // afterwards
             it.insert(
                 DevIncome(
-                    personId = fridgeHeadOfChildId,
+                    personId = fridgeHeadOfChild.id,
                     modifiedBy = AuthenticatedUser.SystemInternalUser.evakaUserId,
                     validFrom = clock.today().minusMonths(1),
                     validTo = clock.today(),
@@ -140,7 +137,7 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
 
             it.insert(
                 DevIncome(
-                    personId = fridgeHeadOfChildId,
+                    personId = fridgeHeadOfChild.id,
                     modifiedBy = AuthenticatedUser.SystemInternalUser.evakaUserId,
                     validFrom = clock.today().plusDays(1),
                     validTo = clock.today().plusMonths(6),
@@ -156,7 +153,7 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
         db.transaction {
             it.insert(
                 DevIncome(
-                    personId = fridgeHeadOfChildId,
+                    personId = fridgeHeadOfChild.id,
                     modifiedBy = AuthenticatedUser.SystemInternalUser.evakaUserId,
                     validFrom = clock.today().minusMonths(1),
                     validTo = clock.today().plusWeeks(4),
@@ -165,10 +162,10 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
         }
 
         assertEquals(1, getEmails().size)
-        assertEquals(1, getIncomeNotifications(fridgeHeadOfChildId).size)
+        assertEquals(1, getIncomeNotifications(fridgeHeadOfChild.id).size)
         assertEquals(
             IncomeNotificationType.INITIAL_EMAIL,
-            getIncomeNotifications(fridgeHeadOfChildId)[0].notificationType,
+            getIncomeNotifications(fridgeHeadOfChild.id)[0].notificationType,
         )
     }
 
@@ -180,14 +177,14 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
                     """
                     UPDATE daycare
                     SET provider_type = 'MUNICIPAL', invoiced_by_municipality = false
-                    WHERE id = ${bind(daycareId)}
+                    WHERE id = ${bind(daycare.id)}
                     """
                 )
             }
 
             it.insert(
                 DevIncome(
-                    personId = fridgeHeadOfChildId,
+                    personId = fridgeHeadOfChild.id,
                     modifiedBy = AuthenticatedUser.SystemInternalUser.evakaUserId,
                     validFrom = clock.today().minusMonths(1),
                     validTo = clock.today().plusWeeks(4),
@@ -196,7 +193,7 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
         }
 
         assertEquals(0, getEmails().size)
-        assertEquals(0, getIncomeNotifications(fridgeHeadOfChildId).size)
+        assertEquals(0, getIncomeNotifications(fridgeHeadOfChild.id).size)
     }
 
     @Test
@@ -207,14 +204,14 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
                     """
                     UPDATE daycare
                     SET provider_type = 'PRIVATE_SERVICE_VOUCHER', invoiced_by_municipality = false
-                    WHERE id = ${bind(daycareId)}
+                    WHERE id = ${bind(daycare.id)}
                     """
                 )
             }
 
             it.insert(
                 DevIncome(
-                    personId = fridgeHeadOfChildId,
+                    personId = fridgeHeadOfChild.id,
                     modifiedBy = AuthenticatedUser.SystemInternalUser.evakaUserId,
                     validFrom = clock.today().minusMonths(1),
                     validTo = clock.today().plusWeeks(4),
@@ -223,7 +220,7 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
         }
 
         assertEquals(1, getEmails().size)
-        assertEquals(1, getIncomeNotifications(fridgeHeadOfChildId).size)
+        assertEquals(1, getIncomeNotifications(fridgeHeadOfChild.id).size)
     }
 
     @Test
@@ -248,7 +245,7 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
                     partnershipId,
                     1,
                     2,
-                    fridgeHeadOfChildId,
+                    fridgeHeadOfChild.id,
                     clock.today(),
                     clock.today(),
                     clock.now(),
@@ -268,7 +265,7 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
         }
 
         assertEquals(1, getEmails().size)
-        assertEquals(0, getIncomeNotifications(fridgeHeadOfChildId).size)
+        assertEquals(0, getIncomeNotifications(fridgeHeadOfChild.id).size)
         assertEquals(1, getIncomeNotifications(fridgePartner.id).size)
         assertEquals(
             IncomeNotificationType.INITIAL_EMAIL,
@@ -297,7 +294,7 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
                     partnershipId,
                     1,
                     2,
-                    fridgeHeadOfChildId,
+                    fridgeHeadOfChild.id,
                     clock.today(),
                     clock.today(),
                     clock.now(),
@@ -317,7 +314,7 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
         }
 
         assertEquals(1, getEmails().size)
-        assertEquals(0, getIncomeNotifications(fridgeHeadOfChildId).size)
+        assertEquals(0, getIncomeNotifications(fridgeHeadOfChild.id).size)
         assertEquals(1, getIncomeNotifications(fridgePartner.id).size)
         assertEquals(
             IncomeNotificationType.INITIAL_EMAIL,
@@ -330,7 +327,7 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
         db.transaction {
             it.insert(
                 DevIncome(
-                    personId = fridgeHeadOfChildId,
+                    personId = fridgeHeadOfChild.id,
                     modifiedBy = AuthenticatedUser.SystemInternalUser.evakaUserId,
                     validFrom = clock.today().minusMonths(1),
                     validTo = clock.today().minusDays(2),
@@ -348,7 +345,7 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
         db.transaction {
             it.insert(
                 DevIncome(
-                    personId = fridgeHeadOfChildId,
+                    personId = fridgeHeadOfChild.id,
                     modifiedBy = AuthenticatedUser.SystemInternalUser.evakaUserId,
                     validFrom = incomeExpirationDate.minusMonths(1),
                     validTo = incomeExpirationDate,
@@ -357,9 +354,36 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
 
             it.insert(
                 DevIncomeStatement(
-                    personId = fridgeHeadOfChildId,
+                    personId = fridgeHeadOfChild.id,
                     data = createGrossIncome(incomeExpirationDate.plusDays(1)),
                     status = IncomeStatementStatus.SENT,
+                    handlerId = null,
+                )
+            )
+        }
+
+        assertEquals(0, getEmails().size)
+    }
+
+    @Test
+    fun `expiring income is not notified if there is a new income statement being handled reaching after expiration`() {
+        val incomeExpirationDate = clock.today().plusWeeks(4)
+
+        db.transaction {
+            it.insert(
+                DevIncome(
+                    personId = fridgeHeadOfChild.id,
+                    modifiedBy = AuthenticatedUser.SystemInternalUser.evakaUserId,
+                    validFrom = incomeExpirationDate.minusMonths(1),
+                    validTo = incomeExpirationDate,
+                )
+            )
+
+            it.insert(
+                DevIncomeStatement(
+                    personId = fridgeHeadOfChild.id,
+                    data = createGrossIncome(incomeExpirationDate.plusDays(1)),
+                    status = IncomeStatementStatus.HANDLING,
                     handlerId = null,
                 )
             )
@@ -378,7 +402,7 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
 
             it.insert(
                 DevIncome(
-                    personId = fridgeHeadOfChildId,
+                    personId = fridgeHeadOfChild.id,
                     modifiedBy = AuthenticatedUser.SystemInternalUser.evakaUserId,
                     validFrom = incomeExpirationDate.minusMonths(1),
                     validTo = incomeExpirationDate,
@@ -388,7 +412,7 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
             it.insert(
                 DevIncomeStatement(
                     id = IncomeStatementId(UUID.randomUUID()),
-                    personId = fridgeHeadOfChildId,
+                    personId = fridgeHeadOfChild.id,
                     data = createGrossIncome(incomeExpirationDate.plusDays(1)),
                     status = IncomeStatementStatus.HANDLED,
                     handlerId = employee.id,
@@ -407,7 +431,7 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
         db.transaction {
             it.insert(
                 DevIncome(
-                    personId = fridgeHeadOfChildId,
+                    personId = fridgeHeadOfChild.id,
                     modifiedBy = AuthenticatedUser.SystemInternalUser.evakaUserId,
                     validFrom = incomeExpirationDate.minusMonths(1),
                     validTo = incomeExpirationDate,
@@ -417,7 +441,7 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
             it.insert(
                 DevIncomeStatement(
                     id = IncomeStatementId(UUID.randomUUID()),
-                    personId = fridgeHeadOfChildId,
+                    personId = fridgeHeadOfChild.id,
                     data = createGrossIncome(incomeExpirationDate.plusDays(1)),
                     status = IncomeStatementStatus.SENT,
                 )
@@ -433,7 +457,7 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
         db.transaction {
             it.insert(
                 DevIncome(
-                    personId = fridgeHeadOfChildId,
+                    personId = fridgeHeadOfChild.id,
                     modifiedBy = AuthenticatedUser.SystemInternalUser.evakaUserId,
                     validFrom = clock.today().minusMonths(1),
                     validTo = expirationDate,
@@ -445,7 +469,7 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
             // so no notification should be sent
             it.execute {
                 sql(
-                    "UPDATE placement SET end_date = ${bind(expirationDate)} WHERE child_id = ${bind(childId)}"
+                    "UPDATE placement SET end_date = ${bind(expirationDate)} WHERE child_id = ${bind(testChild.id)}"
                 )
             }
         }
@@ -457,7 +481,7 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
         db.transaction {
             it.execute {
                 sql(
-                    "UPDATE placement SET end_date = ${bind(expirationDate)} + INTERVAL '1 day' WHERE child_id = ${bind(childId)}"
+                    "UPDATE placement SET end_date = ${bind(expirationDate)} + INTERVAL '1 day' WHERE child_id = ${bind(testChild.id)}"
                 )
             }
         }
@@ -470,7 +494,7 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
         db.transaction {
             it.insert(
                 DevIncome(
-                    personId = fridgeHeadOfChildId,
+                    personId = fridgeHeadOfChild.id,
                     modifiedBy = AuthenticatedUser.SystemInternalUser.evakaUserId,
                     validFrom = clock.today().minusMonths(1),
                     validTo = clock.today().plusDays(13),
@@ -492,7 +516,7 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
         db.transaction {
             it.insert(
                 DevIncome(
-                    personId = fridgeHeadOfChildId,
+                    personId = fridgeHeadOfChild.id,
                     modifiedBy = AuthenticatedUser.SystemInternalUser.evakaUserId,
                     validFrom = clock.today().minusMonths(1),
                     validTo = clock.today().plusWeeks(4),
@@ -518,7 +542,7 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
                     it.getIncomesForPerson(
                         incomeTypesProvider,
                         coefficientMultiplierProvider,
-                        fridgeHeadOfChildId,
+                        fridgeHeadOfChild.id,
                     )
                 }
                 .size,
@@ -532,7 +556,7 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
         db.transaction {
             it.insert(
                 DevIncome(
-                    personId = fridgeHeadOfChildId,
+                    personId = fridgeHeadOfChild.id,
                     modifiedBy = AuthenticatedUser.SystemInternalUser.evakaUserId,
                     validFrom = clock.today().minusMonths(1),
                     validTo = clock.today().plusDays(6),
@@ -565,7 +589,7 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
                     it.getIncomesForPerson(
                         incomeTypesProvider,
                         coefficientMultiplierProvider,
-                        fridgeHeadOfChildId,
+                        fridgeHeadOfChild.id,
                     )
                 }
                 .size,
@@ -578,7 +602,7 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
         db.transaction {
             it.insert(
                 DevIncome(
-                    personId = fridgeHeadOfChildId,
+                    personId = fridgeHeadOfChild.id,
                     modifiedBy = AuthenticatedUser.SystemInternalUser.evakaUserId,
                     validFrom = expirationDay.minusMonths(1),
                     validTo = expirationDay,
@@ -587,11 +611,11 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
             )
 
             it.createIncomeNotification(
-                receiverId = fridgeHeadOfChildId,
+                receiverId = fridgeHeadOfChild.id,
                 IncomeNotificationType.INITIAL_EMAIL,
             )
             it.createIncomeNotification(
-                receiverId = fridgeHeadOfChildId,
+                receiverId = fridgeHeadOfChild.id,
                 IncomeNotificationType.REMINDER_EMAIL,
             )
 
@@ -642,7 +666,7 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
                 it.getIncomesForPerson(
                     incomeTypesProvider,
                     coefficientMultiplierProvider,
-                    fridgeHeadOfChildId,
+                    fridgeHeadOfChild.id,
                 )
             }
         assertEquals(2, incomes.size)
@@ -651,7 +675,7 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
         assertEquals(firstDayAfterExpiration, incomes[0].validFrom)
 
         val feeFecisions =
-            db.read { it.findFeeDecisionsForHeadOfFamily(fridgeHeadOfChildId, null, null) }
+            db.read { it.findFeeDecisionsForHeadOfFamily(fridgeHeadOfChild.id, null, null) }
         assertEquals(
             1,
             feeFecisions
@@ -681,14 +705,14 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
                 )
 
             tx.insert(testChild2, DevPersonType.CHILD)
-            tx.insert(DevGuardian(guardianId = fridgeHeadOfChildId, childId = testChild2.id))
+            tx.insert(DevGuardian(guardianId = fridgeHeadOfChild.id, childId = testChild2.id))
             val placementStart = clock.today().minusMonths(2)
             val placementEnd = clock.today().plusMonths(2)
             val placementId =
                 tx.insert(
                     DevPlacement(
                         childId = testChild2.id,
-                        unitId = daycareId,
+                        unitId = daycare.id,
                         startDate = placementStart,
                         endDate = placementEnd,
                     )
@@ -706,7 +730,7 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
 
             tx.insert(
                 DevIncome(
-                    personId = fridgeHeadOfChildId,
+                    personId = fridgeHeadOfChild.id,
                     modifiedBy = AuthenticatedUser.SystemInternalUser.evakaUserId,
                     validFrom = clock.today().minusMonths(1),
                     validTo = clock.today().plusWeeks(4),
@@ -715,10 +739,10 @@ class OutdatedIncomeNotificationsIntegrationTest : FullApplicationTest(resetDbBe
         }
 
         assertEquals(1, getEmails().size)
-        assertEquals(1, getIncomeNotifications(fridgeHeadOfChildId).size)
+        assertEquals(1, getIncomeNotifications(fridgeHeadOfChild.id).size)
         assertEquals(
             IncomeNotificationType.INITIAL_EMAIL,
-            getIncomeNotifications(fridgeHeadOfChildId)[0].notificationType,
+            getIncomeNotifications(fridgeHeadOfChild.id)[0].notificationType,
         )
     }
 

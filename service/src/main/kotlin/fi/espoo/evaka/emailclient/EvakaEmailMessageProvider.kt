@@ -122,7 +122,7 @@ $unsubscribeEn
 <p>Om du valde att ansökan är brådskande, ska du bifoga ansökan <strong>ett intyg över att du plötsligt fått ett nytt jobb eller en ny studieplats.</strong> Ansökningstiden är då <strong>minst 2 veckor</strong> och börjar den dag då intyget inkom.</p>
 <p>När du ansöker om <strong>vård dygnet runt eller kvällstid</strong>, ska du lämna in arbetsgivarens intyg över skiftarbete eller läroanstaltens intyg över kvällsstudier för båda vårdnadshavarna som bor i samma hushåll. <strong>Ansökan behandlas som ansökan om skiftvård först när de ovannämnda intygen har lämnats in.</strong></p>
 <p>När du ansöker om <strong>byte</strong> till en annan <strong>kommunal enhet för småbarnspedagogik</strong> har ansökan ingen ansökningstid. Ansökan gäller ett år från den dag då ansökan inkom. Om du säger upp barnets nuvarande plats, faller också ansökan om byte bort.</p>
-<p>Ansökan om servicesedel: <a href="https://www.espoo.fi/sv/fostran-och-utbildning/smabarnspedagogik/servicesedel-smabarnspedagogik">espoo.fi/sv/fostran-och-utbildning/smabarnspedagogik/servicesedel-smabarnspedagogik</a></p>
+<p>Ansökan om servicesedel: <a href="https://www.espoo.fi/sv/fostran-och-utbildning/smabarnspedagogik/ansokan-till-privat-smabarnspedagogik#section-55369">espoo.fi/sv/fostran-och-utbildning/smabarnspedagogik/ansokan-till-privat-smabarnspedagogik#section-55369</a></p>
 <p>Ansökan till privata enheter för småbarnspedagogik: <a href="https://www.espoo.fi/sv/fostran-och-utbildning/smabarnspedagogik/produktion-av-privat-smabarnspedagogik">www.espoo.fi/sv/fostran-och-utbildning/smabarnspedagogik/produktion-av-privat-smabarnspedagogik</a></p>
 <p>Bilagorna till ansökan skickas antingen per post till adressen Esbo stad, Småbarnspedagogikens servicehandledning, PB 3125, 02070 Esbo stad eller som e-postbilaga till <a href="mailto:dagis@esbo.fi">dagis@esbo.fi</a> (observera att förbindelsen inte är krypterad).</p>
 <p>Du kan göra ändringar i ansökan så länge den inte har tagits upp till behandling. Därefter kan du göra ändringar i ansökan genom att kontakta småbarnspedagogikens servicehandledning (tfn 09 816 27600). Du kan återta en ansökan som du redan lämnat in genom att meddela detta per e-post till småbarnspedagogikens servicehandledning <a href="mailto:dagis@esbo.fi">dagis@esbo.fi</a></p>
@@ -552,7 +552,13 @@ $unsubscribeEn
                     if (event.period.end != event.period.start) {
                         period += "-${event.period.end.format(format)}"
                     }
-                    "<li>$period: ${event.title}</li>"
+                    val groupInfo =
+                        if (event.groupNames.isNotEmpty()) {
+                            " (${event.groupNames.joinToString(", ")})"
+                        } else {
+                            ""
+                        }
+                    "<li>$period: ${event.title}$groupInfo</li>"
                 } +
                 "</ul>"
         return EmailContent.fromHtml(

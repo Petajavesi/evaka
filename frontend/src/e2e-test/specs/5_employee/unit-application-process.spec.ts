@@ -36,10 +36,10 @@ import CitizenDecisionsPage from '../../pages/citizen/citizen-decisions'
 import CitizenHeader from '../../pages/citizen/citizen-header'
 import type { ApplicationProcessPage } from '../../pages/employee/units/unit'
 import { UnitPage } from '../../pages/employee/units/unit'
-import { Page } from '../../utils/page'
+import { test } from '../../playwright'
+import type { Page } from '../../utils/page'
 import { employeeLogin, enduserLogin } from '../../utils/user'
 
-let page: Page
 let unitPage: UnitPage
 const groupId = randomId<GroupId>()
 let child1Fixture: DevPerson
@@ -52,7 +52,7 @@ let unitSupervisor: DevEmployee
 const placementStartDate = LocalDate.todayInSystemTz().subWeeks(4)
 const placementEndDate = LocalDate.todayInSystemTz().addWeeks(4)
 
-beforeEach(async () => {
+test.beforeEach(async () => {
   await resetServiceState()
 
   await testCareArea.save()
@@ -95,20 +95,22 @@ beforeEach(async () => {
   }).save()
 })
 
-const loadUnitApplicationProcessPage =
-  async (): Promise<ApplicationProcessPage> => {
-    unitPage = new UnitPage(page)
-    await unitPage.navigateToUnit(daycare.id)
-    const ApplicationProcessPage = await unitPage.openApplicationProcessTab()
-    await ApplicationProcessPage.waitUntilVisible()
-    return ApplicationProcessPage
-  }
+test.describe('Unit groups - placement plans / proposals', () => {
+  let page: Page
 
-describe('Unit groups - placement plans / proposals', () => {
-  beforeEach(async () => {
-    page = await Page.open()
+  test.beforeEach(async ({ evaka }) => {
+    page = evaka
     await employeeLogin(page, unitSupervisor)
   })
+
+  const loadUnitApplicationProcessPage =
+    async (): Promise<ApplicationProcessPage> => {
+      unitPage = new UnitPage(page)
+      await unitPage.navigateToUnit(daycare.id)
+      const ApplicationProcessPage = await unitPage.openApplicationProcessTab()
+      await ApplicationProcessPage.waitUntilVisible()
+      return ApplicationProcessPage
+    }
 
   test('Placement plan is shown', async () => {
     const today = LocalDate.todayInSystemTz()
@@ -165,7 +167,9 @@ describe('Unit groups - placement plans / proposals', () => {
     )
   })
 
-  test('Application is shown in the unit page until guardian handles both decisions', async () => {
+  test('Application is shown in the unit page until guardian handles both decisions', async ({
+    newEvakaPage
+  }) => {
     const today = LocalDate.todayInSystemTz()
     const mockChild = Fixture.person({ ssn: '010116A9219' })
     const mockAdult = Fixture.person({ ssn: '010106A973C' })
@@ -252,19 +256,20 @@ describe('Unit groups - placement plans / proposals', () => {
     await page.close()
 
     // Guardian accepts the first decision
-    page = await Page.open()
+    page = await newEvakaPage()
     await enduserLogin(page, mockAdult)
     let header = new CitizenHeader(page)
     await header.selectTab('decisions')
     let citizenDecisionsPage = new CitizenDecisionsPage(page)
     let responsePage = await citizenDecisionsPage.navigateToDecisionResponse(
-      testApplication.id
+      testApplication.id,
+      2
     )
     await responsePage.acceptDecision(decision1.id)
     await page.close()
 
     // Unit supervisor checks that the application is still shown
-    page = await Page.open()
+    page = await newEvakaPage()
     await employeeLogin(page, mockUnitSupervisor)
     unitPage = new UnitPage(page)
     await unitPage.navigateToUnit(testDaycare.id)
@@ -273,19 +278,20 @@ describe('Unit groups - placement plans / proposals', () => {
     await page.close()
 
     // Guardian accepts the second decision
-    page = await Page.open()
+    page = await newEvakaPage()
     await enduserLogin(page, mockAdult)
     header = new CitizenHeader(page)
     await header.selectTab('decisions')
     citizenDecisionsPage = new CitizenDecisionsPage(page)
     responsePage = await citizenDecisionsPage.navigateToDecisionResponse(
-      testApplication.id
+      testApplication.id,
+      1
     )
     await responsePage.acceptDecision(decision2.id)
     await page.close()
 
     // Unit supervisor checks that the application is no longer shown
-    page = await Page.open()
+    page = await newEvakaPage()
     await employeeLogin(page, mockUnitSupervisor)
     unitPage = new UnitPage(page)
     await unitPage.navigateToUnit(testDaycare.id)

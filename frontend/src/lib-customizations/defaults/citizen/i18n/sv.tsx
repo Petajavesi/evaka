@@ -89,7 +89,9 @@ const sv: Translations = {
     openExpandingInfo: 'Öppna detaljer',
     errors: {
       genericGetError: 'Hämtning av information misslyckades',
-      http403Error: 'Ingen tillgång till informationen'
+      http403Error: 'Ingen tillgång till informationen',
+      endpointDisabled:
+        'eVaka genomgår för närvarande ett partiellt underhållsavbrott. Vissa funktioner är inte tillgängliga just nu. Försök igen om en stund.'
     },
     today: 'Idag',
     datetime: {
@@ -773,7 +775,7 @@ const sv: Translations = {
                 </a>
                 .
               </P>
-              <P fitted={true}>
+              <P $fitted={true}>
                 * Informationen markerad med en stjärna är obligatorisk
               </P>
             </>
@@ -806,7 +808,9 @@ const sv: Translations = {
                 </a>
                 -meddelanden.
               </P>
-              <P fitted={true}>* Informationen markerad med en stjärna krävs</P>
+              <P $fitted={true}>
+                * Informationen markerad med en stjärna krävs
+              </P>
             </>
           ),
           CLUB: (
@@ -833,7 +837,7 @@ const sv: Translations = {
                 för att beviljas förskoleundervisning eller privat vårdbidrag
                 kan han inte beviljas klubbplats.
               </P>
-              <P fitted={true}>
+              <P $fitted={true}>
                 * Informationen markerad med en stjärna krävs.
               </P>
             </>
@@ -1101,7 +1105,7 @@ const sv: Translations = {
           label: 'Ansökningen är brådskande (gäller inte ansökan om byte)',
           attachmentsMessage: {
             text: (
-              <P fitted={true}>
+              <P $fitted={true}>
                 Om behovet av en plats inom småbarnspedagogiken beror på att du
                 plötsligt fått sysselsättning eller börjat studera, ska platsen
                 sökas senast <strong>två veckor innan</strong> behovet börjar.
@@ -1637,21 +1641,15 @@ const sv: Translations = {
   },
   decisions: {
     title: 'Beslut',
-    childhoodEducationTitle:
-      'Beslut gällande barnets ansökan till småbarnspedagogik, förskola och klubbverksamhet',
-    summary: (
-      <P width="800px">
-        Till denna sidan kommer beslut gällande betalningar, barnets ansökan
-        till småbarnspedagogik, förskola och klubbverksamhet.
-        <br aria-hidden="true" />
-        <br aria-hidden="true" />
-        Om beslutet gäller en ny sökt plats för barnet ska du svara inom två
-        veckor om du tar emot eller inte tar emot platsen.
-      </P>
-    ),
-    unconfirmedDecisions: (n: number) => `${n} beslut inväntar bekräftelse`,
+    summary:
+      'På denna sida hittar du beslut som gäller småbarnspedagogik, förskoleundervisning och klubbar samt beslut som gäller avgifter.',
+    unconfirmedDecisions: (n: number) => {
+      if (n === 0) {
+        return 'Beslut'
+      }
+      return `${n} beslut väntar på bekräftelse från vårdnadshavaren`
+    },
     noUnconfirmedDecisions: 'alla beslut bekräftade',
-    unreadDecision: 'oläst beslut',
     pageLoadError: 'Hämtning av information misslyckades',
     financeDecisions: {
       type: {
@@ -1668,45 +1666,42 @@ const sv: Translations = {
     applicationDecisions: {
       decision: 'Beslut',
       type: {
-        CLUB: 'klubbverksamhet',
-        DAYCARE: 'småbarnspedagogik',
-        DAYCARE_PART_TIME: 'deldag småbarnspedagogik',
-        PRESCHOOL: 'förskola',
-        PRESCHOOL_DAYCARE: 'kompletterande småbarnspedagogik',
-        PRESCHOOL_CLUB: 'esiopetuksen kerhosta (sv)',
-        PREPARATORY_EDUCATION: 'förberedande undervisning'
+        CLUB: 'Klubbverksamhet',
+        DAYCARE: 'Småbarnspedagogik',
+        DAYCARE_PART_TIME: 'Deldag småbarnspedagogik',
+        PRESCHOOL: 'Förskola',
+        PRESCHOOL_DAYCARE: 'Kompletterande småbarnspedagogik',
+        PRESCHOOL_CLUB: 'Esiopetuksen kerho (sv)',
+        PREPARATORY_EDUCATION: 'Förberedande undervisning'
       },
+      data: 'Uppgifter',
       childName: 'Barnets namn',
       unit: 'Enhet',
       period: 'För tiden',
       sentDate: 'Beslutsdatum',
       resolved: 'Bekräftat',
+      confirmation: 'Bekräftelse',
       statusLabel: 'Status',
       summary:
-        'Du ska omedelbart eller senast två veckor från mottagandet av ett beslut ta emot eller avvisa platsen / platserna.',
+        'Bekräfta besluten omedelbart eller senast två veckor från mottagandet av meddelandet.',
+      allDecisionsConfirmed: 'Du har bekräftat alla beslut.',
       status: {
         PENDING: 'Bekräftas av vårdnadshavaren',
         ACCEPTED: 'Bekräftad',
         REJECTED: 'Avvisad'
       },
-      confirmationInfo: {
-        preschool:
-          'Du ska omedelbart eller senast två veckor från mottagandet av detta beslut, ta emot eller annullera platsen. Du kan ta emot eller annullera platsen elektroniskt på adressen espoonvarhaiskasvatus.fi (kräver identifiering) eller per post.',
-        default:
-          'Du ska omedelbart eller senast två veckor från mottagandet av ett beslut ta emot eller annullera platsen.'
-      },
-      goToConfirmation:
-        'Gå till beslutet för att läsa det och svara om du tar emot eller avvisar platsen.',
       confirmationLink: 'Gå vidare för att bekräfta',
+      information:
+        'Bekräfta besluten omedelbart eller senast två veckor från mottagandet av meddelandet.',
+      new: (n: number) => (n === 1 ? '1 ny' : `${n} nya`),
       response: {
-        title: 'Mottagande eller avvisande av plats',
         accept1: 'Vi tar emot platsen från och med',
         accept2: '',
         reject: 'Vi tar inte emot platsen',
-        cancel: 'Gå tillbaka utan att svara',
-        submit: 'Skicka svar på beslutet',
+        cancel: 'Gå tillbaka utan att bekräfta',
+        submit: 'Skicka bekräftelse på beslutet',
         disabledInfo:
-          'OBS! Du kan bekräfta/avvisa beslutet gällande kompletterande småbarnspedagogik, om du först bekräftar beslutet för förskola..'
+          'Bekräfta först beslutet om förskoleundervisning eller förberedande undervisning. Därefter kan du bekräfta det tillhörande beslutet om småbarnspedagogik.'
       },
       openPdf: 'Visa beslut',
       warnings: {
@@ -1859,7 +1854,7 @@ const sv: Translations = {
             Omprövning ska begäras skriftligt. Också elektroniska dokument
             uppfyller kravet på skriftlig form.
           </P>
-          <P noMargin>I omprövningsbegäran ska uppges:</P>
+          <P $noMargin>I omprövningsbegäran ska uppges:</P>
           <ul>
             <li>det beslut i vilket omprövning begärs</li>
             <li>hurdan omprövning som yrkas</li>
@@ -1881,7 +1876,7 @@ const sv: Translations = {
             omprövningsbegäran, ska även denna persons namn och hemkommun uppges
             i omprövningsbegäran.
           </P>
-          <P noMargin>Till omprövningsbegäran ska fogas:</P>
+          <P $noMargin>Till omprövningsbegäran ska fogas:</P>
           <ul>
             <li>det beslut som avses, i original eller kopia</li>
             <li>
@@ -2030,7 +2025,7 @@ const sv: Translations = {
               omprövning ännu under följande vardag.
             </P>
             <H3>Begäran om omprövning</H3>
-            <P noMargin>
+            <P $noMargin>
               Begäran om omprövning ska innehålla följande uppgifter:
             </P>
             <ul>
@@ -2045,7 +2040,7 @@ const sv: Translations = {
               </li>
               <li>På vilka grunder omprövningen begärs</li>
             </ul>
-            <P noMargin>
+            <P $noMargin>
               Till begäran om omprövning bifogas följande handlingar:
             </P>
             <ul>
@@ -2085,7 +2080,7 @@ const sv: Translations = {
   applicationsList: {
     title: 'Ansökan till småbarnspedagogik eller anmälan till förskolan',
     summary: (
-      <P width="800px">
+      <P $width="800px">
         Barnets vårdnadshavare kan anmäla barnet till förskolan eller ansöka om
         plats i småbarnspedagogisk verksamhet. Med samma ansökan kan du ansöka
         om servicesedel inom småbarnspedagogik när du ansöker om en plats i en
@@ -2122,25 +2117,25 @@ const sv: Translations = {
     cancelApplicationBtn: 'Ta bort ansökan',
     confirmationLinkInstructions:
       'Under Beslut-fliken kan du läsa besluten till dina ansökningar och ta emot/annullera platsen',
-    confirmationLink: 'Gå vidare för att svara',
+    confirmationLink: 'Bekräftelse av beslut',
     newApplicationLink: 'Ny ansökan',
     namelessChild: 'Namnlöst barn',
     noCustodians: 'Inga försörjningsskyldiga barn',
     noCustodiansInfo: (
       <>
-        <P width="100%">
+        <P $width="100%">
           Enligt uppgifter från Myndigheten för digitalisering och
           befolkningsdata har du inte vårdnad om något barn.
         </P>
-        <P width="100%">
+        <P $width="100%">
           Om du ändå har det, kan bristen bero på att myndighetens sammanför
           uppgifterna med fördröjning.
         </P>
-        <P width="100%">
+        <P $width="100%">
           Kontrollera hos myndigheten att du har gjort allt de behöver för att
           registrera vårdnaden.
         </P>
-        <P width="100%">
+        <P $width="100%">
           Du kan inte använda eVaka innan vårdnaden har uppdaterats i
           myndighetens register. Under tiden kan du till exempel ringa eller
           skicka e-post till daghemmets föreståndare.
@@ -2342,7 +2337,8 @@ const sv: Translations = {
         <P>
           Inkomstutredningen jämte dess bilagor lämnas in inom två veckor efter
           att småbarnspedagogiken startats. En bristfällig inkomstutredning kan
-          leda till den högsta avgiften.
+          leda till den högsta avgiften. Bristfälliga inkomstuppgifter
+          korrigeras inte med retroaktiv verkan efter omprövningstidens utgång.
         </P>
         <P>
           Klientavgiften tas ut från och med den dag då småbarnspedagogiken
@@ -2357,7 +2353,7 @@ const sv: Translations = {
         <P>
           <strong>Observera:</strong>
         </P>
-        <Gap size="xs" />
+        <Gap $size="xs" />
         <UnorderedList>
           <li>
             Avgiften kan justeras i mitten av verksamhetsperioden om en sådan
@@ -2446,7 +2442,7 @@ const sv: Translations = {
       title: 'Att fylla i uppgifterna om bruttoinkomster',
       description: (
         <>
-          <P noMargin>
+          <P $noMargin>
             Välj nedan om du vill skicka in dina inkomstuppgifter som bilaga,
             eller om myndigheten ska se dina uppgifter direkt i inkomstregistret
             samt hos FPA vid behov.
@@ -2713,6 +2709,7 @@ const sv: Translations = {
       statuses: {
         DRAFT: 'Utkast',
         SENT: 'Skickat',
+        HANDLING: 'Under handläggning',
         HANDLED: 'Handläggare'
       },
       actions: {

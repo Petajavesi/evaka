@@ -51,6 +51,7 @@ export interface AclUpdate {
   endDate: LocalDate | null
   groupIds: GroupId[] | null
   hasStaffOccupancyEffect: boolean | null
+  role: UserRole
 }
 
 /**
@@ -367,14 +368,6 @@ export interface FinanceDecisionHandler {
 }
 
 /**
-* Generated from fi.espoo.evaka.daycare.controllers.UnitAclController.FullAclInfo
-*/
-export interface FullAclInfo {
-  role: UserRole
-  update: AclUpdate
-}
-
-/**
 * Generated from fi.espoo.evaka.daycare.controllers.GroupOccupancies
 */
 export interface GroupOccupancies {
@@ -389,7 +382,7 @@ export interface GroupStaffAttendance {
   count: number
   date: LocalDate
   groupId: GroupId
-  updated: HelsinkiDateTime
+  updatedAt: HelsinkiDateTime
 }
 
 /**
@@ -740,14 +733,6 @@ export function deserializeJsonDaycareResponse(json: JsonOf<DaycareResponse>): D
 }
 
 
-export function deserializeJsonFullAclInfo(json: JsonOf<FullAclInfo>): FullAclInfo {
-  return {
-    ...json,
-    update: deserializeJsonAclUpdate(json.update)
-  }
-}
-
-
 export function deserializeJsonGroupOccupancies(json: JsonOf<GroupOccupancies>): GroupOccupancies {
   return {
     ...json,
@@ -765,7 +750,7 @@ export function deserializeJsonGroupStaffAttendance(json: JsonOf<GroupStaffAtten
   return {
     ...json,
     date: LocalDate.parseIso(json.date),
-    updated: HelsinkiDateTime.parseIso(json.updated)
+    updatedAt: HelsinkiDateTime.parseIso(json.updatedAt)
   }
 }
 

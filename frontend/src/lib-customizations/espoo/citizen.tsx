@@ -15,7 +15,7 @@ import featureFlags from './featureFlags'
 import mapConfig from './mapConfig'
 
 const MultiLineCheckboxLabel = styled(FixedSpaceColumn).attrs({
-  spacing: 'zero'
+  $spacing: 'zero'
 })`
   margin-top: -6px;
 `
@@ -117,7 +117,7 @@ const customizations: CitizenCustomizations = {
                       tuloselvityksen tekemisestä löydät täältä.
                     </a>
                   </P>
-                  <P fitted={true}>
+                  <P $fitted={true}>
                     * Tähdellä merkityt tiedot ovat pakollisia
                   </P>
                 </>
@@ -141,7 +141,7 @@ const customizations: CitizenCustomizations = {
                     </a>{' '}
                     -palveluun.
                   </P>
-                  <P fitted>* Tähdellä merkityt tiedot ovat pakollisia</P>
+                  <P $fitted>* Tähdellä merkityt tiedot ovat pakollisia</P>
                 </>
               )
             }
@@ -188,7 +188,7 @@ const customizations: CitizenCustomizations = {
               attachmentsMessage: {
                 text: (
                   <>
-                    <P fitted>
+                    <P $fitted>
                       Jos tarvitset varhaiskasvatuspaikkaa äkillisen
                       työllistymisen tai opiskelun vuoksi, hae paikkaa
                       viimeistään kaksi viikkoa ennen tarpeen alkamista. Liitä
@@ -359,7 +359,7 @@ const customizations: CitizenCustomizations = {
               info: {
                 DAYCARE: (
                   <>
-                    <P fitted>
+                    <P $fitted>
                       Lapsella on sisarusperuste varhaiskasvatuspaikkaan, jossa
                       hänen sisaruksensa on silloin, kun lapsen varhaiskasvatus
                       alkaa.
@@ -402,7 +402,7 @@ const customizations: CitizenCustomizations = {
               info: {
                 DAYCARE: (
                   <>
-                    <P fitted>
+                    <P $fitted>
                       Voit hakea 1-2 paikkaa toivomassasi järjestyksessä.
                       Hakutoiveet eivät takaa paikkaa toivotussa yksikössä,
                       mutta mahdollisuus toivotun paikan saamiseen kasvaa, kun
@@ -593,7 +593,7 @@ const customizations: CitizenCustomizations = {
                       upprättande av inkomstutredningen.
                     </a>
                   </P>
-                  <P fitted={true}>
+                  <P $fitted={true}>
                     * Informationen markerad med en stjärna är obligatorisk
                   </P>
                 </>
@@ -619,7 +619,7 @@ const customizations: CitizenCustomizations = {
                     </a>{' '}
                     .
                   </P>
-                  <P fitted={true}>
+                  <P $fitted={true}>
                     * Informationen markerad med en stjärna är obligatorisk
                   </P>
                 </>
@@ -674,7 +674,7 @@ const customizations: CitizenCustomizations = {
               attachmentsMessage: {
                 text: (
                   <>
-                    <P fitted>
+                    <P $fitted>
                       Om du behöver en plats inom småbarnspedagogiken för att du
                       hittat ett jobb eller fått en studieplats med kort varsel,
                       ska du ansöka om platsen senast två veckor innan den
@@ -745,7 +745,7 @@ const customizations: CitizenCustomizations = {
               attachmentsMessage: {
                 DAYCARE: (
                   <>
-                    <P fitted>
+                    <P $fitted>
                       Skiftvården är avsedd för barn vars båda föräldrar arbetar
                       skift eller studerar på kvällstid eller under veckoslut
                       som sin huvudsyssla. Rätten till skiftvård upphör om
@@ -863,7 +863,7 @@ const customizations: CitizenCustomizations = {
               info: {
                 DAYCARE: (
                   <>
-                    <P fitted>
+                    <P $fitted>
                       Barnet har en syskongrund till den enhet för
                       småbarnspedagogik där barnets syskon går vid den tidpunkt
                       då barnet ska börja i småbarnspedagogiken.
@@ -919,7 +919,7 @@ const customizations: CitizenCustomizations = {
               info: {
                 DAYCARE: (
                   <>
-                    <P fitted>
+                    <P $fitted>
                       Du kan ansöka till 1–3 enheter i önskad ordning.
                       Önskemålen i ansökan garanterar inte en plats vid den
                       önskade enheten, men chansen att få den önskade platsen är
@@ -1133,7 +1133,7 @@ const customizations: CitizenCustomizations = {
                       income statement.
                     </a>
                   </P>
-                  <P fitted={true}>
+                  <P $fitted={true}>
                     * Information marked with a star is required
                   </P>
                 </>
@@ -1159,7 +1159,7 @@ const customizations: CitizenCustomizations = {
                     </a>{' '}
                     service.
                   </P>
-                  <P fitted={true}>
+                  <P $fitted={true}>
                     * Information marked with a star is required
                   </P>
                 </>
@@ -1214,7 +1214,7 @@ const customizations: CitizenCustomizations = {
               attachmentsMessage: {
                 text: (
                   <>
-                    <P fitted>
+                    <P $fitted>
                       If your child needs a place in early childhood education
                       due to your sudden employment or studies, you must apply
                       for a place no later than two weeks before your child
@@ -1312,7 +1312,7 @@ const customizations: CitizenCustomizations = {
               attachmentsMessage: {
                 DAYCARE: (
                   <>
-                    <P fitted>
+                    <P $fitted>
                       Shift care is intended for children whose both guardians
                       do shift work or mainly study in the evening and/or at
                       weekends. The right to shift care ends if the child no
@@ -1431,7 +1431,7 @@ const customizations: CitizenCustomizations = {
               info: {
                 DAYCARE: (
                   <>
-                    <P fitted>
+                    <P $fitted>
                       The sibling principle applies to an early childhood
                       education unit in which the child’s sibling has a place
                       when the child’s early childhood education starts.
@@ -1491,7 +1491,7 @@ const customizations: CitizenCustomizations = {
               info: {
                 DAYCARE: (
                   <>
-                    <P fitted>
+                    <P $fitted>
                       You can apply for a place in 1–3 units in order of
                       preference. We cannot guarantee a place in the desired
                       unit, but your chances increase if you select several

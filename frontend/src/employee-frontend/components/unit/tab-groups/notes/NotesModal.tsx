@@ -6,7 +6,6 @@ import React, { useCallback, useMemo, useState } from 'react'
 import styled from 'styled-components'
 
 import type { Result } from 'lib-common/api'
-import { wrapResult } from 'lib-common/api'
 import type { NotesByGroupResponse } from 'lib-common/generated/api-types/note'
 import type {
   ChildId,
@@ -14,6 +13,7 @@ import type {
   GroupId,
   GroupNoteId
 } from 'lib-common/generated/api-types/shared'
+import { useMutationResult } from 'lib-common/query'
 import RoundIcon from 'lib-components/atoms/RoundIcon'
 import { IconOnlyButton } from 'lib-components/atoms/buttons/IconOnlyButton'
 import { StickyNoteTab } from 'lib-components/employee/notes/StickyNoteTab'
@@ -25,26 +25,19 @@ import { defaultMargins, Gap } from 'lib-components/white-space'
 import colors from 'lib-customizations/common'
 import { faTimes } from 'lib-icons'
 
-import {
-  createChildStickyNote,
-  createGroupNote,
-  deleteChildStickyNote,
-  deleteGroupNote,
-  updateChildStickyNote,
-  updateGroupNote
-} from '../../../../generated/api-clients/note'
 import type { Translations } from '../../../../state/i18n'
 import { useTranslation } from '../../../../state/i18n'
 import { renderResult } from '../../../async-rendering'
 
 import ChildDailyNoteForm from './ChildDailyNoteForm'
-
-const createGroupNoteResult = wrapResult(createGroupNote)
-const updateGroupNoteResult = wrapResult(updateGroupNote)
-const deleteGroupNoteResult = wrapResult(deleteGroupNote)
-const createChildStickyNoteResult = wrapResult(createChildStickyNote)
-const updateChildStickyNoteResult = wrapResult(updateChildStickyNote)
-const deleteChildStickyNoteResult = wrapResult(deleteChildStickyNote)
+import {
+  createChildStickyNoteMutation,
+  createGroupNoteMutation,
+  deleteChildStickyNoteMutation,
+  deleteGroupNoteMutation,
+  updateChildStickyNoteMutation,
+  updateGroupNoteMutation
+} from './queries'
 
 const getLabels = (i18n: Translations, title: string, placeholder: string) => ({
   addNew: i18n.common.addNew,
@@ -78,7 +71,7 @@ const Tabs = styled.div`
   flex-grow: 1;
 `
 
-const Tab = styled.div<{ active?: boolean }>`
+const Tab = styled.div<{ $active?: boolean }>`
   flex-grow: 1;
   display: flex;
   justify-content: center;
@@ -86,8 +79,8 @@ const Tab = styled.div<{ active?: boolean }>`
 
   border-bottom-width: 2px;
   border-bottom-style: solid;
-  border-bottom-color: ${({ active, theme }) =>
-    active ? theme.colors.main.m2 : 'transparent'};
+  border-bottom-color: ${({ $active, theme }) =>
+    $active ? theme.colors.main.m2 : 'transparent'};
 
   font-size: 15px;
   font-weight: ${fontWeights.bold};
@@ -100,7 +93,6 @@ interface Props {
   group: { id: GroupId; name: string }
   child?: { id: ChildId; name: string }
   notesByGroup: Result<NotesByGroupResponse>
-  reload: () => void
   onClose: () => void
 }
 
@@ -108,10 +100,27 @@ export default React.memo(function NotesModal({
   child,
   group,
   notesByGroup,
-  onClose,
-  reload
+  onClose
 }: Props) {
   const { i18n } = useTranslation()
+  const { mutateAsync: createGroupNote } = useMutationResult(
+    createGroupNoteMutation
+  )
+  const { mutateAsync: updateGroupNote } = useMutationResult(
+    updateGroupNoteMutation
+  )
+  const { mutateAsync: deleteGroupNote } = useMutationResult(
+    deleteGroupNoteMutation
+  )
+  const { mutateAsync: createChildStickyNote } = useMutationResult(
+    createChildStickyNoteMutation
+  )
+  const { mutateAsync: updateChildStickyNote } = useMutationResult(
+    updateChildStickyNoteMutation
+  )
+  const { mutateAsync: deleteChildStickyNote } = useMutationResult(
+    deleteChildStickyNoteMutation
+  )
 
   const notes = useMemo(
     () =>
@@ -160,44 +169,31 @@ export default React.memo(function NotesModal({
       ),
     [i18n]
   )
-  const reloadAndClose = useCallback(() => {
-    reload()
-    onClose()
-  }, [onClose, reload])
-
-  const reloadOnSuccess = useCallback(
-    (res: Result<unknown>) => res.map(() => reload()),
-    [reload]
-  )
   const saveGroupNote = useCallback(
     ({ id, ...body }: EditedNote<GroupNoteId>) =>
-      (id
-        ? updateGroupNoteResult({ noteId: id, body })
-        : createGroupNoteResult({ groupId: group.id, body })
-      ).then(reloadOnSuccess),
-    [group.id, reloadOnSuccess]
+      id
+        ? updateGroupNote({ noteId: id, body })
+        : createGroupNote({ groupId: group.id, body }),
+    [group.id, updateGroupNote, createGroupNote]
   )
   const removeGroupNote = useCallback(
-    (id: GroupNoteId) =>
-      deleteGroupNoteResult({ noteId: id }).then(reloadOnSuccess),
-    [reloadOnSuccess]
+    (id: GroupNoteId) => deleteGroupNote({ noteId: id }),
+    [deleteGroupNote]
   )
   const saveStickyNote = useCallback(
     ({ id, ...body }: EditedNote<ChildStickyNoteId>) => {
       if (!child?.id) {
         return Promise.reject('invalid usage: childId was not provided')
       }
-      const promise = id
-        ? updateChildStickyNoteResult({ noteId: id, body })
-        : createChildStickyNoteResult({ childId: child.id, body })
-      return promise.then(reloadOnSuccess)
+      return id
+        ? updateChildStickyNote({ noteId: id, body })
+        : createChildStickyNote({ childId: child.id, body })
     },
-    [child, reloadOnSuccess]
+    [child, updateChildStickyNote, createChildStickyNote]
   )
   const removeStickyNote = useCallback(
-    (id: ChildStickyNoteId) =>
-      deleteChildStickyNoteResult({ noteId: id }).then(reloadOnSuccess),
-    [reloadOnSuccess]
+    (id: ChildStickyNoteId) => deleteChildStickyNote({ noteId: id }),
+    [deleteChildStickyNote]
   )
 
   const tabs = useMemo(
@@ -226,13 +222,13 @@ export default React.memo(function NotesModal({
         <Tab
           key={type}
           data-qa={`tab-${type}`}
-          active={tab === type}
+          $active={tab === type}
           onClick={() => setTab(type)}
         >
           {title}
           {indicator && (
             <>
-              <Gap horizontal size="xs" />
+              <Gap $horizontal $size="xs" />
               <RoundIcon content="" color={colors.main.m3} size="xs" />
             </>
           )}
@@ -260,14 +256,14 @@ export default React.memo(function NotesModal({
         ({ childStickyNotes, groupNotes, childDailyNotes }) => (
           <>
             {tab === 'child' && child && (
-              <ContentArea opaque={false} paddingHorizontal="s">
+              <ContentArea $opaque={false} $paddingHorizontal="s">
                 <ChildDailyNoteForm
                   note={childDailyNotes[0] ?? null}
                   childId={child.id}
                   childName={child.name}
                   onCancel={onClose}
-                  onSuccess={reloadAndClose}
-                  onRemove={reload}
+                  onSuccess={onClose}
+                  onRemove={onClose}
                 />
               </ContentArea>
             )}

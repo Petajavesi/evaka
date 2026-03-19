@@ -243,6 +243,7 @@ export interface ChildPreschoolAbsenceRowWithUnitAndGroup {
   groupName: string
   hourlyTypeResults: Partial<Record<AbsenceType, number>>
   lastName: string
+  placementType: PlacementType
 }
 
 /**
@@ -752,6 +753,16 @@ export interface PlacementSketchingReportRow {
   sentDate: LocalDate
   serviceNeedOption: ServiceNeedOption | null
   siblingBasis: boolean | null
+}
+
+/**
+* Generated from fi.espoo.evaka.reports.PreschoolAbsenceReport.PreschoolAbsenceReportBody
+*/
+export interface PreschoolAbsenceReportBody {
+  areaId: AreaId | null
+  groupId: GroupId | null
+  term: FiniteDateRange
+  unitId: DaycareId | null
 }
 
 /**
@@ -1356,6 +1367,14 @@ export function deserializeJsonPlacementSketchingReportRow(json: JsonOf<Placemen
     childMovingDate: (json.childMovingDate != null) ? LocalDate.parseIso(json.childMovingDate) : null,
     preferredStartDate: LocalDate.parseIso(json.preferredStartDate),
     sentDate: LocalDate.parseIso(json.sentDate)
+  }
+}
+
+
+export function deserializeJsonPreschoolAbsenceReportBody(json: JsonOf<PreschoolAbsenceReportBody>): PreschoolAbsenceReportBody {
+  return {
+    ...json,
+    term: FiniteDateRange.parseJson(json.term)
   }
 }
 

@@ -26,7 +26,6 @@ import { useIdRouteParam } from 'lib-common/useRouteParams'
 import { scrollToTop } from 'lib-common/utils/scrolling'
 import Main from 'lib-components/atoms/Main'
 import { Button } from 'lib-components/atoms/buttons/Button'
-import { LegacyButton } from 'lib-components/atoms/buttons/LegacyButton'
 import ReturnButton, {
   ReturnButtonWrapper
 } from 'lib-components/atoms/buttons/ReturnButton'
@@ -419,7 +418,7 @@ const ApplicationEditorContent = React.memo(function DaycareApplicationEditor({
   const renderActions = () => (
     <>
       {verifying && (
-        <ContentArea opaque>
+        <ContentArea $opaque>
           <div style={{ marginLeft: defaultMargins.s }}>
             <Checkbox
               aria-required
@@ -428,7 +427,7 @@ const ApplicationEditorContent = React.memo(function DaycareApplicationEditor({
               onChange={setVerified}
               data-qa="verify-checkbox"
             />
-            <Gap size="s" />
+            <Gap $size="s" />
             {hasOtherGuardian && (
               <>
                 <Checkbox
@@ -438,7 +437,7 @@ const ApplicationEditorContent = React.memo(function DaycareApplicationEditor({
                   onChange={setAllowOtherGuardianAccess}
                   data-qa="allow-other-guardian-access"
                 />
-                <Gap size="s" />
+                <Gap $size="s" />
               </>
             )}
           </div>
@@ -446,9 +445,9 @@ const ApplicationEditorContent = React.memo(function DaycareApplicationEditor({
       )}
 
       <StickyContainer>
-        <ActionRow breakpoint="660px">
+        <ActionRow $breakpoint="660px">
           {!verifying && (
-            <LegacyButton
+            <Button
               data-qa="cancel-application-button"
               text={t.applications.editor.actions.cancel}
               onClick={() => history.go(-1)}
@@ -459,7 +458,7 @@ const ApplicationEditorContent = React.memo(function DaycareApplicationEditor({
           <div className="expander" />
 
           {application.status === 'CREATED' && !verifying && (
-            <LegacyButton
+            <Button
               text={t.applications.editor.actions.saveDraft}
               onClick={onSaveDraft}
               disabled={submitting}
@@ -468,14 +467,14 @@ const ApplicationEditorContent = React.memo(function DaycareApplicationEditor({
           )}
           {verifying ? (
             <>
-              <LegacyButton
+              <Button
                 text={t.applications.editor.actions.returnToEditBtn}
                 onClick={() => setVerifying(false)}
                 disabled={submitting}
                 data-qa="return-to-edit-btn"
               />
               {application.status === 'CREATED' ? (
-                <LegacyButton
+                <Button
                   text={t.applications.editor.actions.send}
                   onClick={onSend}
                   disabled={
@@ -487,7 +486,7 @@ const ApplicationEditorContent = React.memo(function DaycareApplicationEditor({
                   data-qa="send-btn"
                 />
               ) : (
-                <LegacyButton
+                <Button
                   text={t.applications.editor.actions.update}
                   onClick={onUpdate}
                   disabled={
@@ -501,7 +500,7 @@ const ApplicationEditorContent = React.memo(function DaycareApplicationEditor({
               )}
             </>
           ) : (
-            <LegacyButton
+            <Button
               text={t.applications.editor.actions.verify}
               onClick={onVerify}
               disabled={submitting}
@@ -533,7 +532,7 @@ const ApplicationEditorContent = React.memo(function DaycareApplicationEditor({
         <ExpandingInfoGroup>
           {verifying ? renderVerificationView() : renderEditor()}
 
-          <Gap size="m" />
+          <Gap $size="m" />
 
           {renderActions()}
         </ExpandingInfoGroup>

@@ -318,11 +318,11 @@ private fun migrateVoucherValueDecisionMetadata(
 
 private data class DocumentData(
     val id: ChildDocumentId,
-    val created: HelsinkiDateTime,
+    val createdAt: HelsinkiDateTime,
     val createdBy: EvakaUserId?,
     val modifiedAt: HelsinkiDateTime,
     val status: DocumentStatus,
-    val documentKey: String?,
+    val hasDocumentKey: Boolean,
     val processDefinitionNumber: String,
     val archiveDurationMonths: Int,
 )
@@ -340,11 +340,16 @@ private fun migrateDocuments(
                         """
                     SELECT
                         d.id,
-                        d.created,
+                        d.created_at,
                         d.created_by,
                         d.modified_at,
                         d.status,
-                        d.document_key,
+                        EXISTS(
+                            SELECT 1
+                            FROM child_document_published_version v
+                            WHERE v.child_document_id = d.id
+                            AND v.document_key IS NOT NULL
+                        ) AS has_document_key,
                         t.process_definition_number,
                         t.archive_duration_months
                     FROM child_document d
@@ -353,7 +358,7 @@ private fun migrateDocuments(
                         d.process_id IS NULL AND
                         t.process_definition_number IS NOT NULL AND
                         t.archive_duration_months IS NOT NULL
-                    ORDER BY d.created
+                    ORDER BY d.created_at
                     LIMIT ${bind(batchSize)}
                     """
                     )
@@ -365,7 +370,7 @@ private fun migrateDocuments(
             val processId =
                 tx.insertCaseProcess(
                         processDefinitionNumber = document.processDefinitionNumber,
-                        year = document.created.year,
+                        year = document.createdAt.year,
                         organization = archiveMetadataOrganization,
                         archiveDurationMonths = document.archiveDurationMonths,
                         migrated = true,
@@ -379,12 +384,10 @@ private fun migrateDocuments(
             tx.insertCaseProcessHistoryRow(
                 processId = processId,
                 state = CaseProcessState.INITIAL,
-                now = document.created,
+                now = document.createdAt,
                 userId = document.createdBy ?: systemInternalUser,
             )
-            if (
-                document.status == DocumentStatus.COMPLETED && !document.documentKey.isNullOrEmpty()
-            ) {
+            if (document.status == DocumentStatus.COMPLETED && document.hasDocumentKey) {
                 tx.insertCaseProcessHistoryRow(
                     processId = processId,
                     state = CaseProcessState.COMPLETED,

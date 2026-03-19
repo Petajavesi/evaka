@@ -126,7 +126,7 @@ export default React.memo(function TabCalendar({
             }
             groups={unitInformation.groups}
           />
-          <Gap size="s" />
+          <Gap $size="s" />
         </>
       ) : null}
       {unitInformation.permittedActions.includes('READ_GROUP_DETAILS') &&
@@ -223,11 +223,15 @@ const CalendarContent = React.memo(function CalendarContent({
     unitInformation.daycare.shiftCareOperationDays
   ])
 
-  // passed into ReservationModalSingleChild to keep the functionality unchanged for now
-  const normalOperationalDays = useMemo((): DayOfWeek[] => {
+  const normalOperationDays = useMemo((): DayOfWeek[] => {
     const days = unitInformation.daycare.operationDays as DayOfWeek[]
     return days.length === 0 ? [1, 2, 3, 4, 5] : days
   }, [unitInformation.daycare.operationDays])
+
+  const shiftCareOperationDays = useMemo((): DayOfWeek[] | undefined => {
+    const days = unitInformation.daycare.shiftCareOperationDays as DayOfWeek[]
+    return days && days.length > 0 ? days : undefined
+  }, [unitInformation.daycare.shiftCareOperationDays])
 
   const weekRange = useMemo(
     () => getWeekDateRange(selectedDate),
@@ -244,12 +248,12 @@ const CalendarContent = React.memo(function CalendarContent({
     <CollapsibleContentArea
       open={calendarOpen}
       toggleOpen={() => setCalendarOpen(!calendarOpen)}
-      title={<H3 noMargin>{i18n.unit.calendar.title}</H3>}
-      opaque
+      title={<H3 $noMargin>{i18n.unit.calendar.title}</H3>}
+      $opaque
     >
       {(reservationEnabled || realtimeStaffAttendanceEnabled) &&
       availableModes.length >= 2 ? (
-        <FixedSpaceRow spacing="xs" justifyContent="flex-end">
+        <FixedSpaceRow $spacing="xs" $justifyContent="flex-end">
           {availableModes.map((m) => (
             <SelectionChip
               key={m}
@@ -264,7 +268,7 @@ const CalendarContent = React.memo(function CalendarContent({
       ) : null}
 
       <StickyTopBar>
-        <FixedSpaceRow spacing="s" alignItems="center">
+        <FixedSpaceRow $spacing="s" $alignItems="center">
           <GroupSelectorWrapper>
             <AttendanceGroupFilterSelect
               groups={groups}
@@ -284,15 +288,15 @@ const CalendarContent = React.memo(function CalendarContent({
         </FixedSpaceRow>
       </StickyTopBar>
 
-      <TopHorizontalLine dashed slim />
+      <TopHorizontalLine $dashed $slim />
 
       <CollapsibleContentArea
         open={attendancesOpen}
         toggleOpen={() => setAttendancesOpen(!attendancesOpen)}
-        title={<H4 noMargin>{i18n.unit.calendar.attendances.title}</H4>}
-        opaque
-        paddingHorizontal="zero"
-        paddingVertical="zero"
+        title={<H4 $noMargin>{i18n.unit.calendar.attendances.title}</H4>}
+        $opaque
+        $paddingHorizontal="zero"
+        $paddingVertical="zero"
       >
         {mode === 'month' && selectedGroup.type === 'group' ? (
           <GroupMonthCalendar
@@ -309,7 +313,8 @@ const CalendarContent = React.memo(function CalendarContent({
             selectedGroup={selectedGroup}
             selectedDate={selectedDate}
             setSelectedDate={setSelectedDate}
-            operationalDays={normalOperationalDays}
+            normalOperationDays={normalOperationDays}
+            shiftCareOperationDays={shiftCareOperationDays}
             realtimeStaffAttendanceEnabled={realtimeStaffAttendanceEnabled}
             groups={groups}
             weekRange={weekRange}
@@ -322,15 +327,15 @@ const CalendarContent = React.memo(function CalendarContent({
         (selectedGroup.type === 'all-children' && mode === 'week')) &&
       reservationEnabled ? (
         <>
-          <HorizontalLine dashed slim />
+          <HorizontalLine $dashed $slim />
 
           <CollapsibleContentArea
             open={eventsOpen}
             toggleOpen={() => setEventsOpen(!eventsOpen)}
-            title={<H4 noMargin>{i18n.unit.calendar.events.title}</H4>}
-            opaque
-            paddingHorizontal="zero"
-            paddingVertical="zero"
+            title={<H4 $noMargin>{i18n.unit.calendar.events.title}</H4>}
+            $opaque
+            $paddingHorizontal="zero"
+            $paddingVertical="zero"
           >
             <CalendarEventsSection
               selectedDate={selectedDate}
@@ -379,7 +384,7 @@ const ActiveDateRangeSelector = React.memo(function ActiveDateRangeSelector({
   return (
     <>
       <div data-qa-date-range={new FiniteDateRange(startDate, endDate)} />
-      <FixedSpaceRow spacing="s" alignItems="center">
+      <FixedSpaceRow $spacing="s" $alignItems="center">
         <IconOnlyButton
           icon={faChevronLeft}
           onClick={() => setSelectedDate(subUnitOfTime(selectedDate))}

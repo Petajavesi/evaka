@@ -18,7 +18,7 @@ import styled from 'styled-components'
 import { Link, useLocation, useParams, useSearchParams } from 'wouter'
 
 import type { Result } from 'lib-common/api'
-import { combine, wrapResult } from 'lib-common/api'
+import { combine } from 'lib-common/api'
 import DateRange from 'lib-common/date-range'
 import FiniteDateRange from 'lib-common/finite-date-range'
 import type {
@@ -36,9 +36,8 @@ import type {
 } from 'lib-common/generated/api-types/shared'
 import LocalDate from 'lib-common/local-date'
 import { formatPersonName } from 'lib-common/names'
-import { useQueryResult } from 'lib-common/query'
+import { useMutationResult, useQueryResult } from 'lib-common/query'
 import type { UUID } from 'lib-common/types'
-import { useApiState } from 'lib-common/utils/useRestApi'
 import Tooltip from 'lib-components/atoms/Tooltip'
 import AddButton from 'lib-components/atoms/buttons/AddButton'
 import { AsyncButton } from 'lib-components/atoms/buttons/AsyncButton'
@@ -65,21 +64,17 @@ import { defaultMargins, Gap } from 'lib-components/white-space'
 import { featureFlags } from 'lib-customizations/employee'
 import { faCalendarPlus, faQuestion, faTrash } from 'lib-icons'
 
-import {
-  createCalendarEvent,
-  deleteCalendarEvent,
-  getUnitCalendarEvents,
-  modifyCalendarEvent
-} from '../../../generated/api-clients/calendarevent'
 import { useTranslation } from '../../../state/i18n'
 import type { DayOfWeek } from '../../../types'
 import { renderResult } from '../../async-rendering'
 import { unitGroupDetailsQuery, daycareQuery } from '../queries'
 
-const createCalendarEventResult = wrapResult(createCalendarEvent)
-const getUnitCalendarEventsResult = wrapResult(getUnitCalendarEvents)
-const modifyCalendarEventResult = wrapResult(modifyCalendarEvent)
-const deleteCalendarEventResult = wrapResult(deleteCalendarEvent)
+import {
+  createCalendarEventMutation,
+  deleteCalendarEventMutation,
+  modifyCalendarEventMutation,
+  unitCalendarEventsQuery
+} from './queries'
 
 const EventsWeekContainer = styled.div`
   display: grid;
@@ -215,14 +210,12 @@ export default React.memo(function CalendarEventsSection({
   operationalDays: DayOfWeek[]
   groupId: UUID | null // null means all groups
 }) {
-  const [events, reloadEvents] = useApiState(
-    () =>
-      getUnitCalendarEventsResult({
-        unitId,
-        start: dateRange.start,
-        end: dateRange.end
-      }),
-    [unitId, dateRange]
+  const events = useQueryResult(
+    unitCalendarEventsQuery({
+      unitId,
+      start: dateRange.start,
+      end: dateRange.end
+    })
   )
 
   const groupData = useQueryResult(
@@ -283,10 +276,7 @@ export default React.memo(function CalendarEventsSection({
         <EditEventModal
           event={editingEvent}
           unitInformation={unitInformation}
-          onClose={(shouldRefresh) => {
-            if (shouldRefresh) {
-              void reloadEvents()
-            }
+          onClose={() => {
             navigate(`/units/${unitId}/calendar`)
           }}
         />
@@ -295,11 +285,8 @@ export default React.memo(function CalendarEventsSection({
       {createEventModalVisible && (
         <CreateEventModal
           unitId={unitId}
-          onClose={(shouldRefresh) => {
+          onClose={() => {
             setCreateEventModalVisible(false)
-            if (shouldRefresh) {
-              void reloadEvents()
-            }
           }}
           groupId={groupId}
         />
@@ -341,7 +328,7 @@ export default React.memo(function CalendarEventsSection({
         </EventButtonColumn>
         <div />
       </EventButtonRow>
-      <Gap size="s" />
+      <Gap $size="s" />
       {renderResult(events, (events) => (
         <div>
           {datesByWeeks.map((datesInWeek, i) => (
@@ -353,7 +340,7 @@ export default React.memo(function CalendarEventsSection({
                   $isOtherMonth={day.month !== selectedDate.month}
                   data-qa={`calendar-event-day-${day.formatIso()}`}
                 >
-                  <H4 noMargin>
+                  <H4 $noMargin>
                     {
                       i18n.common.datetime.weekdaysShort[
                         day.getIsoDayOfWeek() - 1
@@ -361,8 +348,8 @@ export default React.memo(function CalendarEventsSection({
                     }{' '}
                     {day.format('d.M.')}
                   </H4>
-                  <Gap size="xs" />
-                  <FixedSpaceColumn spacing="s">
+                  <Gap $size="xs" />
+                  <FixedSpaceColumn $spacing="s">
                     {sortBy(
                       events
                         .filter(({ period }) => period.includes(day))
@@ -441,15 +428,15 @@ export default React.memo(function CalendarEventsSection({
                                 to={`/units/${unitId}/calendar/events/${event.id}?eventDay=${day.formatIso()}`}
                                 data-qa="survey"
                               >
-                                <P noMargin>
+                                <P $noMargin>
                                   <Bold>{event.title}</Bold>
                                 </P>
 
                                 <P
-                                  noMargin
+                                  $noMargin
                                 >{`${reservationsToday.length} ${i18n.unit.calendar.events.reservedTimesLabel}`}</P>
                                 <P
-                                  noMargin
+                                  $noMargin
                                 >{`${freeTimesToday.length} ${i18n.unit.calendar.events.freeTimesLabel}`}</P>
                               </Link>
                             </Tooltip>
@@ -516,10 +503,13 @@ const CreateEventModal = React.memo(function CreateEventModal({
   groupId
 }: {
   unitId: DaycareId
-  onClose: (shouldRefresh: boolean) => void
+  onClose: () => void
   groupId: UUID | null
 }) {
   const { i18n, lang } = useTranslation()
+  const { mutateAsync: createCalendarEvent } = useMutationResult(
+    createCalendarEventMutation
+  )
 
   const unitInformation = useQueryResult(daycareQuery({ daycareId: unitId }))
 
@@ -744,7 +734,7 @@ const CreateEventModal = React.memo(function CreateEventModal({
       icon={faCalendarPlus}
       type="info"
       resolveAction={() =>
-        createCalendarEventResult({
+        createCalendarEvent({
           body: {
             unitId,
             title: form.title,
@@ -758,13 +748,13 @@ const CreateEventModal = React.memo(function CreateEventModal({
         })
       }
       resolveLabel={i18n.unit.calendar.events.create.add}
-      onSuccess={() => onClose(true)}
-      rejectAction={() => onClose(false)}
+      onSuccess={onClose}
+      rejectAction={onClose}
       rejectLabel={i18n.common.cancel}
       resolveDisabled={!formIsValid}
     >
       <Label>{i18n.unit.calendar.events.create.attendees}</Label>
-      <Gap size="xs" />
+      <Gap $size="xs" />
       <TreeDropdown
         tree={form.attendees}
         onChange={(tree) => updateForm('attendees', tree)}
@@ -772,7 +762,7 @@ const CreateEventModal = React.memo(function CreateEventModal({
         placeholder={i18n.unit.calendar.events.create.attendeesPlaceholder}
       />
 
-      <Gap size="s" />
+      <Gap $size="s" />
 
       <Label>{i18n.unit.calendar.events.create.eventTitle}</Label>
       <InputField
@@ -784,7 +774,7 @@ const CreateEventModal = React.memo(function CreateEventModal({
         data-qa="title-input"
       />
 
-      <Gap size="s" />
+      <Gap $size="s" />
 
       <Label id="event-create-period">
         {i18n.unit.calendar.events.create.period}
@@ -803,7 +793,7 @@ const CreateEventModal = React.memo(function CreateEventModal({
         <AlertBox
           message={
             <>
-              <P noMargin>
+              <P $noMargin>
                 {i18n.unit.calendar.events.create.missingPlacementsWarning}
               </P>
               <ul>
@@ -821,7 +811,7 @@ const CreateEventModal = React.memo(function CreateEventModal({
         />
       )}
 
-      <Gap size="s" />
+      <Gap $size="s" />
 
       <Label>{i18n.unit.calendar.events.create.description}</Label>
       <TextArea
@@ -833,7 +823,7 @@ const CreateEventModal = React.memo(function CreateEventModal({
 
       {featureFlags.nekkuIntegration && (
         <>
-          <Gap size="s" />
+          <Gap $size="s" />
           <Label>{i18n.unit.calendar.events.create.unorderedMeals}</Label>
           {nekkuMealList.map((meal) => (
             <Checkbox
@@ -892,9 +882,15 @@ const EditEventModal = React.memo(function EditEventModal({
 }: {
   event: CalendarEvent
   unitInformation: Result<DaycareResponse>
-  onClose: (shouldRefresh: boolean) => void
+  onClose: () => void
 }) {
   const { i18n } = useTranslation()
+  const { mutateAsync: modifyCalendarEvent } = useMutationResult(
+    modifyCalendarEventMutation
+  )
+  const { mutateAsync: deleteCalendarEvent } = useMutationResult(
+    deleteCalendarEventMutation
+  )
 
   const [form, setForm] = useState<{
     title: string
@@ -926,7 +922,7 @@ const EditEventModal = React.memo(function EditEventModal({
           title={i18n.unit.calendar.events.edit.title}
           type="info"
           width="wide"
-          close={() => onClose(false)}
+          close={onClose}
           closeLabel={i18n.common.closeModal}
           padding="L"
         >
@@ -940,20 +936,20 @@ const EditEventModal = React.memo(function EditEventModal({
             data-qa="title-input"
           />
 
-          <Gap size="s" />
+          <Gap $size="s" />
 
           <Label>{i18n.unit.calendar.events.create.period}</Label>
-          <Gap size="xs" />
+          <Gap $size="xs" />
           <div data-qa="period">
             {event.period.start.isEqual(event.period.end)
               ? event.period.start.format()
               : `${event.period.start.format()}–${event.period.end.format()}`}
           </div>
 
-          <Gap size="s" />
+          <Gap $size="s" />
 
           <Label>{i18n.unit.calendar.events.create.attendees}</Label>
-          <Gap size="xs" />
+          <Gap $size="xs" />
           <div data-qa="attendee-list">
             {getLongAttendees(
               unitInformation.map(({ daycare }) => daycare.name).getOrElse(''),
@@ -962,7 +958,7 @@ const EditEventModal = React.memo(function EditEventModal({
             )}
           </div>
 
-          <Gap size="s" />
+          <Gap $size="s" />
 
           <Label>{i18n.unit.calendar.events.create.description}</Label>
           <TextArea
@@ -976,7 +972,7 @@ const EditEventModal = React.memo(function EditEventModal({
 
           {featureFlags.nekkuIntegration && (
             <>
-              <Gap size="s" />
+              <Gap $size="s" />
               <Label>{i18n.unit.calendar.events.create.unorderedMeals}</Label>
               {nekkuMealList.map((meal) => (
                 <Checkbox
@@ -1002,7 +998,7 @@ const EditEventModal = React.memo(function EditEventModal({
             </>
           )}
 
-          <Gap size="m" />
+          <Gap $size="m" />
 
           <ListGrid>
             <FixedSpaceColumn>
@@ -1015,8 +1011,8 @@ const EditEventModal = React.memo(function EditEventModal({
             </FixedSpaceColumn>
           </ListGrid>
 
-          <Gap size="L" />
-          <FixedSpaceRow justifyContent="space-between">
+          <Gap $size="L" />
+          <FixedSpaceRow $justifyContent="space-between">
             <Button
               appearance="inline"
               icon={faTrash}
@@ -1028,15 +1024,13 @@ const EditEventModal = React.memo(function EditEventModal({
             />
             <AsyncButton
               primary
-              onClick={() =>
-                modifyCalendarEventResult({ id: event.id, body: form })
-              }
-              onSuccess={() => onClose(true)}
+              onClick={() => modifyCalendarEvent({ id: event.id, body: form })}
+              onSuccess={onClose}
               text={i18n.unit.calendar.events.edit.saveChanges}
               data-qa="save"
             />
           </FixedSpaceRow>
-          <Gap size="L" />
+          <Gap $size="L" />
         </BaseModal>
       )}
 
@@ -1046,11 +1040,11 @@ const EditEventModal = React.memo(function EditEventModal({
           title="Haluatko varmasti poistaa tapahtuman?"
           text="Tapahtuma poistetaan sekä henkilökunnan että huoltajien kalenterista."
           type="warning"
-          resolveAction={() => deleteCalendarEventResult({ id: event.id })}
+          resolveAction={() => deleteCalendarEvent({ id: event.id })}
           resolveLabel="Poista tapahtuma"
           onSuccess={() => {
             setShowDeletionModal(false)
-            onClose(true)
+            onClose()
           }}
           rejectAction={() => setShowDeletionModal(false)}
           rejectLabel="Älä poista"
@@ -1119,7 +1113,7 @@ const SurveySummaryModal = React.memo(function SurveySummaryModal({
       {times.length > 0 && (
         <>
           <Label>{tr.surveyDiscussionTimesTitle}</Label>
-          <Gap size="s" />
+          <Gap $size="s" />
           <EventTimeGrid>
             {times.map((t) => {
               const child = t.childId ? childrenById[t.childId][0] : null
@@ -1148,8 +1142,8 @@ const SurveySummaryModal = React.memo(function SurveySummaryModal({
         </>
       )}
 
-      <Gap size="L" />
-      <FixedSpaceRow justifyContent="center">
+      <Gap $size="L" />
+      <FixedSpaceRow $justifyContent="center">
         <Button
           appearance="button"
           text={i18n.common.close}
@@ -1157,7 +1151,7 @@ const SurveySummaryModal = React.memo(function SurveySummaryModal({
           data-qa="close"
         />
       </FixedSpaceRow>
-      <Gap size="L" />
+      <Gap $size="L" />
     </BaseModal>
   )
 })
