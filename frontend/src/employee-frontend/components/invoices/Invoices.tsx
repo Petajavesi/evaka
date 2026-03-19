@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import React, { useContext, useState } from 'react'
+import React, { useContext, useState } from 'react' //Petäjäveden muutos 2025
 import styled from 'styled-components'
 import { useLocation } from 'wouter'
 
@@ -96,8 +96,8 @@ export default React.memo(function Invoices({
     { on: setDraftCreationError, off: clearDraftCreationError }
   ] = useBoolean(false)
 
-  const previousMonth = YearMonth.todayInHelsinkiTz().subMonths(1)
-  const [selectedMonth, setSelectedMonth] = useState<YearMonth>(previousMonth)
+  const previousMonth = YearMonth.todayInHelsinkiTz().subMonths(1) //Petäjäveden muutos 2025
+  const [selectedMonth, setSelectedMonth] = useState<YearMonth>(previousMonth) //Petäjäveden muutos 2025
 
   return (
     <div className="invoices" data-isloading={isLoading}>
@@ -106,6 +106,7 @@ export default React.memo(function Invoices({
           {draftCreationError && (
             <RefreshError>{i18n.common.error.unknown}</RefreshError>
           )}
+          //Petäjäveden muutos 2025
           <MonthSelector>
             <label htmlFor="invoice-month">{i18n.invoices.buttons.selectMonth}:</label>
             <select
@@ -125,7 +126,7 @@ export default React.memo(function Invoices({
             appearance="inline"
             icon={faSync}
             mutation={createDraftInvoicesMutation}
-            onClick={() => ({ year: selectedMonth.year, month: selectedMonth.month })}
+            onClick={() => ({ year: selectedMonth.year, month: selectedMonth.month })} //Petäjäveden muutos 2025
             onSuccess={clearDraftCreationError}
             onFailure={setDraftCreationError}
             text={i18n.invoices.buttons.createInvoices}
