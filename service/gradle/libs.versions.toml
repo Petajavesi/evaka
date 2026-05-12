@@ -4,14 +4,14 @@
 
 [versions]
 bouncycastle = "1.83"
-dd-java-agent = "1.60.0"
-flyingsaucer = "10.0.7"
-flyway = "12.0.3"
+dd-java-agent = "1.60.1"
+flyingsaucer = "10.1.0"
+flyway = "12.1.0"
 java = "25"
 kotlin = "2.3.10"
 ktfmt = "0.25.0"
 ktlint = "1.8.0"
-ktlint-gradle = "14.0.1"
+ktlint-gradle = "14.1.0"
 mockito = "5.22.0"
 owasp = "12.2.0"
 spring-boot = "4.0.3"

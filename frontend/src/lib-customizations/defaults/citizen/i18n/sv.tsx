@@ -633,7 +633,9 @@ const sv: Translations = {
       close: 'Gå tillbaka till listan',
       sender: 'Avsändare',
       sentAt: 'Skickat',
-      recipients: 'Mottagare'
+      recipients: 'Mottagare',
+      financeReplyInfo:
+        'Det är möjligt att svara endast när din inkomstutredning har skickats eller är under handläggning.'
     },
     messageEditor: {
       newMessage: 'Nytt Meddelande',
@@ -715,7 +717,7 @@ const sv: Translations = {
         )
       },
       create: 'Ny ansökan',
-      daycare4monthWarning: 'Behandlingstiden för ansökningen är 4 månader.',
+      daycare4monthWarning: <>Behandlingstiden för ansökningen är 4 månader.</>,
       applicationInfo: (
         <P>
           Du kan ändra i ansökan så länge den inte har tagits till behandling.
@@ -2302,7 +2304,7 @@ const sv: Translations = {
           Avgifterna för kommunal småbarnspedagogik beräknas i procentandel av
           familjens bruttoinkomster. Avgifterna varierar beroende på familjens
           storlek och inkomster samt barnets vårdtid inom småbarnspedagogik.
-          Kontrollera från tabellen som finns i kundcirkuläret (fattas{' '}
+          Kontrollera från tabellen som finns i kundmeddelandet (fattas{' '}
           <a
             target="_blank"
             rel="noreferrer"

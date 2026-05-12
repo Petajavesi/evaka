@@ -644,7 +644,9 @@ const en: Translations = {
       close: 'Back to list',
       sender: 'Sender',
       sentAt: 'Sent at',
-      recipients: 'Recipients'
+      recipients: 'Recipients',
+      financeReplyInfo:
+        'Replying is only possible when your income statement has been sent or is being processed.'
     },
     messageEditor: {
       newMessage: 'New message',
@@ -721,7 +723,7 @@ const en: Translations = {
         )
       },
       create: 'Apply',
-      daycare4monthWarning: 'The application processing time is 4 months.',
+      daycare4monthWarning: <>The application processing time is 4 months.</>,
       applicationInfo: (
         <P>
           You can make changes to your application until its processing starts.

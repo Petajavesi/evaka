@@ -5,10 +5,10 @@
 [tools]
 devcontainer-cli = "0.83.2"
 java = "zulu-25"
-lefthook = "2.1.2"
+lefthook = "2.1.3"
 node = "24.14.0"
 "npm:pm2" = "6.0.14"
-uv = "0.10.7"
+uv = "0.10.9"
 "pipx:reuse" = "6.2.0"
 yarn = "4.12.0"
 
@@ -242,7 +242,7 @@ echo "Restart your shell or run: source $RC_FILE"
 """
 
 [tasks.sandbox]
-description = "Manage the sandbox container"
+description = "Manage the Colima VM sandbox"
 dir = ".sandbox"
 usage = 'arg "[args]" var=#true'
 run = "node sandbox.mjs {{arg(name='args')}}"

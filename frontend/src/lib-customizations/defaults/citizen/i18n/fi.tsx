@@ -646,7 +646,9 @@ export default {
       close: 'Takaisin listaan',
       sender: 'Lähettäjä',
       sentAt: 'Lähetetty',
-      recipients: 'Vastaanottajat'
+      recipients: 'Vastaanottajat',
+      financeReplyInfo:
+        'Vastaaminen on mahdollista vain silloin, kun tuloselvityksesi on lähetetty tai käsittelyssä.'
     },
     messageEditor: {
       newMessage: 'Uusi viesti',
@@ -723,7 +725,7 @@ export default {
         )
       },
       create: 'Tee hakemus',
-      daycare4monthWarning: 'Hakemuksen käsittelyaika on 4 kuukautta.',
+      daycare4monthWarning: <>Hakemuksen käsittelyaika on 4 kuukautta.</>,
       applicationInfo: (
         <P>
           Hakemukseen voi tehdä muutoksia niin kauan kuin hakemusta ei ole

@@ -175,6 +175,12 @@ export default class MessagesPage {
     )
   }
 
+  async getGroupAccountNames(): Promise<string[]> {
+    return this.#unitAccount
+      .findAllByDataQa('group-message-account-name')
+      .allTexts()
+  }
+
   async close() {
     return this.page.close()
   }
@@ -280,6 +286,7 @@ export class MessageEditor extends Element {
     urgent?: boolean
     sensitive?: boolean
     attachmentCount?: number
+    attachmentFilePath?: string
     sender?: string
     recipientKeys?: string[]
     confirmManyRecipients?: boolean
@@ -340,8 +347,8 @@ export class MessageEditor extends Element {
     }
 
     if (attachmentCount > 0) {
-      const testFileName = 'test_file.odt'
-      const testFilePath = `src/e2e-test/assets/${testFileName}`
+      const testFilePath =
+        message.attachmentFilePath ?? `src/e2e-test/assets/test_file.odt`
 
       for (let i = 1; i <= attachmentCount; i++) {
         await this.fileUpload.upload(testFilePath)

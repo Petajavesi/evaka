@@ -490,6 +490,17 @@ const customizations: CitizenCustomizations = {
               }
             }
           }
+        },
+        creation: {
+          daycare4monthWarning: (
+            <>
+              Uuden hakemuksen käsittelyaika on 4 kuukautta.
+              <br />
+              <br />
+              Siirtohakemuksella ei ole käsittelyaikaa. Päätökset tehdään
+              hakija- ja paikkatilanteen salliessa.
+            </>
+          )
         }
       },
       income: {
@@ -1023,6 +1034,17 @@ const customizations: CitizenCustomizations = {
               }
             }
           }
+        },
+        creation: {
+          daycare4monthWarning: (
+            <>
+              En ny ansökan behandlas inom 4 månader.
+              <br />
+              <br />
+              En överföringsansökan har ingen bestämd behandlingstid. Beslut
+              fattas när det finns lediga platser och möjlighet att ordna plats.
+            </>
+          )
         }
       },
       income: {
@@ -1586,6 +1608,17 @@ const customizations: CitizenCustomizations = {
               }
             }
           }
+        },
+        creation: {
+          daycare4monthWarning: (
+            <>
+              The processing time for a new application is 4 months.
+              <br />
+              <br />
+              Transfer applications have no defined processing time; decisions
+              are made when applicant and place availability allow.
+            </>
+          )
         }
       },
       income: {

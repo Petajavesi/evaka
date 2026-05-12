@@ -41,7 +41,7 @@ import org.junit.jupiter.api.Test
 
 class PdfGenerationTest {
     private val service: PdfGenerator =
-        PdfGenerator(EvakaTemplateProvider(), PDFConfig.templateEngine())
+        PdfGenerator(EvakaTemplateProvider(), PDFConfig.templateEngine("espoo"))
 
     private val normalDecision =
         FeeDecisionDetailed(

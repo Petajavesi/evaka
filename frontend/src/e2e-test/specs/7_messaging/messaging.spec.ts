@@ -38,6 +38,7 @@ import {
   createMessageAccounts,
   insertGuardians,
   resetServiceState,
+  updateIncomeStatementHandled,
   upsertWeakCredentials
 } from '../../generated/api-clients'
 import type {
@@ -47,6 +48,7 @@ import type {
 } from '../../generated/api-types'
 import CitizenHeader from '../../pages/citizen/citizen-header'
 import CitizenMessagesPage from '../../pages/citizen/citizen-messages'
+import GuardianInformationPage from '../../pages/employee/guardian-information'
 import MessagesPage from '../../pages/employee/messages/messages-page'
 import type { NewEvakaPage } from '../../playwright'
 import { test, expect } from '../../playwright'
@@ -369,6 +371,31 @@ test.describe('Sending and receiving messages', () => {
           'src/e2e-test/assets/test_file.odt'
         )
         expect(downloadedContent).toEqual(originalContent)
+      })
+
+      test('Employee can send video attachment', async () => {
+        await openSupervisorPage(mockedDateAt10)
+        await unitSupervisorPage.goto(`${config.employeeUrl}/messages`)
+        const messagesPage = new MessagesPage(unitSupervisorPage)
+        const messageEditor = await messagesPage.openMessageEditor()
+        await messageEditor.sendNewMessage({
+          ...defaultMessage,
+          attachmentCount: 1,
+          attachmentFilePath: 'src/e2e-test/assets/test_file.mp4'
+        })
+        await runPendingAsyncJobs(mockedDateAt10.addMinutes(1))
+
+        await openCitizen(mockedDateAt11)
+        await citizenPage.goto(config.enduserMessagesUrl)
+        const citizenMessagesPage = new CitizenMessagesPage(
+          citizenPage,
+          'desktop'
+        )
+        await citizenMessagesPage.assertThreadContent(defaultMessage)
+        await waitUntilEqual(
+          () => citizenMessagesPage.getThreadAttachmentCount(),
+          1
+        )
       })
 
       test('Employee can discard thread reply', async () => {
@@ -1111,6 +1138,82 @@ test.describe('Sending and receiving messages', () => {
       await messageEditor.draftNewMessage(defaultTitle, defaultContent)
       await messageEditor.discardButton.click()
       await messagesPage.assertNoDrafts()
+    })
+  })
+
+  test.describe('Finance threads', () => {
+    test('Citizen can only reply to finance threads when there is an income statement sent or being handled', async ({
+      newEvakaPage
+    }) => {
+      const mockedTime = HelsinkiDateTime.of(2022, 5, 21, 10, 0, 0, 0)
+      await resetServiceState()
+      await testAdult.saveAdult({ updateMockVtjWithDependants: [] })
+      const financeAdmin = await Fixture.employee().financeAdmin().save()
+      await createMessageAccounts()
+
+      const page = await newEvakaPage({ mockedTime })
+      await employeeLogin(page, financeAdmin)
+      await page.goto(config.employeeUrl)
+      const guardianPage = new GuardianInformationPage(page)
+      await guardianPage.navigateToGuardian(testAdult.id)
+      const notesAndMessages = await guardianPage.openCollapsible(
+        'financeNotesAndMessages'
+      )
+      const messageEditor = await notesAndMessages.openNewMessageEditor()
+      await messageEditor.sendNewMessage({
+        title: 'Tuloselvitys',
+        content: 'Toimita tuloselvitys'
+      })
+      await runPendingAsyncJobs(mockedTime.addMinutes(1))
+
+      async function openCitizenThread(time: HelsinkiDateTime) {
+        const citizenPage = await newEvakaPage({ mockedTime: time })
+        await enduserLogin(citizenPage, testAdult)
+        await citizenPage.goto(config.enduserMessagesUrl)
+        const citizenMessagesPage = new CitizenMessagesPage(
+          citizenPage,
+          'desktop'
+        )
+        await citizenMessagesPage.openFirstThread()
+        return citizenMessagesPage
+      }
+
+      let citizenMessagesPage = await openCitizenThread(mockedTime.addHours(1))
+      await citizenMessagesPage.assertFinanceReplyInfo(true)
+      await citizenMessagesPage.assertOpenReplyEditorButtonIsHidden()
+
+      const incomeStatement = await Fixture.incomeStatement({
+        personId: testAdult.id,
+        status: 'SENT',
+        sentAt: mockedTime.addHours(2)
+      }).save()
+      citizenMessagesPage = await openCitizenThread(mockedTime.addHours(2))
+      await citizenMessagesPage.assertFinanceReplyInfo(false)
+      await citizenMessagesPage.replyToFirstThread('Reply to finance thread')
+
+      await updateIncomeStatementHandled({
+        body: {
+          incomeStatementId: incomeStatement.id,
+          employeeId: financeAdmin.id,
+          status: 'HANDLING',
+          note: ''
+        }
+      })
+      citizenMessagesPage = await openCitizenThread(mockedTime.addHours(3))
+      await citizenMessagesPage.assertFinanceReplyInfo(false)
+      await citizenMessagesPage.replyToFirstThread('Reply during handling')
+
+      await updateIncomeStatementHandled({
+        body: {
+          incomeStatementId: incomeStatement.id,
+          employeeId: financeAdmin.id,
+          status: 'HANDLED',
+          note: ''
+        }
+      })
+      citizenMessagesPage = await openCitizenThread(mockedTime.addHours(4))
+      await citizenMessagesPage.assertFinanceReplyInfo(true)
+      await citizenMessagesPage.assertOpenReplyEditorButtonIsHidden()
     })
   })
 })
