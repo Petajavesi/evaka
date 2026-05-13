@@ -9,15 +9,12 @@ import {
   resetServiceState,
   updateIncomeStatementHandled
 } from '../../generated/api-clients'
-import CitizenHeader from '../../pages/citizen/citizen-header'
 import IncomeStatementsPage from '../../pages/citizen/citizen-income'
-import { test } from '../../playwright'
-import { waitUntilEqual } from '../../utils'
+import { test, expect } from '../../playwright'
 import type { EnvType, Page } from '../../utils/page'
 import { enduserLogin } from '../../utils/user'
 
 let page: Page
-let header: CitizenHeader
 let incomeStatementsPage: IncomeStatementsPage
 
 const now = HelsinkiDateTime.of(2024, 11, 25, 12)
@@ -27,7 +24,7 @@ async function assertIncomeStatementCreated(
   sent: HelsinkiDateTime | null,
   env: EnvType
 ) {
-  await waitUntilEqual(async () => await incomeStatementsPage.rows.count(), 1)
+  await expect(incomeStatementsPage.rows).toHaveCount(1)
   const row = incomeStatementsPage.rows.only()
   await row.assertText((text) => text.includes(startDate))
   await row.assertText((text) =>
@@ -66,14 +63,12 @@ for (const env of ['desktop', 'mobile'] as const) {
       })
 
       page = evaka
-      await enduserLogin(page, testAdult)
-      header = new CitizenHeader(page, env)
+      await enduserLogin(page, testAdult, '/income')
       incomeStatementsPage = new IncomeStatementsPage(page, env)
     })
 
     test.describe('With the bare minimum selected', () => {
       test('Highest fee', async () => {
-        await header.selectTab('income')
         await incomeStatementsPage.createNewIncomeStatement()
         await incomeStatementsPage.selectIncomeStatementType('highest-fee')
         await incomeStatementsPage.setValidFromDate(startDate)
@@ -84,8 +79,6 @@ for (const env of ['desktop', 'mobile'] as const) {
       })
 
       test('Gross income', async () => {
-        await header.selectTab('income')
-
         await incomeStatementsPage.createNewIncomeStatement()
 
         await incomeStatementsPage.selectIncomeStatementType('gross-income')
@@ -94,12 +87,12 @@ for (const env of ['desktop', 'mobile'] as const) {
         await incomeStatementsPage.setValidFromDate(
           now.toLocalDate().subMonths(12).subDays(1).format('d.M.yyyy')
         )
-        await incomeStatementsPage.incomeStartDateInfo.waitUntilVisible()
+        await expect(incomeStatementsPage.incomeStartDateInfo).toBeVisible()
 
         await incomeStatementsPage.setValidFromDate(startDate)
-        await incomeStatementsPage.incomeStartDateInfo.waitUntilHidden()
+        await expect(incomeStatementsPage.incomeStartDateInfo).toBeHidden()
 
-        await incomeStatementsPage.incomeEndDateInfo.waitUntilVisible()
+        await expect(incomeStatementsPage.incomeEndDateInfo).toBeVisible()
 
         await incomeStatementsPage.checkIncomesRegisterConsent()
         await incomeStatementsPage.checkAssured()
@@ -108,12 +101,12 @@ for (const env of ['desktop', 'mobile'] as const) {
 
         // End date can be max 1y from start date so a warning is shown
         await incomeStatementsPage.setValidToDate('25.12.2045')
-        await incomeStatementsPage.incomeEndDateInfo.assertTextEquals(
+        await expect(incomeStatementsPage.incomeEndDateInfo).toHaveText(
           'Valitse aikaisempi päivä'
         )
 
         await incomeStatementsPage.setValidToDate(endDate)
-        await incomeStatementsPage.incomeEndDateInfo.waitUntilHidden()
+        await expect(incomeStatementsPage.incomeEndDateInfo).toBeHidden()
         await incomeStatementsPage.submit()
         await incomeStatementsPage.assertAriaLiveExistsAndIncludesNotification()
         await assertIncomeStatementCreated(startDate, now, env)
@@ -129,7 +122,6 @@ for (const env of ['desktop', 'mobile'] as const) {
 
     test.describe('Entrepreneur income', () => {
       test('Limited liability company', async () => {
-        await header.selectTab('income')
         await incomeStatementsPage.createNewIncomeStatement()
         await incomeStatementsPage.selectIncomeStatementType('gross-income')
         await incomeStatementsPage.setValidFromDate(startDate)
@@ -161,7 +153,7 @@ for (const env of ['desktop', 'mobile'] as const) {
 
         // Try to submit without attachments
         await incomeStatementsPage.submit()
-        await incomeStatementsPage.invalidForm.waitUntilVisible()
+        await expect(incomeStatementsPage.invalidForm).toBeVisible()
 
         // Add the missing attachment
         await incomeStatementsPage
@@ -173,7 +165,6 @@ for (const env of ['desktop', 'mobile'] as const) {
         await assertIncomeStatementCreated(startDate, now, env)
       })
       test('Self employed', async () => {
-        await header.selectTab('income')
         await incomeStatementsPage.createNewIncomeStatement()
         await incomeStatementsPage.selectIncomeStatementType('gross-income')
         await incomeStatementsPage.setValidFromDate(startDate)
@@ -214,7 +205,6 @@ for (const env of ['desktop', 'mobile'] as const) {
       })
 
       test('Light entrepreneur', async () => {
-        await header.selectTab('income')
         await incomeStatementsPage.createNewIncomeStatement()
         await incomeStatementsPage.selectIncomeStatementType('gross-income')
         await incomeStatementsPage.setValidFromDate(startDate)
@@ -251,7 +241,6 @@ for (const env of ['desktop', 'mobile'] as const) {
       })
 
       test('Partnership', async () => {
-        await header.selectTab('income')
         await incomeStatementsPage.createNewIncomeStatement()
         await incomeStatementsPage.selectIncomeStatementType('gross-income')
         await incomeStatementsPage.setValidFromDate(startDate)
@@ -290,7 +279,6 @@ for (const env of ['desktop', 'mobile'] as const) {
 
     test.describe('Saving as draft', () => {
       test('No need to check assured', async () => {
-        await header.selectTab('income')
         await incomeStatementsPage.createNewIncomeStatement()
         await incomeStatementsPage.selectIncomeStatementType('highest-fee')
         await incomeStatementsPage.setValidFromDate(startDate)
@@ -322,7 +310,7 @@ for (const env of ['desktop', 'mobile'] as const) {
           status: 'SENT'
         }).save()
 
-        await header.selectTab('income')
+        await page.reload()
         await incomeStatementsPage.assertNthIncomeStatementDeleteButtonDisabled(
           0,
           false

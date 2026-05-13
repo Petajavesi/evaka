@@ -60,13 +60,12 @@ test.describe('Citizen daycare applications', () => {
     })
 
     page = evaka
-    await enduserLogin(page, testAdult)
+    await enduserLogin(page, testAdult, '/applications')
     header = new CitizenHeader(page)
     applicationsPage = new CitizenApplicationsPage(page)
   })
 
   test('Sending incomplete daycare application gives validation error', async () => {
-    await header.selectTab('applications')
     const editorPage = await applicationsPage.createApplication(
       testChild.id,
       'DAYCARE'
@@ -97,7 +96,7 @@ test.describe('Citizen daycare applications', () => {
     await editorPage.goToVerification()
     await editorPage.assertErrorsExist()
     await editorPage.openSection('contactInfo')
-    await page.findByDataQa('guardianEmail-input-info').waitUntilHidden()
+    await expect(page.findByDataQa('guardianEmail-input-info')).toBeHidden()
   })
 
   test('If user has not selected any email setting in own settings the application requires it by default', async () => {
@@ -112,11 +111,10 @@ test.describe('Citizen daycare applications', () => {
     await editorPage.goToVerification()
     await editorPage.assertErrorsExist()
     await editorPage.openSection('contactInfo')
-    await page.findByDataQa('guardianEmail-input-info').waitUntilVisible()
+    await expect(page.findByDataQa('guardianEmail-input-info')).toBeVisible()
   })
 
   test('Minimal valid daycare application can be sent', async () => {
-    await header.selectTab('applications')
     const editorPage = await applicationsPage.createApplication(
       testChild.id,
       'DAYCARE'
@@ -135,7 +133,6 @@ test.describe('Citizen daycare applications', () => {
   })
 
   test('Full valid daycare application can be sent', async () => {
-    await header.selectTab('applications')
     const editorPage = await applicationsPage.createApplication(
       testChild.id,
       'DAYCARE'
@@ -194,7 +191,6 @@ test.describe('Citizen daycare applications', () => {
   })
 
   test('A warning is shown if preferred start date is very soon', async () => {
-    await header.selectTab('applications')
     const editorPage = await applicationsPage.createApplication(
       testChild.id,
       'DAYCARE'
@@ -210,7 +206,6 @@ test.describe('Citizen daycare applications', () => {
   })
 
   test('A validation error message is shown if preferred start date is not valid', async () => {
-    await header.selectTab('applications')
     const editorPage = await applicationsPage.createApplication(
       testChild.id,
       'DAYCARE'
@@ -224,7 +219,6 @@ test.describe('Citizen daycare applications', () => {
   })
 
   test('Citizen cannot move preferred start date before a previously selected date', async () => {
-    await header.selectTab('applications')
     const editorPage = await applicationsPage.createApplication(
       testChild.id,
       'DAYCARE'
@@ -243,7 +237,6 @@ test.describe('Citizen daycare applications', () => {
   })
 
   test('An error message is shown if part time is chosen and daily hours exceed 5 hours', async () => {
-    await header.selectTab('applications')
     const editorPage = await applicationsPage.createApplication(
       testChild.id,
       'DAYCARE'
@@ -257,7 +250,6 @@ test.describe('Citizen daycare applications', () => {
   })
 
   test('Previously selected preferred units exists', async () => {
-    await header.selectTab('applications')
     const editorPage = await applicationsPage.createApplication(
       testChild.id,
       'DAYCARE'
@@ -276,7 +268,6 @@ test.describe('Citizen daycare applications', () => {
   })
 
   test('Application can be made for restricted child', async () => {
-    await header.selectTab('applications')
     const editorPage = await applicationsPage.createApplication(
       testChildRestricted.id,
       'DAYCARE'
@@ -288,7 +279,6 @@ test.describe('Citizen daycare applications', () => {
   })
 
   test('Urgent application attachment can be uploaded and downloaded by citizen', async () => {
-    await header.selectTab('applications')
     const editorPage = await applicationsPage.createApplication(
       testChildRestricted.id,
       'DAYCARE'
@@ -302,7 +292,6 @@ test.describe('Citizen daycare applications', () => {
   test('Other guardian can see an application after it has been sent, and cannot see person details or attachments', async ({
     newEvakaPage
   }) => {
-    await header.selectTab('applications')
     const editorPage = await applicationsPage.createApplication(
       testChild.id,
       'DAYCARE'
@@ -319,22 +308,21 @@ test.describe('Citizen daycare applications', () => {
     await editorPage.verifyAndSend({ hasOtherGuardian: true })
 
     const otherGuardianPage = await newEvakaPage({ mockedTime: mockedNow })
-    await enduserLogin(otherGuardianPage, testAdult2)
+    await enduserLogin(otherGuardianPage, testAdult2, '/applications')
 
     const applications = new CitizenApplicationsPage(otherGuardianPage)
     await applications.assertApplicationExists(applicationId)
     const applicationReadView =
       await applications.viewApplication(applicationId)
 
-    await applicationReadView.unitPreferenceSection.waitUntilVisible()
-    await applicationReadView.contactInfoSection.waitUntilHidden()
-    await applicationReadView.urgencyAttachments.waitUntilHidden()
-    await applicationReadView.shiftCareAttachments.waitUntilHidden()
-    await applicationReadView.assistanceNeedDescription.assertTextEquals('')
+    await expect(applicationReadView.unitPreferenceSection).toBeVisible()
+    await expect(applicationReadView.contactInfoSection).toBeHidden()
+    await expect(applicationReadView.urgencyAttachments).toBeHidden()
+    await expect(applicationReadView.shiftCareAttachments).toBeHidden()
+    await expect(applicationReadView.assistanceNeedDescription).toHaveText('')
   })
 
   test('Application can be saved as draft', async () => {
-    await header.selectTab('applications')
     const editorPage = await applicationsPage.createApplication(
       testChild.id,
       'DAYCARE'
@@ -352,12 +340,11 @@ test.describe('Citizen daycare applications', () => {
     await editorPage.modalOkBtn.click()
     await applicationsPage.editApplication(applicationId)
     await editorPage.openSection('contactInfo')
-    await editorPage.guardianPhoneInput.assertValueEquals('040123456789')
+    await expect(editorPage.guardianPhoneInput).toHaveValue('040123456789')
   })
 
   test('If user has a verified email, that one is used in the application and cannot be changed', async () => {
     // given user has a draft application with an email
-    await header.selectTab('applications')
     const editorPage = await applicationsPage.createApplication(
       testChild.id,
       'DAYCARE'
@@ -387,15 +374,15 @@ test.describe('Citizen daycare applications', () => {
       },
       true
     )
-    await section.unverifiedEmailStatus.waitUntilVisible()
+    await expect(section.unverifiedEmailStatus).toBeVisible()
     await section.sendVerificationCode.click()
-    await section.verificationCodeField.waitUntilVisible()
+    await expect(section.verificationCodeField).toBeVisible()
     await runJobs({ mockedTime: mockedNow })
     const verificationCode = await getVerificationCodeFromEmail()
     expect(verificationCode).toBeTruthy()
     await section.verificationCodeField.fill(verificationCode ?? '')
     await section.verifyEmail.click()
-    await section.verifiedEmailStatus.waitUntilVisible()
+    await expect(section.verifiedEmailStatus).toBeVisible()
 
     // when user goes back to the application
     await page.reload()

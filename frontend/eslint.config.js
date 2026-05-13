@@ -15,7 +15,7 @@ import globals from 'globals'
 import typescriptEslint from 'typescript-eslint'
 
 export default [
-  { ignores: ['.yarn', 'dist', 'src/*/generated'] },
+  { ignores: ['.yarn', 'dist', 'src/*/generated', 'test-results'] },
   eslint.configs.recommended,
   ...typescriptEslint.configs.recommendedTypeChecked,
   ...typescriptEslint.configs.stylisticTypeChecked,
@@ -88,11 +88,14 @@ export default [
       'jsx-expressions': fixupPluginRules(jsxExpressionsPlugin)
     },
     settings: {
-      react: { version: 'detect' }
+      react: { version: 'detect' },
+      parserOptions: { jsx: true }
     },
     rules: {
       ...reactPlugin.configs.recommended.rules,
       ...reactHooksPlugin.configs.recommended.rules,
+      'react/react-in-jsx-scope': 'off',
+      'react/jsx-uses-react': 'off',
       'react/jsx-curly-brace-presence': ['error', 'never'],
       'react/prop-types': 'off',
       'react/self-closing-comp': ['error', { component: true, html: true }],

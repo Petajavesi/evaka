@@ -37,8 +37,7 @@ import PinLoginPage from '../../pages/mobile/pin-login-page'
 import ThreadViewPage from '../../pages/mobile/thread-view'
 import UnreadMobileMessagesPage from '../../pages/mobile/unread-message-counts'
 import type { NewEvakaPage } from '../../playwright'
-import { test } from '../../playwright'
-import { waitUntilEqual } from '../../utils'
+import { test, expect } from '../../playwright'
 import { pairMobileDevice, pairPersonalMobileDevice } from '../../utils/mobile'
 import type { Page } from '../../utils/page'
 import { enduserLogin } from '../../utils/user'
@@ -216,12 +215,12 @@ test.describe('Messages in child page', () => {
     await page.goto(mobileSignupUrl)
   })
 
-  async function initCitizenPage(mockedTime: HelsinkiDateTime) {
+  async function initCitizenPage(mockedTime: HelsinkiDateTime, url?: string) {
     citizenPage = await newPage({
       viewport: mobileViewport,
       mockedTime
     })
-    await enduserLogin(citizenPage, testAdult)
+    await enduserLogin(citizenPage, testAdult, url)
   }
 
   test('Employee can open editor and send message', async () => {
@@ -247,8 +246,7 @@ test.describe('Messages in child page', () => {
     await childPage.waitUntilLoaded()
     await runPendingAsyncJobs(mockedDateAt11.addMinutes(1))
 
-    await initCitizenPage(mockedDateAt12)
-    await citizenPage.goto(config.enduserMessagesUrl)
+    await initCitizenPage(mockedDateAt12, '/messages')
     const citizenMessagesPage = new CitizenMessagesPage(citizenPage, 'mobile')
     await citizenMessagesPage.assertThreadContent(message)
   })
@@ -334,12 +332,12 @@ test.describe('Messages page', () => {
     await page.goto(mobileSignupUrl)
   })
 
-  async function initCitizenPage(mockedTime: HelsinkiDateTime) {
+  async function initCitizenPage(mockedTime: HelsinkiDateTime, url?: string) {
     citizenPage = await newPage({
       viewport: mobileViewport,
       mockedTime
     })
-    await enduserLogin(citizenPage, testAdult)
+    await enduserLogin(citizenPage, testAdult, url)
   }
 
   async function citizenSendsMessageToGroup() {
@@ -379,15 +377,14 @@ test.describe('Messages page', () => {
     content: string
     urgent?: boolean
   }) {
-    await initCitizenPage(mockedDateAt12)
-    await citizenPage.goto(config.enduserMessagesUrl)
+    await initCitizenPage(mockedDateAt12, '/messages')
     const citizenMessagesPage = new CitizenMessagesPage(citizenPage, 'mobile')
     await citizenMessagesPage.assertThreadContent(message)
   }
 
   async function userSeesNewMessagesIndicator() {
     await page.goto(config.mobileUrl)
-    await listPage.unreadMessagesIndicator.waitUntilVisible()
+    await expect(listPage.unreadMessagesIndicator).toBeVisible()
   }
 
   async function userSeesNewMessageIndicatorAndClicks() {
@@ -416,7 +413,7 @@ test.describe('Messages page', () => {
     await unreadMessageCountsPage.pinLoginButton.click()
     await pinLoginPage.login(employeeName, pin)
     const linkToGroup = unreadMessageCountsPage.linkToGroup(daycareGroupId)
-    await linkToGroup.waitUntilVisible()
+    await expect(linkToGroup).toBeVisible()
     await linkToGroup.click()
   }
 
@@ -479,14 +476,14 @@ test.describe('Messages page', () => {
     await unreadMessageCountsPage.linkToGroup(daycareGroupId).click()
 
     await messagesPage.thread(0).click()
-    await waitUntilEqual(() => threadView.singleMessageContents.count(), 1)
+    await expect(threadView.singleMessageContents).toHaveCount(1)
     const replyContent = 'Testivastauksen sisältö'
     await threadView.replyButton.click()
     await threadView.replyContent.fill(replyContent)
 
     await threadView.goBack.click()
 
-    await messagesPage.thread(0).draftIndicator.waitUntilVisible()
+    await expect(messagesPage.thread(0).draftIndicator).toBeVisible()
   })
 
   test('Employee replies as a group to message sent to group', async () => {
@@ -499,15 +496,14 @@ test.describe('Messages page', () => {
     await unreadMessageCountsPage.linkToGroup(daycareGroupId).click()
 
     await messagesPage.thread(0).click()
-    await waitUntilEqual(() => threadView.singleMessageContents.count(), 1)
+    await expect(threadView.singleMessageContents).toHaveCount(1)
     const replyContent = 'Testivastauksen sisältö'
     await threadView.replyButton.click()
     await threadView.replyContent.fill(replyContent)
     await threadView.sendReplyButton.click()
-    await waitUntilEqual(() => threadView.singleMessageContents.count(), 2)
-    await waitUntilEqual(() => threadView.getMessageContent(1), replyContent)
-    await waitUntilEqual(
-      () => threadView.getMessageSender(1),
+    await expect(threadView.singleMessageContents).toHaveCount(2)
+    await expect(threadView.messageContent(1)).toHaveText(replyContent)
+    await expect(threadView.messageSender(1)).toHaveText(
       `${testDaycare.name} - ${daycareGroup.name}`
     )
   })
@@ -522,12 +518,12 @@ test.describe('Messages page', () => {
     await unreadMessageCountsPage.linkToGroup(daycareGroupId).click()
 
     await messagesPage.thread(0).click()
-    await waitUntilEqual(() => threadView.singleMessageContents.count(), 1)
+    await expect(threadView.singleMessageContents).toHaveCount(1)
     await threadView.replyButton.click()
     await threadView.replyContent.fill('foo bar baz')
     await threadView.discardReplyButton.click()
     await threadView.replyButton.click()
-    await waitUntilEqual(() => threadView.replyContent.inputValue, '')
+    await expect(threadView.replyContent).toHaveValue('')
   })
 
   test('Employee sends a message to a group', async () => {
@@ -565,7 +561,7 @@ test.describe('Messages page', () => {
 
     await staffStartsNewMessage()
 
-    await messageEditor.senderName.assertTextEquals(
+    await expect(messageEditor.senderName).toHaveText(
       `${testDaycare.name} - ${daycareGroup.name}`
     )
 
@@ -576,19 +572,19 @@ test.describe('Messages page', () => {
     // message editor
     await messageEditor.recipients.open()
     await messageEditor.recipients.option(`${daycareGroup.id}+false`).click()
-    await messageEditor.recipients
-      .option(`${daycareGroup2.id}+false`)
-      .waitUntilHidden()
-    await messageEditor.recipients
-      .option(`${daycareGroup3.id}+false`)
-      .waitUntilHidden()
+    await expect(
+      messageEditor.recipients.option(`${daycareGroup2.id}+false`)
+    ).toBeHidden()
+    await expect(
+      messageEditor.recipients.option(`${daycareGroup3.id}+false`)
+    ).toBeHidden()
 
     const message = { title: 'Otsikko', content: 'Testiviestin sisältö' }
     await messageEditor.fillMessage(message)
     await messageEditor.send.click()
-    await messageEditor.manyRecipientsWarning.waitUntilVisible()
+    await expect(messageEditor.manyRecipientsWarning).toBeVisible()
     await messageEditor.manyRecipientsConfirm.click()
-    await messageEditor.waitUntilHidden()
+    await expect(messageEditor).toBeHidden()
     await runPendingAsyncJobs(mockedDateAt11.addMinutes(1))
 
     // Check that citizen received the message
@@ -602,15 +598,15 @@ test.describe('Messages page', () => {
     const message = { title: 'Otsikko', content: 'Testiviestin sisältö' }
     await messageEditor.fillMessage(message)
     await messageEditor.send.click()
-    await messageEditor.waitUntilHidden()
+    await expect(messageEditor).toBeHidden()
 
     const sentTab = await messagesPage.openSentTab()
     const first = sentTab.message(0)
-    await first.title.assertTextEquals(message.title)
+    await expect(first.title).toHaveText(message.title)
 
     const firstMessage = await first.openMessage()
-    await firstMessage.topBarTitle.assertTextEquals(message.title)
-    await firstMessage.content.assertTextEquals(message.content)
+    await expect(firstMessage.topBarTitle).toHaveText(message.title)
+    await expect(firstMessage.content).toHaveText(message.content)
   })
 
   test('Employee sees a draft message and can send it', async () => {
@@ -623,17 +619,19 @@ test.describe('Messages page', () => {
 
     const draftsTab = await messagesPage.openDraftsTab()
     const firstDraft = draftsTab.message(0)
-    await firstDraft.title.assertTextEquals(message.title)
+    await expect(firstDraft.title).toHaveText(message.title)
 
     messageEditor = await firstDraft.editDraft()
 
-    await messageEditor.recipients.values.assertTextsEqual([daycareGroup.name])
-    await messageEditor.title.assertValueEquals(message.title)
-    await messageEditor.content.assertValueEquals(message.content)
+    await expect(messageEditor.recipients.values).toHaveText([
+      daycareGroup.name
+    ])
+    await expect(messageEditor.title).toHaveValue(message.title)
+    await expect(messageEditor.content).toHaveValue(message.content)
     await messageEditor.send.click()
 
-    await draftsTab.list.waitUntilVisible()
-    await draftsTab.message(0).waitUntilHidden()
+    await expect(draftsTab.list).toBeVisible()
+    await expect(draftsTab.message(0)).toBeHidden()
   })
 
   test('Employee can discard a draft message', async () => {
@@ -646,13 +644,13 @@ test.describe('Messages page', () => {
 
     const draftsTab = await messagesPage.openDraftsTab()
     const firstDraft = draftsTab.message(0)
-    await firstDraft.title.assertTextEquals(message.title)
+    await expect(firstDraft.title).toHaveText(message.title)
 
     messageEditor = await firstDraft.editDraft()
     await messageEditor.discard.click()
 
-    await draftsTab.list.waitUntilVisible()
-    await draftsTab.message(0).waitUntilHidden()
+    await expect(draftsTab.list).toBeVisible()
+    await expect(draftsTab.message(0)).toBeHidden()
   })
 
   test('Message button goes to unread messages if user has no pin session', async () => {
@@ -680,9 +678,8 @@ test.describe('Messages page', () => {
     await messagesPage.assertThreadsExist()
     await messagesPage.thread(0).click()
 
-    await waitUntilEqual(() => threadView.singleMessageContents.count(), 1)
-    await waitUntilEqual(
-      () => threadView.getMessageContent(0),
+    await expect(threadView.singleMessageContents).toHaveCount(1)
+    await expect(threadView.messageContent(0)).toHaveText(
       'Testiviestin sisältö'
     )
   })
@@ -697,16 +694,16 @@ test.describe('Messages page', () => {
 
     await unreadMessageCountsPage.linkToGroup(daycareGroup2.id).click()
     await messagesPage.assertThreadsExist()
-    await waitUntilEqual(() => messagesPage.getThreadTitle(0), 'Hei ryhmä 2')
+    await expect(messagesPage.threadTitle(0)).toHaveText('Hei ryhmä 2')
 
     await nav.selectGroup(daycareGroup.id)
     await messagesPage.assertThreadsExist()
-    await waitUntilEqual(() => messagesPage.getThreadTitle(0), 'Otsikko')
+    await expect(messagesPage.threadTitle(0)).toHaveText('Otsikko')
   })
 
   test('Staff without group access sees info that no accounts were found', async () => {
     await staff2LoginsToMessagesPage()
-    await messagesPage.noAccountInfo.waitUntilVisible()
+    await expect(messagesPage.noAccountInfo).toBeVisible()
   })
 })
 
@@ -744,8 +741,8 @@ test.describe('Personal mobile device', () => {
     await pinLoginPage.personalDeviceLogin(pin)
     await unreadMessageCountsPage.linkToGroup(daycareGroup.id).click()
 
-    await messagesPage.receivedTab.waitUntilVisible()
-    await messagesPage.sentTab.waitUntilVisible()
-    await messagesPage.draftsTab.waitUntilVisible()
+    await expect(messagesPage.receivedTab).toBeVisible()
+    await expect(messagesPage.sentTab).toBeVisible()
+    await expect(messagesPage.draftsTab).toBeVisible()
   })
 })

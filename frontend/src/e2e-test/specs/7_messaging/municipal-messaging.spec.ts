@@ -30,7 +30,7 @@ import type { DevEmployee, DevPerson } from '../../generated/api-types'
 import CitizenMessagesPage from '../../pages/citizen/citizen-messages'
 import MessagesPage from '../../pages/employee/messages/messages-page'
 import type { NewEvakaPage } from '../../playwright'
-import { test } from '../../playwright'
+import { test, expect } from '../../playwright'
 import type { Page } from '../../utils/page'
 import { employeeLogin, enduserLogin } from '../../utils/user'
 
@@ -144,9 +144,9 @@ test.describe('Municipal messaging -', () => {
     await employeeLogin(staffPage, staff)
   }
 
-  async function openCitizenPage(mockedTime: HelsinkiDateTime) {
+  async function openCitizenPage(mockedTime: HelsinkiDateTime, url?: string) {
     citizenPage = await newPage({ mockedTime })
-    await enduserLogin(citizenPage, testAdult)
+    await enduserLogin(citizenPage, testAdult, url)
   }
 
   test('Messaging role can send messages to multiple areas', async () => {
@@ -161,8 +161,7 @@ test.describe('Municipal messaging -', () => {
     })
     await runPendingAsyncJobs(messageSendTime.addMinutes(1))
 
-    await openCitizenPage(messageReadTime)
-    await citizenPage.goto(config.enduserMessagesUrl)
+    await openCitizenPage(messageReadTime, '/messages')
     const citizenMessagesPage = new CitizenMessagesPage(citizenPage, 'desktop')
     await citizenMessagesPage.assertThreadContent(defaultMessage)
   })
@@ -208,7 +207,7 @@ test.describe('Municipal messaging -', () => {
     await messagingPage.goto(`${config.employeeUrl}/messages`)
     const messagesPage = new MessagesPage(messagingPage)
     const messageEditor = await messagesPage.openMessageEditor()
-    await messageEditor.filtersButton.waitUntilVisible()
+    await expect(messageEditor.filtersButton).toBeVisible()
     await messageEditor.filtersButton.click()
     await messageEditor.assertFiltersVisible()
   })

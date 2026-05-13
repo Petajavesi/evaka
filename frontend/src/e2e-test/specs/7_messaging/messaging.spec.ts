@@ -52,7 +52,6 @@ import GuardianInformationPage from '../../pages/employee/guardian-information'
 import MessagesPage from '../../pages/employee/messages/messages-page'
 import type { NewEvakaPage } from '../../playwright'
 import { test, expect } from '../../playwright'
-import { waitUntilEqual } from '../../utils'
 import type { Page } from '../../utils/page'
 import { employeeLogin, enduserLogin, enduserLoginWeak } from '../../utils/user'
 
@@ -180,14 +179,18 @@ test.describe('Sending and receiving messages', () => {
     await employeeLogin(unitSupervisorPage, unitSupervisor)
   }
 
-  async function openCitizenPage(mockedTime: HelsinkiDateTime) {
+  async function openCitizenPage(mockedTime: HelsinkiDateTime, url?: string) {
     citizenPage = await newPage({ mockedTime })
-    await enduserLogin(citizenPage, testAdult)
+    await enduserLogin(citizenPage, testAdult, url)
   }
 
-  async function openCitizenPageWeak(mockedTime: HelsinkiDateTime) {
+  async function openCitizenPageWeak(
+    mockedTime: HelsinkiDateTime,
+    path?: string
+  ) {
     citizenPage = await newPage({ mockedTime })
     await enduserLoginWeak(citizenPage, credentials)
+    if (path) await citizenPage.goto(config.enduserUrl + path)
   }
 
   for (const [name, openCitizen] of [
@@ -203,8 +206,7 @@ test.describe('Sending and receiving messages', () => {
         await messageEditor.sendNewMessage(defaultMessage)
         await runPendingAsyncJobs(mockedDateAt10.addMinutes(1))
 
-        await openCitizen(mockedDateAt11)
-        await citizenPage.goto(config.enduserMessagesUrl)
+        await openCitizen(mockedDateAt11, '/messages')
         const citizenMessagesPage = new CitizenMessagesPage(
           citizenPage,
           'desktop'
@@ -212,12 +214,12 @@ test.describe('Sending and receiving messages', () => {
         await citizenMessagesPage.assertThreadContent(defaultMessage)
         await citizenMessagesPage.replyToFirstThread(defaultReply)
         await runPendingAsyncJobs(mockedDateAt11.addMinutes(1))
-        await waitUntilEqual(() => citizenMessagesPage.getMessageCount(), 2)
+        await expect(citizenMessagesPage.threadMessages).toHaveCount(2)
 
         await openSupervisorPage(mockedDateAt12)
         messagesPage = new MessagesPage(unitSupervisorPage)
         await unitSupervisorPage.goto(`${config.employeeUrl}/messages`)
-        await waitUntilEqual(() => messagesPage.getReceivedMessageCount(), 1)
+        await expect(messagesPage.receivedMessages).toHaveCount(1)
         await messagesPage.receivedMessage.click()
         await messagesPage.assertMessageContent(1, defaultReply)
       })
@@ -262,8 +264,7 @@ test.describe('Sending and receiving messages', () => {
           `${testChild2.lastName} ${testChild2.firstName}`
         )
 
-        await openCitizen(mockedDateAt11)
-        await citizenPage.goto(config.enduserMessagesUrl)
+        await openCitizen(mockedDateAt11, '/messages')
         const citizenMessagesPage = new CitizenMessagesPage(
           citizenPage,
           'desktop'
@@ -271,12 +272,12 @@ test.describe('Sending and receiving messages', () => {
         await citizenMessagesPage.assertThreadContent(defaultMessage)
         await citizenMessagesPage.replyToFirstThread(defaultReply)
         await runPendingAsyncJobs(mockedDateAt11.addMinutes(1))
-        await waitUntilEqual(() => citizenMessagesPage.getMessageCount(), 2)
+        await expect(citizenMessagesPage.threadMessages).toHaveCount(2)
 
         await openSupervisorPage(mockedDateAt12)
         await unitSupervisorPage.goto(`${config.employeeUrl}/messages`)
         messagesPage = new MessagesPage(unitSupervisorPage)
-        await waitUntilEqual(() => messagesPage.getReceivedMessageCount(), 1)
+        await expect(messagesPage.receivedMessages).toHaveCount(1)
         await messagesPage.receivedMessage.click()
         await messagesPage.assertMessageContent(1, defaultReply)
       })
@@ -298,8 +299,7 @@ test.describe('Sending and receiving messages', () => {
           ]
         })
 
-        await openCitizen(mockedDateAt10)
-        await citizenPage.goto(config.enduserMessagesUrl)
+        await openCitizen(mockedDateAt10, '/messages')
         const citizenMessagesPage = new CitizenMessagesPage(
           citizenPage,
           'desktop'
@@ -322,8 +322,7 @@ test.describe('Sending and receiving messages', () => {
         await messageEditor.sendNewMessage(message)
         await runPendingAsyncJobs(mockedDateAt10.addMinutes(1))
 
-        await openCitizen(mockedDateAt11)
-        await citizenPage.goto(config.enduserMessagesUrl)
+        await openCitizen(mockedDateAt11, '/messages')
         const citizenMessagesPage = new CitizenMessagesPage(
           citizenPage,
           'desktop'
@@ -331,12 +330,12 @@ test.describe('Sending and receiving messages', () => {
         await citizenMessagesPage.assertThreadContent(message)
         await citizenMessagesPage.replyToFirstThread(defaultReply)
         await runPendingAsyncJobs(mockedDateAt11.addMinutes(1))
-        await waitUntilEqual(() => citizenMessagesPage.getMessageCount(), 2)
+        await expect(citizenMessagesPage.threadMessages).toHaveCount(2)
 
         await openSupervisorPage(mockedDateAt12)
         await unitSupervisorPage.goto(`${config.employeeUrl}/messages`)
         messagesPage = new MessagesPage(unitSupervisorPage)
-        await waitUntilEqual(() => messagesPage.getReceivedMessageCount(), 1)
+        await expect(messagesPage.receivedMessages).toHaveCount(1)
         await messagesPage.receivedMessage.click()
         await messagesPage.assertMessageContent(1, defaultReply)
       })
@@ -352,17 +351,13 @@ test.describe('Sending and receiving messages', () => {
         })
         await runPendingAsyncJobs(mockedDateAt10.addMinutes(1))
 
-        await openCitizen(mockedDateAt11)
-        await citizenPage.goto(config.enduserMessagesUrl)
+        await openCitizen(mockedDateAt11, '/messages')
         const citizenMessagesPage = new CitizenMessagesPage(
           citizenPage,
           'desktop'
         )
         await citizenMessagesPage.assertThreadContent(defaultMessage)
-        await waitUntilEqual(
-          () => citizenMessagesPage.getThreadAttachmentCount(),
-          2
-        )
+        await expect(citizenMessagesPage.threadAttachments).toHaveCount(2)
 
         await citizenMessagesPage.openFirstThread()
         const downloadedContent =
@@ -385,17 +380,13 @@ test.describe('Sending and receiving messages', () => {
         })
         await runPendingAsyncJobs(mockedDateAt10.addMinutes(1))
 
-        await openCitizen(mockedDateAt11)
-        await citizenPage.goto(config.enduserMessagesUrl)
+        await openCitizen(mockedDateAt11, '/messages')
         const citizenMessagesPage = new CitizenMessagesPage(
           citizenPage,
           'desktop'
         )
         await citizenMessagesPage.assertThreadContent(defaultMessage)
-        await waitUntilEqual(
-          () => citizenMessagesPage.getThreadAttachmentCount(),
-          1
-        )
+        await expect(citizenMessagesPage.threadAttachments).toHaveCount(1)
       })
 
       test('Employee can discard thread reply', async () => {
@@ -406,8 +397,7 @@ test.describe('Sending and receiving messages', () => {
         await messageEditor.sendNewMessage(defaultMessage)
         await runPendingAsyncJobs(mockedDateAt10.addMinutes(1))
 
-        await openCitizen(mockedDateAt11)
-        await citizenPage.goto(config.enduserMessagesUrl)
+        await openCitizen(mockedDateAt11, '/messages')
         const citizenMessagesPage = new CitizenMessagesPage(
           citizenPage,
           'desktop'
@@ -421,18 +411,17 @@ test.describe('Sending and receiving messages', () => {
         messagesPage = new MessagesPage(unitSupervisorPage)
         await messagesPage.openInbox(0)
         await messagesPage.openFirstThreadReplyEditor()
-        await messagesPage.discardMessageButton.waitUntilVisible()
+        await expect(messagesPage.discardMessageButton).toBeVisible()
         await messagesPage.fillReplyContent(defaultContent)
         await messagesPage.discardReplyEditor()
-        await messagesPage.discardMessageButton.waitUntilHidden()
+        await expect(messagesPage.discardMessageButton).toBeHidden()
         await messagesPage.openReplyEditor()
         await messagesPage.assertReplyContentIsEmpty()
       })
 
       test('Citizen sends a message to the unit supervisor', async () => {
         const recipients = ['Esimies Essi']
-        await openCitizen(mockedDateAt10)
-        await citizenPage.goto(config.enduserMessagesUrl)
+        await openCitizen(mockedDateAt10, '/messages')
         const citizenMessagesPage = new CitizenMessagesPage(
           citizenPage,
           'desktop'
@@ -450,9 +439,9 @@ test.describe('Sending and receiving messages', () => {
         await unitSupervisorPage.goto(`${config.employeeUrl}/messages`)
         const messagesPage = new MessagesPage(unitSupervisorPage)
         await messagesPage.openInbox(0)
-        await waitUntilEqual(() => messagesPage.getReceivedMessageCount(), 1)
+        await expect(messagesPage.receivedMessages).toHaveCount(1)
         await messagesPage.openInbox(1)
-        await waitUntilEqual(() => messagesPage.getReceivedMessageCount(), 0)
+        await expect(messagesPage.receivedMessages).toHaveCount(0)
       })
 
       test('Citizen sends a message to the unit supervisor before the placement, both will reply', async () => {
@@ -461,8 +450,7 @@ test.describe('Sending and receiving messages', () => {
           LocalTime.of(10, 2)
         )
         const recipients = ['Esimies Essi']
-        await openCitizen(tenDaysbeforePlacementAt10)
-        await citizenPage.goto(config.enduserMessagesUrl)
+        await openCitizen(tenDaysbeforePlacementAt10, '/messages')
         const citizenMessagesPage = new CitizenMessagesPage(
           citizenPage,
           'desktop'
@@ -484,35 +472,30 @@ test.describe('Sending and receiving messages', () => {
         await unitSupervisorPage.goto(`${config.employeeUrl}/messages`)
         const messagesPage = new MessagesPage(unitSupervisorPage)
         await messagesPage.openInbox(0)
-        await waitUntilEqual(() => messagesPage.getReceivedMessageCount(), 1)
+        await expect(messagesPage.receivedMessages).toHaveCount(1)
         await messagesPage.openFirstThreadReplyEditor()
         await messagesPage.fillReplyContent(defaultReply)
         await messagesPage.sendReplyButton.click()
-        await messagesPage.sendReplyButton.waitUntilHidden()
+        await expect(messagesPage.sendReplyButton).toBeHidden()
         await runPendingAsyncJobs(tenDaysBeforePlacementAt11.addMinutes(1))
 
         const tenDaysBeforePlacementAt12 = HelsinkiDateTime.fromLocal(
           mockedDate.addDays(-10),
           LocalTime.of(12, 13)
         )
-        await openCitizen(tenDaysBeforePlacementAt12)
-        await citizenPage.goto(config.enduserMessagesUrl)
+        await openCitizen(tenDaysBeforePlacementAt12, '/messages')
         const citizenMessagesPageLater = new CitizenMessagesPage(
           citizenPage,
           'desktop'
         )
         await citizenMessagesPageLater.openFirstThread()
-        await waitUntilEqual(
-          () => citizenMessagesPageLater.getMessageCount(),
-          2
-        )
+        await expect(citizenMessagesPageLater.threadMessages).toHaveCount(2)
         await citizenMessagesPageLater.replyToFirstThread(defaultReply)
       })
 
       test('Citizen can send a message and receive a notification on success', async () => {
         const recipients = ['Esimies Essi']
-        await openCitizen(mockedDateAt10)
-        await citizenPage.goto(config.enduserMessagesUrl)
+        await openCitizen(mockedDateAt10, '/messages')
         const citizenMessagesPage = new CitizenMessagesPage(
           citizenPage,
           'desktop'
@@ -547,8 +530,7 @@ test.describe('Sending and receiving messages', () => {
         }).save()
 
         const recipients = ['Esimies Essi']
-        await openCitizen(mockedDateAt10)
-        await citizenPage.goto(config.enduserMessagesUrl)
+        await openCitizen(mockedDateAt10, '/messages')
         const citizenMessagesPage = new CitizenMessagesPage(
           citizenPage,
           'desktop'
@@ -565,16 +547,15 @@ test.describe('Sending and receiving messages', () => {
         await openSupervisorPage(mockedDateAt11)
         await unitSupervisorPage.goto(`${config.employeeUrl}/messages`)
         const messagesPage = new MessagesPage(unitSupervisorPage)
-        await waitUntilEqual(() => messagesPage.getReceivedMessageCount(), 1)
+        await expect(messagesPage.receivedMessages).toHaveCount(1)
         await messagesPage.receivedMessage.click()
         await messagesPage.assertMessageContent(0, defaultContent)
-        await waitUntilEqual(() => messagesPage.getThreadAttachmentCount(), 1)
+        await expect(messagesPage.threadAttachments).toHaveCount(1)
       })
 
       test('Unit supervisor sees the name of the child in a message sent by citizen', async () => {
         const recipients = ['Esimies Essi']
-        await openCitizen(mockedDateAt10)
-        await citizenPage.goto(config.enduserMessagesUrl)
+        await openCitizen(mockedDateAt10, '/messages')
         const citizenMessagesPage = new CitizenMessagesPage(
           citizenPage,
           'desktop'
@@ -592,7 +573,7 @@ test.describe('Sending and receiving messages', () => {
         await unitSupervisorPage.goto(`${config.employeeUrl}/messages`)
         const messagesPage = new MessagesPage(unitSupervisorPage)
         await messagesPage.openInbox(0)
-        await waitUntilEqual(() => messagesPage.getReceivedMessageCount(), 1)
+        await expect(messagesPage.receivedMessages).toHaveCount(1)
         await messagesPage.assertReceivedMessageParticipantsContains(
           0,
           '(Karhula Jari)'
@@ -622,8 +603,7 @@ test.describe('Sending and receiving messages', () => {
         })
 
         const recipients = ['Esimies Essi']
-        await openCitizen(mockedDateAt10)
-        await citizenPage.goto(config.enduserMessagesUrl)
+        await openCitizen(mockedDateAt10, '/messages')
         const citizenMessagesPage = new CitizenMessagesPage(
           citizenPage,
           'desktop'
@@ -644,7 +624,7 @@ test.describe('Sending and receiving messages', () => {
         await unitSupervisorPage.goto(`${config.employeeUrl}/messages`)
         const messagesPage = new MessagesPage(unitSupervisorPage)
         await messagesPage.openInbox(0)
-        await waitUntilEqual(() => messagesPage.getReceivedMessageCount(), 1)
+        await expect(messagesPage.receivedMessages).toHaveCount(1)
         await messagesPage.assertReceivedMessageParticipantsContains(
           0,
           '(Karhula Kaarina)'
@@ -696,8 +676,7 @@ test.describe('Sending and receiving messages', () => {
         }).save()
         await createMessageAccounts()
 
-        await openCitizen(mockedDateAt10)
-        await citizenPage.goto(config.enduserMessagesUrl)
+        await openCitizen(mockedDateAt10, '/messages')
         const citizenMessagesPage = new CitizenMessagesPage(
           citizenPage,
           'desktop'
@@ -760,8 +739,7 @@ test.describe('Sending and receiving messages', () => {
           .addDays(1)
           .toHelsinkiDateTime(LocalTime.of(12, 0))
 
-        await openCitizen(dayAfterPlacementEnds)
-        await citizenPage.goto(config.enduserMessagesUrl)
+        await openCitizen(dayAfterPlacementEnds, '/messages')
         const citizenMessagesPageAfterPlacement = new CitizenMessagesPage(
           citizenPage,
           'desktop'
@@ -778,8 +756,7 @@ test.describe('Sending and receiving messages', () => {
         })
 
         const recipients = ['Esimies Essi']
-        await openCitizen(mockedDateAt10)
-        await citizenPage.goto(config.enduserMessagesUrl)
+        await openCitizen(mockedDateAt10, '/messages')
         const citizenMessagesPage = new CitizenMessagesPage(
           citizenPage,
           'desktop'
@@ -799,7 +776,7 @@ test.describe('Sending and receiving messages', () => {
         await unitSupervisorPage.goto(`${config.employeeUrl}/messages`)
         const messagesPage = new MessagesPage(unitSupervisorPage)
         await messagesPage.openInbox(0)
-        await waitUntilEqual(() => messagesPage.getReceivedMessageCount(), 1)
+        await expect(messagesPage.receivedMessages).toHaveCount(1)
         await messagesPage.assertReceivedMessageParticipantsContains(
           0,
           `${otherGuardian.lastName} ${otherGuardian.firstName}`
@@ -808,8 +785,7 @@ test.describe('Sending and receiving messages', () => {
 
       test('Citizen sends message to the unit supervisor and the group', async () => {
         const recipients = ['Esimies Essi', 'Kosmiset vakiot (Henkilökunta)']
-        await openCitizen(mockedDateAt10)
-        await citizenPage.goto(config.enduserMessagesUrl)
+        await openCitizen(mockedDateAt10, '/messages')
         const citizenMessagesPage = new CitizenMessagesPage(
           citizenPage,
           'desktop'
@@ -827,9 +803,9 @@ test.describe('Sending and receiving messages', () => {
         await unitSupervisorPage.goto(`${config.employeeUrl}/messages`)
         const messagesPage = new MessagesPage(unitSupervisorPage)
         await messagesPage.openInbox(0)
-        await waitUntilEqual(() => messagesPage.getReceivedMessageCount(), 1)
+        await expect(messagesPage.receivedMessages).toHaveCount(1)
         await messagesPage.openInbox(1)
-        await waitUntilEqual(() => messagesPage.getReceivedMessageCount(), 1)
+        await expect(messagesPage.receivedMessages).toHaveCount(1)
       })
 
       test('Citizen can discard message', async () => {
@@ -840,19 +816,18 @@ test.describe('Sending and receiving messages', () => {
         await messageEditor.sendNewMessage(defaultMessage)
         await runPendingAsyncJobs(mockedDateAt10.addMinutes(1))
 
-        await openCitizen(mockedDateAt11)
-        await citizenPage.goto(config.enduserMessagesUrl)
+        await openCitizen(mockedDateAt11, '/messages')
         const citizenMessagesPage = new CitizenMessagesPage(
           citizenPage,
           'desktop'
         )
         await citizenMessagesPage.startReplyToFirstThread()
-        await citizenMessagesPage.discardMessageButton.waitUntilVisible()
+        await expect(citizenMessagesPage.discardMessageButton).toBeVisible()
         await citizenMessagesPage.messageReplyContent.fill(defaultContent)
         await citizenMessagesPage.discardReplyEditor()
-        await citizenMessagesPage.discardMessageButton.waitUntilHidden()
+        await expect(citizenMessagesPage.discardMessageButton).toBeHidden()
         await citizenMessagesPage.startReplyToFirstThread()
-        await citizenMessagesPage.messageReplyContent.assertTextEquals('')
+        await expect(citizenMessagesPage.messageReplyContent).toHaveText('')
       })
 
       test('Citizen can reply to a thread and receive a notification on success', async () => {
@@ -863,8 +838,7 @@ test.describe('Sending and receiving messages', () => {
         await messageEditor.sendNewMessage(defaultMessage)
         await runPendingAsyncJobs(mockedDateAt10.addMinutes(1))
 
-        await openCitizen(mockedDateAt11)
-        await citizenPage.goto(config.enduserMessagesUrl)
+        await openCitizen(mockedDateAt11, '/messages')
         const citizenMessagesPage = new CitizenMessagesPage(
           citizenPage,
           'desktop'
@@ -886,8 +860,7 @@ test.describe('Sending and receiving messages', () => {
         await messageEditor.sendNewMessage(defaultMessage)
         await runPendingAsyncJobs(mockedDateAt10.addMinutes(1))
 
-        await openCitizen(mockedDateAt11)
-        await citizenPage.goto(config.enduserMessagesUrl)
+        await openCitizen(mockedDateAt11, '/messages')
         const citizenMessagesPage = new CitizenMessagesPage(
           citizenPage,
           'desktop'
@@ -908,8 +881,7 @@ test.describe('Sending and receiving messages', () => {
 
       test('Mark unread button is hidden for citizen if there are no messages from staff in the thread', async () => {
         const recipients = ['Kosmiset vakiot (Henkilökunta)']
-        await openCitizen(mockedDateAt10)
-        await citizenPage.goto(config.enduserMessagesUrl)
+        await openCitizen(mockedDateAt10, '/messages')
         const citizenMessagesPage = new CitizenMessagesPage(
           citizenPage,
           'desktop'
@@ -937,8 +909,7 @@ test.describe('Sending and receiving messages', () => {
           .groupAcl(testDaycareGroup.id, mockedDateAt10, mockedDateAt10)
           .save()
 
-        await openCitizen(mockedDateAt10)
-        await citizenPage.goto(config.enduserMessagesUrl)
+        await openCitizen(mockedDateAt10, '/messages')
         const citizenMessagesPage = new CitizenMessagesPage(
           citizenPage,
           'desktop'
@@ -964,14 +935,14 @@ test.describe('Sending and receiving messages', () => {
 
         await messagesPage.unitReceived.click()
 
-        await waitUntilEqual(() => messagesPage.getReceivedMessageCount(), 1)
+        await expect(messagesPage.receivedMessages).toHaveCount(1)
         await messagesPage.openFirstThread()
         await messagesPage.assertMessageContent(0, defaultContent)
-        await waitUntilEqual(() => messagesPage.getReceivedMessageCount(), 0)
+        await expect(messagesPage.receivedMessages).toHaveCount(0)
 
-        await messagesPage.markUnreadButton.waitUntilVisible()
+        await expect(messagesPage.markUnreadButton).toBeVisible()
         await messagesPage.markUnreadButton.click()
-        await waitUntilEqual(() => messagesPage.getReceivedMessageCount(), 1)
+        await expect(messagesPage.receivedMessages).toHaveCount(1)
 
         const employeePage2 = await newPage({
           mockedTime: mockedDateAt11.addMinutes(5)
@@ -982,14 +953,14 @@ test.describe('Sending and receiving messages', () => {
 
         await messagesPage2.unitReceived.click()
 
-        await waitUntilEqual(() => messagesPage2.getReceivedMessageCount(), 1)
+        await expect(messagesPage2.receivedMessages).toHaveCount(1)
         await messagesPage2.openFirstThread()
         await messagesPage2.assertMessageContent(0, defaultContent)
-        await waitUntilEqual(() => messagesPage2.getReceivedMessageCount(), 0)
+        await expect(messagesPage2.receivedMessages).toHaveCount(0)
 
-        await messagesPage2.markUnreadButton.waitUntilVisible()
+        await expect(messagesPage2.markUnreadButton).toBeVisible()
         await messagesPage2.markUnreadButton.click()
-        await waitUntilEqual(() => messagesPage2.getReceivedMessageCount(), 1)
+        await expect(messagesPage2.receivedMessages).toHaveCount(1)
       })
 
       test('Citizen reply recipient toggles persist while typing', async () => {
@@ -1004,8 +975,7 @@ test.describe('Sending and receiving messages', () => {
         await messageEditor.sendNewMessage(defaultMessage)
         await runPendingAsyncJobs(mockedDateAt10.addMinutes(1))
 
-        await openCitizen(mockedDateAt11)
-        await citizenPage.goto(config.enduserMessagesUrl)
+        await openCitizen(mockedDateAt11, '/messages')
         const citizenMessagesPage = new CitizenMessagesPage(
           citizenPage,
           'desktop'
@@ -1032,8 +1002,7 @@ test.describe('Sending and receiving messages', () => {
           await messageEditor.sendNewMessage(defaultMessage)
           await runPendingAsyncJobs(mockedDateAt10.addMinutes(1))
 
-          await openCitizen(mockedDateAt11)
-          await citizenPage.goto(config.enduserMessagesUrl)
+          await openCitizen(mockedDateAt11, '/messages')
           const citizenMessagesPage = new CitizenMessagesPage(
             citizenPage,
             'desktop'
@@ -1051,8 +1020,7 @@ test.describe('Sending and receiving messages', () => {
           await messageEditor.sendNewMessage(defaultMessage)
           await runPendingAsyncJobs(mockedDateAt10.addMinutes(1))
 
-          await openCitizen(mockedDateAt11)
-          await citizenPage.goto(config.enduserMessagesUrl)
+          await openCitizen(mockedDateAt11, '/messages')
           const citizenMessagesPage = new CitizenMessagesPage(
             citizenPage,
             'desktop'
@@ -1168,8 +1136,7 @@ test.describe('Sending and receiving messages', () => {
 
       async function openCitizenThread(time: HelsinkiDateTime) {
         const citizenPage = await newEvakaPage({ mockedTime: time })
-        await enduserLogin(citizenPage, testAdult)
-        await citizenPage.goto(config.enduserMessagesUrl)
+        await enduserLogin(citizenPage, testAdult, '/messages')
         const citizenMessagesPage = new CitizenMessagesPage(
           citizenPage,
           'desktop'
@@ -1312,8 +1279,7 @@ test.describe('Foster parent messaging', () => {
     const fosterParentPage = await newPage({
       mockedTime: mockedDateAt10
     })
-    await enduserLogin(fosterParentPage, fosterParent)
-    await fosterParentPage.goto(config.enduserMessagesUrl)
+    await enduserLogin(fosterParentPage, fosterParent, '/messages')
     const fosterParentMessagesPage = new CitizenMessagesPage(
       fosterParentPage,
       'desktop'
@@ -1337,7 +1303,7 @@ test.describe('Foster parent messaging', () => {
     await unitSupervisorPage.goto(`${config.employeeUrl}/messages`)
     const messagesPage = new MessagesPage(unitSupervisorPage)
     await messagesPage.unitReceived.click()
-    await waitUntilEqual(() => messagesPage.getReceivedMessageCount(), 1)
+    await expect(messagesPage.receivedMessages).toHaveCount(1)
     await messagesPage.openFirstThreadReplyEditor()
 
     const guardianButton = messagesPage.secondaryRecipient(
@@ -1377,8 +1343,7 @@ test.describe('Foster parent messaging', () => {
     const fosterParentPage = await newPage({
       mockedTime: mockedDateAt11
     })
-    await enduserLogin(fosterParentPage, fosterParent)
-    await fosterParentPage.goto(config.enduserMessagesUrl)
+    await enduserLogin(fosterParentPage, fosterParent, '/messages')
     const fosterParentMessagesPage = new CitizenMessagesPage(
       fosterParentPage,
       'desktop'
