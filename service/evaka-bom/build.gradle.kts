@@ -16,7 +16,7 @@ dependencies {
         api("com.networknt:json-schema-validator:3.0.1")
         api("com.zaxxer:HikariCP:7.0.2")
         api("io.github.oshai:kotlin-logging-jvm:8.0.01")
-        api("io.kotest:kotest-property:6.1.10")
+        api("io.kotest:kotest-property:6.1.11")
         api("jakarta.annotation:jakarta.annotation-api:3.0.0")
         api("jakarta.jws:jakarta.jws-api:3.0.0")
         api("jakarta.xml.ws:jakarta.xml.ws-api:4.0.3")
@@ -38,10 +38,10 @@ dependencies {
         api(libs.mockito.junit.jupiter)
         api("org.mockito.kotlin:mockito-kotlin:6.3.0")
         api("org.postgresql:postgresql:42.7.10")
-        api("org.checkerframework:checker-qual:3.54.0")
+        api("org.checkerframework:checker-qual:3.55.1")
         api("org.skyscreamer:jsonassert:1.5.3")
         api("org.thymeleaf.extras:thymeleaf-extras-java8time:3.0.4.RELEASE")
-        api("org.thymeleaf:thymeleaf:3.1.3.RELEASE")
+        api("org.thymeleaf:thymeleaf:3.1.4.RELEASE")
         api(libs.flyingsaucer.core)
         api(libs.flyingsaucer.pdf)
         api(libs.ktlint.cli.ruleset.core)
@@ -55,8 +55,8 @@ dependencies {
         api("org.apache.groovy:groovy") { version { strictly("5.0.3") } }
 
         // These constraints are needed for CVE fixes
-        api("ch.qos.logback:logback-classic:1.5.32")
-        api("ch.qos.logback:logback-core:1.5.32")
+        api("org.apache.tomcat.embed:tomcat-embed-core:11.0.21")
+        api("org.apache.tomcat.embed:tomcat-embed-websocket:11.0.21")
     }
 
     api(platform("tools.jackson:jackson-bom:3.1.1"))
@@ -68,5 +68,5 @@ dependencies {
     api(platform(libs.kotlin.bom))
     api(platform("org.junit:junit-bom:6.0.3"))
     api(platform(libs.spring.boot.dependencies))
-    api(platform("software.amazon.awssdk:bom:2.42.24"))
+    api(platform("software.amazon.awssdk:bom:2.42.29"))
 }
