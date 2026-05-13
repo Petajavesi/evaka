@@ -7,6 +7,9 @@ package evaka.instance.tampere
 import evaka.core.EvakaEnv
 import evaka.core.ScheduledJobsEnv
 import evaka.core.application.ApplicationStatus
+import evaka.core.bi.BiExportClient
+import evaka.core.bi.BiExportConfig
+import evaka.core.bi.BiExportJob
 import evaka.core.document.archival.ArchivalIntegrationClient
 import evaka.core.invoicing.domain.PaymentIntegrationClient
 import evaka.core.mealintegration.DefaultMealTypeMapper
@@ -22,14 +25,14 @@ import evaka.core.shared.security.actionrule.ActionRuleMapping
 import evaka.core.titania.TitaniaEmployeeIdConverter
 import evaka.instance.espoo.DefaultPasswordSpecification
 import evaka.instance.tampere.archival.TampereArchivalClient
-import evaka.instance.tampere.bi.BiExportClient
-import evaka.instance.tampere.bi.BiExportJob
 import evaka.instance.tampere.bi.FileBiExportS3Client
 import evaka.instance.tampere.export.ExportUnitsAclService
 import evaka.instance.tampere.payment.TamperePaymentClient
 import evaka.instance.tampere.security.TampereActionRuleMapping
+import evaka.trevaka.TrevakaProperties
 import evaka.trevaka.export.ExportPreschoolChildDocumentsService
 import evaka.trevaka.frends.basicAuthInterceptor
+import evaka.trevaka.frends.frendsWebServiceMessageSender
 import evaka.trevaka.frends.newFrendsHttpClient
 import evaka.trevaka.security.TrevakaActionRuleMapping
 import evaka.trevaka.titania.TrimStartTitaniaEmployeeIdConverter
@@ -47,6 +50,7 @@ import org.springframework.oxm.jaxb.Jaxb2Marshaller
 import org.springframework.ws.client.core.WebServiceTemplate
 import org.springframework.ws.soap.SoapVersion
 import org.springframework.ws.soap.saaj.SaajSoapMessageFactory
+import org.springframework.ws.transport.WebServiceMessageSender
 import org.springframework.ws.transport.http.SimpleHttpComponents5MessageSender
 import software.amazon.awssdk.services.s3.S3Client
 
@@ -132,7 +136,8 @@ class TampereConfig {
         AsyncJobRunner(TampereAsyncJob::class, listOf(TampereAsyncJob.pool), jdbi, tracer)
 
     @Bean
-    fun tampereBiJob(biExportClient: BiExportClient): BiExportJob = BiExportJob(biExportClient)
+    fun tampereBiJob(biExportClient: BiExportClient): BiExportJob =
+        BiExportJob(biExportClient, BiExportConfig(includePII = true, includeLegacyColumns = true))
 
     @Bean
     fun paymentIntegrationClient(properties: TampereProperties): PaymentIntegrationClient {
@@ -156,6 +161,10 @@ class TampereConfig {
             }
         return TamperePaymentClient(webServiceTemplate, properties.payment)
     }
+
+    @Bean
+    fun webServiceMessageSender(trevakaProperties: TrevakaProperties): WebServiceMessageSender =
+        frendsWebServiceMessageSender(trevakaProperties.vtjKyselyApiKey)
 
     @Bean
     fun actionRuleMapping(): ActionRuleMapping =

@@ -6,6 +6,7 @@ package evaka.instance.turku
 
 import com.jcraft.jsch.JSch
 import evaka.core.ScheduledJobsEnv
+import evaka.core.VtjXroadEnv
 import evaka.core.application.ApplicationStatus
 import evaka.core.document.archival.ArchivalIntegrationClient
 import evaka.core.emailclient.IEmailMessageProvider
@@ -32,6 +33,7 @@ import evaka.core.shared.message.IMessageProvider
 import evaka.core.shared.security.actionrule.ActionRuleMapping
 import evaka.core.shared.template.ITemplateProvider
 import evaka.core.titania.TitaniaEmployeeIdConverter
+import evaka.core.vtjclient.config.httpsMessageSender
 import evaka.instance.espoo.DefaultPasswordSpecification
 import evaka.instance.turku.database.DevDataInitializer
 import evaka.instance.turku.dw.DwExportClient
@@ -57,8 +59,8 @@ import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.Profile
 import org.springframework.core.env.Environment
 import org.springframework.core.io.ClassPathResource
+import org.springframework.ws.transport.WebServiceMessageSender
 import org.thymeleaf.ITemplateEngine
-import software.amazon.awssdk.services.s3.S3Client
 
 @Configuration
 @Import(TurkuAsyncJobRegistration::class)
@@ -183,6 +185,11 @@ class TurkuConfig {
     }
 
     @Bean
+    @Profile("production")
+    fun webServiceMessageSender(xroadEnv: VtjXroadEnv): WebServiceMessageSender =
+        httpsMessageSender(xroadEnv.trustStore, xroadEnv.keyStore)
+
+    @Bean
     fun tomcatCustomizer(env: Environment) =
         WebServerFactoryCustomizer<TomcatServletWebServerFactory> {
             it.addContextValves(defaultAccessLoggingValve(env))
@@ -197,16 +204,8 @@ class TurkuConfig {
     @Bean fun mealTypeMapper(): MealTypeMapper = DefaultMealTypeMapper
 
     @Bean
-    fun fileDwExportClient(
-        s3Client: S3Client,
-        sftpConnector: SftpConnector,
-        properties: TurkuEnv,
-    ): DwExportClient =
-        FileDWExportClient(
-            s3Client,
-            SftpSender(properties.dwExport.sftp, sftpConnector),
-            properties,
-        )
+    fun fileDwExportClient(sftpConnector: SftpConnector, properties: TurkuEnv): DwExportClient =
+        FileDWExportClient(SftpSender(properties.dwExport.sftp, sftpConnector))
 
     @Bean
     fun evakaTurkuAsyncJobRunner(

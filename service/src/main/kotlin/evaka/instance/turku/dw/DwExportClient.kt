@@ -4,13 +4,9 @@
 
 package evaka.instance.turku.dw
 
+import evaka.core.bi.CsvInputStream
 import evaka.core.shared.domain.EvakaClock
-import evaka.instance.espoo.bi.EspooBiJob
 
 interface DwExportClient {
-    fun sendDwCsvFile(
-        queryName: String,
-        clock: EvakaClock,
-        stream: EspooBiJob.CsvInputStream,
-    ): Pair<String, String>
+    fun sendDwCsvFile(queryName: String, clock: EvakaClock, stream: CsvInputStream)
 }

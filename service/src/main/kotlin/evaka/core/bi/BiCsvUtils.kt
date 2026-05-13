@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
-package evaka.instance.tampere.bi
+package evaka.core.bi
 
 import evaka.core.shared.domain.DateRange
 import evaka.core.shared.domain.TimeRange
@@ -39,9 +39,17 @@ fun <T : Any> toCsvRecords(
     converter: (value: Any?) -> String,
     clazz: KClass<T>,
     values: Sequence<T>,
+    config: BiExportConfig,
 ): Sequence<String> {
     check(clazz.isData)
-    val props = clazz.declaredMemberProperties.toList()
+    val props =
+        clazz.declaredMemberProperties
+            .filter { prop ->
+                val isPii = prop.annotations.any { it is Pii }
+                val isLegacy = prop.annotations.any { it is LegacyColumn }
+                (!isPii || config.includePII) && (!isLegacy || config.includeLegacyColumns)
+            }
+            .toList()
     val header = props.joinToString(CSV_FIELD_SEPARATOR, postfix = CSV_RECORD_SEPARATOR) { it.name }
     return sequenceOf(header) +
         values.map { record ->

@@ -38,7 +38,7 @@ dependencies {
         api(libs.mockito.junit.jupiter)
         api("org.mockito.kotlin:mockito-kotlin:6.3.0")
         api("org.postgresql:postgresql:42.7.10")
-        api("org.checkerframework:checker-qual:3.55.1")
+        api("org.checkerframework:checker-qual:4.0.0")
         api("org.skyscreamer:jsonassert:1.5.3")
         api("org.thymeleaf.extras:thymeleaf-extras-java8time:3.0.4.RELEASE")
         api("org.thymeleaf:thymeleaf:3.1.4.RELEASE")
@@ -59,14 +59,14 @@ dependencies {
         api("org.apache.tomcat.embed:tomcat-embed-websocket:11.0.21")
     }
 
-    api(platform("tools.jackson:jackson-bom:3.1.1"))
+    api(platform("tools.jackson:jackson-bom:3.1.2"))
     api(platform("com.squareup.okhttp3:okhttp-bom:5.3.2"))
-    api(platform("io.opentelemetry:opentelemetry-bom:1.60.1"))
+    api(platform("io.opentelemetry:opentelemetry-bom:1.61.0"))
     api(platform("io.netty:netty-bom:4.2.12.Final"))
     api(platform("org.apache.cxf:cxf-bom:4.2.0"))
-    api(platform("org.jdbi:jdbi3-bom:3.52.0"))
+    api(platform("org.jdbi:jdbi3-bom:3.52.1"))
     api(platform(libs.kotlin.bom))
     api(platform("org.junit:junit-bom:6.0.3"))
     api(platform(libs.spring.boot.dependencies))
-    api(platform("software.amazon.awssdk:bom:2.42.29"))
+    api(platform("software.amazon.awssdk:bom:2.42.34"))
 }
