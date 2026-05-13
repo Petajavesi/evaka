@@ -1,8 +1,9 @@
 package evaka.core.invoicing.integration
 
 import evaka.core.invoicing.domain.InvoiceDetailed
-import fi.espoo.evaka.invoicing.domain.InvoiceRowDetailed
-import fi.espoo.evaka.invoicing.service.PetajavesiInvoiceProducts
+import evaka.core.invoicing.domain.InvoiceRowDetailed
+import evaka.core.invoicing.service.PetajavesiInvoiceProducts
+import evaka.core.BucketEnv
 import evaka.core.shared.domain.HelsinkiDateTime
 import io.github.oshai.kotlinlogging.KotlinLogging
 import tools.jackson.databind.json.JsonMapper
@@ -29,7 +30,7 @@ interface InvoiceIntegrationClient {
     class MockClient(
         s3Client: S3Client,
         private val jsonMapper: JsonMapper,
-        private val bucketEnv: fi.espoo.evaka.BucketEnv,
+        private val bucketEnv: evaka.core.BucketEnv,
         private val outputDirectory: String = "invoices",
         private val filenamePrefix: String = "invoice_batch"
     ) : InvoiceIntegrationClient {

@@ -2,10 +2,10 @@
 //
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
-package fi.espoo.evaka.invoicing.service
+package evaka.core.invoicing.service
 
-import fi.espoo.evaka.invoicing.domain.FeeAlterationType
-import fi.espoo.evaka.placement.PlacementType
+import evaka.core.invoicing.domain.FeeAlterationType
+import evaka.core.placement.PlacementType
 
 object PetajavesiInvoiceProducts {
     enum class Product(

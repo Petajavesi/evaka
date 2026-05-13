@@ -6,7 +6,7 @@ package evaka.instance.espoo
 
 import evaka.core.ChildDocumentArchivalEnv
 import evaka.core.EvakaEnv
-import fi.espoo.evaka.BucketEnv
+import evaka.core.BucketEnv
 import evaka.core.ScheduledJobsEnv
 import evaka.core.Sensitive
 import evaka.core.document.archival.ArchivalIntegrationClient
