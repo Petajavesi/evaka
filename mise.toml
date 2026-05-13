@@ -3,12 +3,11 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 [tools]
-devcontainer-cli = "0.83.2"
 java = "zulu-25"
 lefthook = "2.1.6"
 node = "24.15.0"
 "npm:pm2" = "6.0.14"
-uv = "0.11.7"
+uv = "0.11.8"
 "pipx:reuse" = "6.2.0"
 yarn = "4.14.1"
 

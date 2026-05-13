@@ -23,7 +23,6 @@ plugins {
     alias(libs.plugins.versions)
     alias(libs.plugins.ktfmt)
     alias(libs.plugins.ktlint.gradle)
-    alias(libs.plugins.owasp)
 
     idea
 }
@@ -271,7 +270,20 @@ tasks.getByName<Jar>("jar") { archiveClassifier.set("") }
 tasks.getByName<BootJar>("bootJar") { archiveClassifier.set("boot") }
 
 tasks {
-    test { systemProperty("spring.profiles.active", "test") }
+    test {
+        systemProperty("spring.profiles.active", "test")
+        useJUnitPlatform { excludeTags("schemaValidation") }
+    }
+
+    register<Test>("validateArchiveMetadata") {
+        description =
+            "Validates generated archive metadata XML against XSD schemas (requires local schema files)"
+        group = "verification"
+        testClassesDirs = sourceSets["test"].output.classesDirs
+        classpath = sourceSets["test"].runtimeClasspath
+        useJUnitPlatform { includeTags("schemaValidation") }
+        systemProperty("sarma.schema.dir", project.findProperty("sarma.schema.dir") ?: "")
+    }
 
     register("integrationTest", Test::class) {
         useJUnitPlatform()
@@ -317,20 +329,6 @@ tasks {
         into(layout.buildDirectory.dir("download-only"))
         // remove version numbers from jar filenames
         rename(Pattern.compile("-([0-9]+[.]?)+.jar"), ".jar")
-    }
-
-    dependencyCheck {
-        failBuildOnCVSS = 0.0f
-        analyzers.apply {
-            assemblyEnabled = false
-            centralEnabled = false
-            nodeAuditEnabled = false
-            nodeEnabled = false
-            nuspecEnabled = false
-            ossIndex.apply { enabled = false }
-        }
-        nvd.apply { apiKey = System.getenv("NVD_API_KEY") }
-        suppressionFile = "$projectDir/owasp-suppressions.xml"
     }
 }
 

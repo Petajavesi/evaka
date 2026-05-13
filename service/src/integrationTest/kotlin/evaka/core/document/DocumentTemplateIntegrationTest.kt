@@ -199,7 +199,7 @@ class DocumentTemplateIntegrationTest : FullApplicationTest(resetDbBeforeEach = 
     }
 
     @Test
-    fun `test publishing, after which basics and content cannot be updated or template deleted`() {
+    fun `test publishing, after which basics and content cannot be updated`() {
         val created =
             controller.createTemplate(dbInstance(), employee.user, now, testCreationRequest)
         controller.updateDraftTemplateContent(
@@ -233,10 +233,6 @@ class DocumentTemplateIntegrationTest : FullApplicationTest(resetDbBeforeEach = 
             )
         }
 
-        assertThrows<BadRequest> {
-            controller.deleteDraftTemplate(dbInstance(), employee.user, now, created.id)
-        }
-
         // validity period can still be updated
         controller.updateTemplateValidity(
             dbInstance(),
@@ -245,6 +241,43 @@ class DocumentTemplateIntegrationTest : FullApplicationTest(resetDbBeforeEach = 
             created.id,
             DateRange(LocalDate.of(2000, 1, 1), null),
         )
+    }
+
+    @Test
+    fun `published template without documents can be deleted, with documents cannot`() {
+        val otherChild = DevPerson()
+        db.transaction { tx -> tx.insert(otherChild, DevPersonType.CHILD) }
+
+        val withDocs =
+            controller.createTemplate(
+                dbInstance(),
+                employee.user,
+                now,
+                testCreationRequest.copy(validity = DateRange(now.today(), null)),
+            )
+        controller.publishTemplate(dbInstance(), employee.user, now, withDocs.id)
+        childDocumentController.createDocument(
+            dbInstance(),
+            employee.user,
+            now,
+            ChildDocumentCreateRequest(otherChild.id, withDocs.id),
+        )
+        assertThrows<BadRequest> {
+            controller.deleteDraftTemplate(dbInstance(), employee.user, now, withDocs.id)
+        }
+
+        val withoutDocs =
+            controller.createTemplate(
+                dbInstance(),
+                employee.user,
+                now,
+                testCreationRequest.copy(validity = DateRange(now.today(), null)),
+            )
+        controller.publishTemplate(dbInstance(), employee.user, now, withoutDocs.id)
+        controller.deleteDraftTemplate(dbInstance(), employee.user, now, withoutDocs.id)
+        assertThrows<NotFound> {
+            controller.getTemplate(dbInstance(), employee.user, now, withoutDocs.id)
+        }
     }
 
     @Test
@@ -513,85 +546,65 @@ class DocumentTemplateIntegrationTest : FullApplicationTest(resetDbBeforeEach = 
     }
 
     @Test
-    fun `active templates endpoint does not return templates in finnish when placement unit is swedish`() {
-        val template =
-            controller.createTemplate(
-                dbInstance(),
-                employee.user,
-                now,
-                testCreationRequest.copy(
-                    language = UiLanguage.FI,
-                    validity = DateRange(now.today(), null),
-                ),
-            )
-        controller.publishTemplate(dbInstance(), employee.user, now, template.id)
-
-        val active = controller.getActiveTemplates(dbInstance(), employee.user, now, child.id)
-        assertTrue(active.isEmpty())
-    }
-
-    @Test
-    fun `active templates endpoint does not return templates in swedish when placement unit is finnish`() {
-        val childId = db.transaction { tx ->
-            val areaId = tx.insert(DevCareArea(name = "Other Area", shortName = "other_area"))
-            val daycareId =
-                tx.insert(
-                    DevDaycare(areaId = areaId, name = "Finnish Daycare", language = Language.fi)
-                )
-            val childId = tx.insert(DevPerson(), DevPersonType.CHILD)
-            tx.insert(
-                DevPlacement(
-                    childId = childId,
-                    unitId = daycareId,
-                    startDate = now.today(),
-                    endDate = now.today().plusDays(5),
-                )
-            )
-            childId
-        }
-        val template =
-            controller.createTemplate(
-                dbInstance(),
-                employee.user,
-                now,
-                testCreationRequest.copy(
-                    language = UiLanguage.SV,
-                    validity = DateRange(now.today(), null),
-                ),
-            )
-        controller.publishTemplate(dbInstance(), employee.user, now, template.id)
-
-        val active = controller.getActiveTemplates(dbInstance(), employee.user, now, childId)
-        assertTrue(active.isEmpty())
-    }
-
-    @Test
-    fun `active templates endpoint returns templates in all languages when placement unit is english`() {
-        val childId = insertChildInUnitWithLanguage(Language.en, name = "English Daycare")
+    fun `active templates endpoint returns same-language templates and english citizen basic when placement unit is finnish`() {
+        val childId = insertChildInUnitWithLanguage(Language.fi, name = "Finnish Daycare")
         listOf(UiLanguage.FI, UiLanguage.SV, UiLanguage.EN).forEach { lang ->
             publishPedagogicalAssessmentTemplate(lang)
+            publishCitizenBasicTemplate(lang)
         }
 
         val active = controller.getActiveTemplates(dbInstance(), employee.user, now, childId)
         assertEquals(
-            setOf(UiLanguage.FI, UiLanguage.SV, UiLanguage.EN),
-            active.map { it.language }.toSet(),
+            setOf(
+                UiLanguage.FI to ChildDocumentType.PEDAGOGICAL_ASSESSMENT,
+                UiLanguage.FI to ChildDocumentType.CITIZEN_BASIC,
+                UiLanguage.EN to ChildDocumentType.CITIZEN_BASIC,
+            ),
+            active.map { it.language to it.type }.toSet(),
         )
     }
 
     @Test
-    fun `active templates endpoint returns finnish and english templates only when placement unit is finnish`() {
-        val childId = insertChildInUnitWithLanguage(Language.fi, name = "Finnish Daycare")
+    fun `active templates endpoint returns same-language templates and english citizen basic when placement unit is swedish`() {
+        val childId = insertChildInUnitWithLanguage(Language.sv, name = "Swedish Daycare")
         listOf(UiLanguage.FI, UiLanguage.SV, UiLanguage.EN).forEach { lang ->
             publishPedagogicalAssessmentTemplate(lang)
+            publishCitizenBasicTemplate(lang)
         }
 
         val active = controller.getActiveTemplates(dbInstance(), employee.user, now, childId)
-        assertEquals(setOf(UiLanguage.FI, UiLanguage.EN), active.map { it.language }.toSet())
+        assertEquals(
+            setOf(
+                UiLanguage.SV to ChildDocumentType.PEDAGOGICAL_ASSESSMENT,
+                UiLanguage.SV to ChildDocumentType.CITIZEN_BASIC,
+                UiLanguage.EN to ChildDocumentType.CITIZEN_BASIC,
+            ),
+            active.map { it.language to it.type }.toSet(),
+        )
     }
 
     @Test
-    fun `active templates by group id endpoint returns templates in all languages when group unit is english`() {
+    fun `active templates endpoint returns finnish and english templates when placement unit is english`() {
+        val childId = insertChildInUnitWithLanguage(Language.en, name = "English Daycare")
+        listOf(UiLanguage.FI, UiLanguage.SV, UiLanguage.EN).forEach { lang ->
+            publishPedagogicalAssessmentTemplate(lang)
+            publishCitizenBasicTemplate(lang)
+        }
+
+        val active = controller.getActiveTemplates(dbInstance(), employee.user, now, childId)
+        assertEquals(
+            setOf(
+                UiLanguage.FI to ChildDocumentType.PEDAGOGICAL_ASSESSMENT,
+                UiLanguage.EN to ChildDocumentType.PEDAGOGICAL_ASSESSMENT,
+                UiLanguage.FI to ChildDocumentType.CITIZEN_BASIC,
+                UiLanguage.EN to ChildDocumentType.CITIZEN_BASIC,
+            ),
+            active.map { it.language to it.type }.toSet(),
+        )
+    }
+
+    @Test
+    fun `active templates by group id endpoint returns finnish and english but not swedish citizen basic templates when group unit is english`() {
         val groupId = insertGroupInUnitWithLanguage(Language.en, name = "English Daycare")
         listOf(UiLanguage.FI, UiLanguage.SV, UiLanguage.EN).forEach { lang ->
             publishCitizenBasicTemplate(lang)
@@ -603,16 +616,13 @@ class DocumentTemplateIntegrationTest : FullApplicationTest(resetDbBeforeEach = 
                 employee.user,
                 now,
                 groupId,
-                emptySet(),
+                setOf(ChildDocumentType.CITIZEN_BASIC),
             )
-        assertEquals(
-            setOf(UiLanguage.FI, UiLanguage.SV, UiLanguage.EN),
-            active.map { it.language }.toSet(),
-        )
+        assertEquals(setOf(UiLanguage.FI, UiLanguage.EN), active.map { it.language }.toSet())
     }
 
     @Test
-    fun `active templates by group id endpoint returns only matching language templates when group unit is finnish`() {
+    fun `active templates by group id endpoint returns finnish and english but not swedish citizen basic templates when group unit is finnish`() {
         val groupId = insertGroupInUnitWithLanguage(Language.fi, name = "Finnish Daycare")
         listOf(UiLanguage.FI, UiLanguage.SV, UiLanguage.EN).forEach { lang ->
             publishCitizenBasicTemplate(lang)
@@ -626,7 +636,71 @@ class DocumentTemplateIntegrationTest : FullApplicationTest(resetDbBeforeEach = 
                 groupId,
                 emptySet(),
             )
+        assertEquals(setOf(UiLanguage.FI, UiLanguage.EN), active.map { it.language }.toSet())
+    }
+
+    @Test
+    fun `active templates by group id endpoint does not show citizen basic templates when pilot feature is disabled`() {
+        val groupId =
+            insertGroupInUnitWithLanguage(
+                Language.fi,
+                name = "Finnish Daycare",
+                enabledPilotFeatures = emptySet(),
+            )
+        publishCitizenBasicTemplate(UiLanguage.FI)
+
+        val active =
+            controller.getActiveTemplatesByGroupId(
+                dbInstance(),
+                employee.user,
+                now,
+                groupId,
+                emptySet(),
+            )
+        assertEquals(emptyList(), active)
+    }
+
+    @Test
+    fun `active templates by group id endpoint does not show english pedagogical templates to finnish unit`() {
+        val groupId =
+            insertGroupInUnitWithLanguage(
+                Language.fi,
+                name = "Finnish Daycare",
+                enabledPilotFeatures = setOf(PilotFeature.VASU_AND_PEDADOC),
+            )
+        publishPedagogicalAssessmentTemplate(UiLanguage.FI)
+        publishPedagogicalAssessmentTemplate(UiLanguage.EN)
+
+        val active =
+            controller.getActiveTemplatesByGroupId(
+                dbInstance(),
+                employee.user,
+                now,
+                groupId,
+                emptySet(),
+            )
         assertEquals(setOf(UiLanguage.FI), active.map { it.language }.toSet())
+    }
+
+    @Test
+    fun `active templates by group id endpoint does not show swedish pedagogical template to english unit`() {
+        val groupId =
+            insertGroupInUnitWithLanguage(
+                Language.en,
+                name = "English Daycare",
+                enabledPilotFeatures = setOf(PilotFeature.VASU_AND_PEDADOC),
+            )
+        publishPedagogicalAssessmentTemplate(UiLanguage.SV)
+
+        val active =
+            controller.getActiveTemplatesByGroupId(
+                dbInstance(),
+                employee.user,
+                now,
+                groupId,
+                emptySet(),
+            )
+        assertEquals(emptyList(), active)
     }
 
     private fun insertChildInUnitWithLanguage(language: Language, name: String) =
@@ -659,23 +733,26 @@ class DocumentTemplateIntegrationTest : FullApplicationTest(resetDbBeforeEach = 
             childId
         }
 
-    private fun insertGroupInUnitWithLanguage(language: Language, name: String) =
-        db.transaction { tx ->
-            val areaId =
-                tx.insert(
-                    DevCareArea(name = "Area for $name", shortName = "area_group_${language.name}")
+    private fun insertGroupInUnitWithLanguage(
+        language: Language,
+        name: String,
+        enabledPilotFeatures: Set<PilotFeature> = setOf(PilotFeature.CITIZEN_BASIC_DOCUMENT),
+    ) = db.transaction { tx ->
+        val areaId =
+            tx.insert(
+                DevCareArea(name = "Area for $name", shortName = "area_group_${language.name}")
+            )
+        val daycareId =
+            tx.insert(
+                DevDaycare(
+                    areaId = areaId,
+                    name = name,
+                    language = language,
+                    enabledPilotFeatures = enabledPilotFeatures,
                 )
-            val daycareId =
-                tx.insert(
-                    DevDaycare(
-                        areaId = areaId,
-                        name = name,
-                        language = language,
-                        enabledPilotFeatures = setOf(PilotFeature.CITIZEN_BASIC_DOCUMENT),
-                    )
-                )
-            tx.insert(DevDaycareGroup(daycareId = daycareId))
-        }
+            )
+        tx.insert(DevDaycareGroup(daycareId = daycareId))
+    }
 
     private fun publishPedagogicalAssessmentTemplate(language: UiLanguage) {
         val template =

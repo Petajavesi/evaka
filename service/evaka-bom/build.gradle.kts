@@ -57,16 +57,17 @@ dependencies {
         // These constraints are needed for CVE fixes
         api("org.apache.tomcat.embed:tomcat-embed-core:11.0.21")
         api("org.apache.tomcat.embed:tomcat-embed-websocket:11.0.21")
+        api("org.postgresql:postgresql:42.7.11")
     }
 
     api(platform("tools.jackson:jackson-bom:3.1.2"))
     api(platform("com.squareup.okhttp3:okhttp-bom:5.3.2"))
     api(platform("io.opentelemetry:opentelemetry-bom:1.61.0"))
-    api(platform("io.netty:netty-bom:4.2.12.Final"))
+    api(platform("io.netty:netty-bom:4.2.13.Final"))
     api(platform("org.apache.cxf:cxf-bom:4.2.0"))
-    api(platform("org.jdbi:jdbi3-bom:3.52.1"))
+    api(platform("org.jdbi:jdbi3-bom:3.53.0"))
     api(platform(libs.kotlin.bom))
     api(platform("org.junit:junit-bom:6.0.3"))
     api(platform(libs.spring.boot.dependencies))
-    api(platform("software.amazon.awssdk:bom:2.42.38"))
+    api(platform("software.amazon.awssdk:bom:2.43.0"))
 }

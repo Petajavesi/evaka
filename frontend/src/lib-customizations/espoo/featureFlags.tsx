@@ -44,6 +44,9 @@ const features: Features = {
     invoiceDisplayAccountNumber: true,
     serviceApplications: true, // Petäjävesi: changed true -> false
     multiSelectDeparture: true,
+    archiveIntegration: {
+      childDocuments: true
+    },
     aromiIntegration: true,
     citizenChildDocumentTypes: true,
     decisionChildDocumentTypes: false, // Petäjävesi: changed true -> false
@@ -88,6 +91,9 @@ const features: Features = {
     invoiceDisplayAccountNumber: true,
     serviceApplications: true,
     multiSelectDeparture: true,
+    archiveIntegration: {
+      childDocuments: true
+    },
     aromiIntegration: true,
     citizenChildDocumentTypes: true,
     decisionChildDocumentTypes: false, // Petäjävesi: changed true -> false
@@ -132,6 +138,9 @@ const features: Features = {
     invoiceDisplayAccountNumber: true,
     serviceApplications: true, // Petäjävesi: changed false -> true
     multiSelectDeparture: true,
+    archiveIntegration: {
+      childDocuments: true
+    },
     aromiIntegration: true,
     citizenChildDocumentTypes: true,
     decisionChildDocumentTypes: false, // Petäjävesi: changed true -> false
