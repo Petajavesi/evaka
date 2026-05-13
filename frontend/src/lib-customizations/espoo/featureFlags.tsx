@@ -53,7 +53,8 @@ const features: Features = {
     showMetadataToCitizen: false, // Petäjävesi: changed true -> false
     placementDesktop: true,
     hideClubApplication: true, // Petäjävesi: added
-    employeeLanguageSelection: true
+    employeeLanguageSelection: true,
+    decisionReasoningOptions: true
   },
   test: { // Petäjävesi: renamed from staging
     environmentLabel: 'Test', // Petäjävesi: renamed from 'Staging'
@@ -96,7 +97,8 @@ const features: Features = {
     showMetadataToCitizen: true, // Petäjävesi: changed true -> false
     placementDesktop: true,
     hideClubApplication: true, // Petäjävesi: added
-    employeeLanguageSelection: true
+    employeeLanguageSelection: true,
+    decisionReasoningOptions: true
   },
   prod: {
     environmentLabel: null,

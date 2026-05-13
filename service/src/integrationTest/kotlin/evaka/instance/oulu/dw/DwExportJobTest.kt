@@ -8,6 +8,7 @@ import com.jcraft.jsch.JSch
 import evaka.core.BucketEnv
 import evaka.core.FullApplicationTest
 import evaka.core.Sensitive
+import evaka.core.SftpEnv
 import evaka.core.absence.AbsenceCategory
 import evaka.core.shared.dev.DevAbsence
 import evaka.core.shared.dev.DevCareArea
@@ -26,6 +27,7 @@ import evaka.core.shared.domain.HelsinkiDateTime
 import evaka.core.shared.domain.MockEvakaClock
 import evaka.instance.oulu.BucketProperties
 import evaka.instance.oulu.DwExportProperties
+import evaka.instance.oulu.FabricProperties
 import evaka.instance.oulu.OuluEnv
 import evaka.instance.oulu.SftpProperties
 import evaka.instance.oulu.invoice.service.SftpConnector
@@ -86,6 +88,19 @@ class DwExportJobTest : FullApplicationTest(resetDbBeforeEach = true) {
                                 username = Sensitive("foo"),
                                 password = Sensitive("pass"),
                             ),
+                    ),
+                fabric =
+                    FabricProperties(
+                        sftp =
+                            SftpEnv(
+                                host = "localhost",
+                                port = sftpPort,
+                                hostKeys = emptyList(),
+                                username = "foo",
+                                password = Sensitive("pass"),
+                                privateKey = null,
+                            ),
+                        remotePath = "upload/",
                     ),
             )
 

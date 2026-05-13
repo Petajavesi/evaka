@@ -4,18 +4,18 @@
 
 [versions]
 bouncycastle = "1.84"
-dd-java-agent = "1.61.0"
+dd-java-agent = "1.61.1"
 flyingsaucer = "10.2.0"
 flyway = "12.4.0"
 java = "25"
 kotlin = "2.3.20"
-ktfmt = "0.25.0"
+ktfmt = "0.26.0"
 ktlint = "1.8.0"
 ktlint-gradle = "14.2.0"
 mockito = "5.23.0"
 owasp = "12.2.1"
 spring-boot = "4.0.6"
-versions = "0.53.0"
+versions = "0.54.0"
 
 [libraries]
 bouncycastle-bcpkix = { module = "org.bouncycastle:bcpkix-jdk18on", version.ref = "bouncycastle" }

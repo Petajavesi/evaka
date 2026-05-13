@@ -108,7 +108,11 @@ export type DaycareCaretakerId = Id<'DaycareCaretaker'>
 
 export type DaycareId = Id<'Daycare'>
 
+export type DecisionGenericReasoningId = Id<'DecisionGenericReasoning'>
+
 export type DecisionId = Id<'Decision'>
+
+export type DecisionIndividualReasoningId = Id<'DecisionIndividualReasoning'>
 
 export type DocumentTemplateId = Id<'DocumentTemplate'>
 
@@ -116,10 +120,12 @@ export type DocumentTemplateId = Id<'DocumentTemplate'>
 * Generated from evaka.core.shared.security.EmployeeFeatures
 */
 export interface EmployeeFeatures {
+  allowEnglishChildDocumentsForAllTypes: boolean
   applications: boolean
   createDraftInvoices: boolean
   createPlacements: boolean
   createUnits: boolean
+  decisionReasonings: boolean
   documentTemplates: boolean
   employees: boolean
   finance: boolean

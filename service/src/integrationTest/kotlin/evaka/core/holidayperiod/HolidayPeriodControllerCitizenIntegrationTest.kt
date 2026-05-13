@@ -569,35 +569,71 @@ class HolidayPeriodControllerCitizenIntegrationTest :
             OpenRangesBody(mapOf(child2.id to listOf(shortRange))),
         )
 
-        val absences =
-            db.read { tx ->
-                tx.createQuery {
-                        sql(
-                            "SELECT child_id, date, absence_type, category FROM absence ORDER BY date"
-                        )
-                    }
-                    .toList<BillableAbsence>()
-            }
-        val billableAbsences =
-            absences.filter {
-                it.childId == child2.id &&
-                    it.category == AbsenceCategory.BILLABLE &&
-                    !it.date.isWeekend()
-            }
+        val absences = db.read { tx ->
+            tx.createQuery {
+                    sql("SELECT child_id, date, absence_type, category FROM absence ORDER BY date")
+                }
+                .toList<BillableAbsence>()
+        }
+        val billableAbsences = absences.filter {
+            it.childId == child2.id &&
+                it.category == AbsenceCategory.BILLABLE &&
+                !it.date.isWeekend()
+        }
         assertThat(billableAbsences).isNotEmpty
         billableAbsences.forEach { absence ->
             assertEquals(AbsenceType.PLANNED_ABSENCE, absence.absenceType)
         }
-        val nonbillableAbsences =
-            absences.filter {
-                it.childId == child2.id &&
-                    it.category == AbsenceCategory.NONBILLABLE &&
-                    !it.date.isWeekend()
-            }
+        val nonbillableAbsences = absences.filter {
+            it.childId == child2.id &&
+                it.category == AbsenceCategory.NONBILLABLE &&
+                !it.date.isWeekend()
+        }
         assertThat(nonbillableAbsences).isNotEmpty
         nonbillableAbsences.forEach { absence ->
             assertEquals(AbsenceType.OTHER_ABSENCE, absence.absenceType)
         }
+    }
+
+    @Test
+    fun `open ranges submission ignores ineligible children with empty range list`() {
+        db.transaction { tx ->
+            tx.insertGuardian(parent.id, child2.id)
+            tx.insert(
+                DevPlacement(
+                    childId = child2.id,
+                    unitId = daycare.id,
+                    type = PlacementType.CLUB,
+                    startDate = mockToday.minusYears(1),
+                    endDate = mockToday.plusYears(1),
+                )
+            )
+        }
+
+        val id = createOpenRangesQuestionnaire(freeRangesQuestionnaire)
+        val range =
+            FiniteDateRange(
+                freeRangesQuestionnaire.period.start,
+                freeRangesQuestionnaire.period.start.plusDays(40),
+            )
+
+        reportFreeRanges(
+            id,
+            OpenRangesBody(mapOf(child1.id to listOf(range), child2.id to emptyList())),
+        )
+
+        val absences = db.read { it.getAllAbsences() }
+        assertThat(absences.map { it.childId }.toSet()).containsExactly(child1.id)
+    }
+
+    @Test
+    fun `open ranges submission with empty list for eligible child is a no-op`() {
+        val id = createOpenRangesQuestionnaire(freeRangesQuestionnaire)
+
+        reportFreeRanges(id, OpenRangesBody(mapOf(child1.id to emptyList())))
+
+        val absences = db.read { it.getAllAbsences() }
+        assertThat(absences).isEmpty()
     }
 
     @Test
@@ -721,7 +757,9 @@ class HolidayPeriodControllerCitizenIntegrationTest :
         OpenRangesBody(mapOf(child1.id to ranges))
 
     private fun createOpenRangesQuestionnaire(body: QuestionnaireBody.OpenRangesQuestionnaireBody) =
-        db.transaction { it.createOpenRangesQuestionnaire(body) }
+        db.transaction {
+            it.createOpenRangesQuestionnaire(body)
+        }
 
     private data class Absence(val childId: ChildId, val date: LocalDate, val type: AbsenceType)
 

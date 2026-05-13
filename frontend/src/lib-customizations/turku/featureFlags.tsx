@@ -52,7 +52,8 @@ const features: Features = {
     showCitizenApplicationPreschoolTerms: true,
     showMetadataToCitizen: true,
     placementDesktop: false,
-    employeeLanguageSelection: true
+    employeeLanguageSelection: true,
+    decisionReasoningOptions: true
   },
   staging: {
     environmentLabel: 'Staging',
@@ -90,7 +91,8 @@ const features: Features = {
     showCitizenApplicationPreschoolTerms: true,
     showMetadataToCitizen: true,
     placementDesktop: true,
-    employeeLanguageSelection: true
+    employeeLanguageSelection: true,
+    decisionReasoningOptions: true
   },
   prod: {
     environmentLabel: null,
@@ -110,7 +112,7 @@ const features: Features = {
     urgencyAttachments: true,
     financeDecisionHandlerSelect: false,
     feeDecisionPreschoolClubFilter: true,
-    placementGuarantee: false,
+    placementGuarantee: true,
     voucherUnitPayments: true,
     extendedPreschoolTerm: false,
     intermittentShiftCare: false,
