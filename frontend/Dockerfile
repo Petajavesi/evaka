@@ -1,11 +1,11 @@
-# syntax=docker/dockerfile:1.22.0
+# syntax=docker/dockerfile:1.23.0
 # SPDX-FileCopyrightText: 2017-2023 City of Espoo
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 ARG NGINX_VERSION=1.29.2
 
-FROM node:24.14.0-trixie-slim AS builder
+FROM node:24.14.1-trixie-slim AS builder
 ARG CACHE_BUST
 
 USER root

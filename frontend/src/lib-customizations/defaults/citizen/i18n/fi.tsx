@@ -1673,6 +1673,7 @@ export default {
           'Vahvista ensin esiopetuksen tai valmistavan opetuksen paikka. Tämän jälkeen voit vahvistaa liittyvän varhaiskasvatuksen paikan.'
       },
       openPdf: 'Näytä päätös',
+      additionalDetails: 'Lisätiedot',
       warnings: {
         decisionWithNoResponseWarning: {
           title: 'Toinen päätös odottaa vastaustasi',
