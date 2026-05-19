@@ -309,6 +309,7 @@ fun validInvoiceRow(
         LocalDate.of(2021, 1, 1),
         LocalDate.of(2021, 1, 31),
         productKey,
+        null,
         DaycareId(UUID.randomUUID()),
         "unit1",
         ProviderType.MUNICIPAL,

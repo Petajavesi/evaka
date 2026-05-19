@@ -579,7 +579,7 @@ export async function updateIncome(
 /**
 * Generated from evaka.core.invoicing.controller.InvoiceController.createDraftInvoices
 */
-//Petäjäveden muutos 2025
+//Petajaveden muutos 2025
 export async function createDraftInvoices(
   request?: {
     year?: number | null,

@@ -128,7 +128,7 @@ const form = transformed(
     return ValidationSuccess.of(result)
   }
 )
-//Petäjäveden muutos 2025
+//Petajaveden muutos 2025
 const excludedAbsenceTypes: AbsenceType[] = [
 
 ]
