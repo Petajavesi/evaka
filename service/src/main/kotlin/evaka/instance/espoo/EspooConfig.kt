@@ -19,6 +19,9 @@ import evaka.core.holidayperiod.QuestionnaireType
 import evaka.core.invoicing.domain.PaymentIntegrationClient
 import evaka.core.invoicing.integration.EspooInvoiceIntegrationClient
 import evaka.core.invoicing.integration.InvoiceIntegrationClient
+import evaka.instance.petajavesi.invoice.PetajavesiInvoiceClient
+import evaka.instance.petajavesi.invoice.PetajavesiInvoiceSftpProperties
+import evaka.core.shared.sftp.SftpClient
 import evaka.core.invoicing.service.DefaultInvoiceGenerationLogic
 import evaka.core.invoicing.service.DefaultInvoiceNumberProvider
 import evaka.core.invoicing.service.EspooIncomeTypesProvider
@@ -85,11 +88,25 @@ class EspooConfig {
         jsonMapper: JsonMapper,
         s3Client: software.amazon.awssdk.services.s3.S3Client,
         bucketEnv: BucketEnv,
-    ): InvoiceIntegrationClient =
-        when (env.invoiceIntegrationEnabled) {
+        environment: Environment,
+    ): InvoiceIntegrationClient {
+        val s3InvoiceClient: InvoiceIntegrationClient = when (env.invoiceIntegrationEnabled) {
             true -> EspooInvoiceIntegrationClient(invoiceEnv.getObject(), jsonMapper)
             false -> InvoiceIntegrationClient.MockClient(s3Client, jsonMapper, bucketEnv)
         }
+
+        // If Petäjävesi SFTP is configured, wrap with SFTP sender
+        val sftpProperties = PetajavesiInvoiceSftpProperties.fromEnvironment(environment)
+        return if (sftpProperties != null) {
+            PetajavesiInvoiceClient(
+                s3Client = s3InvoiceClient,
+                sftpClient = SftpClient(sftpProperties.toSftpEnv()),
+                sftpPrefix = sftpProperties.prefix,
+            )
+        } else {
+            s3InvoiceClient
+        }
+    }
 
     @Bean
     fun patuIntegrationClient(
