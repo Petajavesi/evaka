@@ -90,21 +90,21 @@ class EspooConfig {
         bucketEnv: BucketEnv,
         environment: Environment,
     ): InvoiceIntegrationClient {
-        val s3InvoiceClient: InvoiceIntegrationClient = when (env.invoiceIntegrationEnabled) {
-            true -> EspooInvoiceIntegrationClient(invoiceEnv.getObject(), jsonMapper)
-            false -> InvoiceIntegrationClient.MockClient(s3Client, jsonMapper, bucketEnv)
-        }
-
-        // If Petäjävesi SFTP is configured, wrap with SFTP sender
+        // If Petäjävesi SFTP is configured, use dedicated client that writes S3 + sends SFTP
         val sftpProperties = PetajavesiInvoiceSftpProperties.fromEnvironment(environment)
-        return if (sftpProperties != null) {
-            PetajavesiInvoiceClient(
-                s3Client = s3InvoiceClient,
+        if (sftpProperties != null) {
+            val bucketName = System.getenv("EVAKA_BUCKET_INVOICES") ?: bucketEnv.data
+            return PetajavesiInvoiceClient(
+                s3Client = s3Client,
+                bucketName = bucketName,
                 sftpClient = SftpClient(sftpProperties.toSftpEnv()),
                 sftpPrefix = sftpProperties.prefix,
             )
-        } else {
-            s3InvoiceClient
+        }
+
+        return when (env.invoiceIntegrationEnabled) {
+            true -> EspooInvoiceIntegrationClient(invoiceEnv.getObject(), jsonMapper)
+            false -> InvoiceIntegrationClient.MockClient(s3Client, jsonMapper, bucketEnv)
         }
     }
 
