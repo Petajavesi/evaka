@@ -11,10 +11,10 @@ import { Link } from 'wouter'
 
 import { combine } from 'lib-common/api'
 import { ChipWrapper, SelectionChip } from 'lib-components/atoms/Chip'
+import { CityLogo } from 'lib-components/atoms/CityLogo'
 import { EvakaLogo } from 'lib-components/atoms/EvakaLogo'
 import HorizontalLine from 'lib-components/atoms/HorizontalLine'
 import NavLink, { useIsRouteActive } from 'lib-components/atoms/NavLink'
-import { CityLogo } from 'lib-components/atoms/CityLogo'
 import { Button } from 'lib-components/atoms/buttons/Button'
 import { desktopMin } from 'lib-components/breakpoints'
 import {
@@ -49,14 +49,14 @@ const LogoLink = styled(Link)`
   display: none;
   @media screen and (min-width: ${desktopMin}) {
     display: block;
-    margin-left: ${defaultMargins.s};
-    margin-right: ${defaultMargins.L};
+    margin-left: 0;
+    margin-right: ${defaultMargins.xs};
   }
 
   > svg {
     width: 100%;
     height: 100%;
-    max-width: 120px;
+    max-width: 100px;
   }
 `
 
@@ -77,7 +77,7 @@ const NavbarContainer = styled.nav`
   position: relative;
   display: flex;
   align-items: center;
-  gap: ${defaultMargins.L};
+  gap: ${defaultMargins.xs};
 `
 
 interface HeaderContainerProps extends BaseProps {
@@ -109,7 +109,7 @@ const NavLinkWrapper = styled.div`
   display: flex;
   align-items: center;
   border-bottom: 4px solid transparent;
-  margin: 6px 16px;
+  margin: 6px 10px;
   padding: 10px 0;
 `
 
@@ -315,6 +315,32 @@ export default React.memo(function Header() {
                       )
                     )
                     .getOrElse(null)}
+                </NavLinkWrapper>
+              </NavbarLink>
+            )}
+
+            {user.accessibleFeatures.shiftPlanning && (
+              <NavbarLink
+                onClick={closeUserPopup}
+                className="navbar-item is-tab"
+                to="/shift-planning"
+                data-qa="shift-planning-nav"
+              >
+                <NavLinkWrapper>
+                  <NavLinkText>{i18n.header.shiftPlanning}</NavLinkText>
+                </NavLinkWrapper>
+              </NavbarLink>
+            )}
+
+            {user.accessibleFeatures.shiftWishes && (
+              <NavbarLink
+                onClick={closeUserPopup}
+                className="navbar-item is-tab"
+                to="/shift-wishes"
+                data-qa="shift-wishes-nav"
+              >
+                <NavLinkWrapper>
+                  <NavLinkText>{i18n.header.shiftWishes}</NavLinkText>
                 </NavLinkWrapper>
               </NavbarLink>
             )}

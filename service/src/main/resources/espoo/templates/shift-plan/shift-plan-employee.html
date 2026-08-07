@@ -1,0 +1,95 @@
+<!--
+SPDX-FileCopyrightText: 2017-2026 City of Espoo
+
+SPDX-License-Identifier: LGPL-2.1-or-later
+-->
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <style>
+      @page {
+        size: A4 portrait;
+        margin: 18mm;
+      }
+      body {
+        font-family: sans-serif;
+        font-size: 12px;
+        color: #0f0f0f;
+      }
+      .employee-page {
+        page-break-after: always;
+      }
+      .employee-page:last-child {
+        page-break-after: avoid;
+      }
+      h1 {
+        font-size: 18px;
+        margin: 0 0 2px 0;
+      }
+      .subtitle {
+        font-size: 12px;
+        margin-bottom: 14px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+      }
+      th,
+      td {
+        border: 0.5pt solid #999999;
+        padding: 6px 8px;
+        text-align: left;
+        vertical-align: top;
+        white-space: pre-line; /* useampi vuoro riveittäin */
+      }
+      th {
+        background: #eeeeee;
+        font-weight: bold;
+      }
+      th.day,
+      td.day {
+        width: 35%;
+      }
+      td.empty {
+        color: #999999;
+      }
+      .total {
+        margin-top: 10px;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="employee-page" th:each="page : ${pages}">
+      <h1 th:text="${page.name}"></h1>
+      <div class="subtitle">
+        Työvuorot — <span th:text="${unitName}"></span> — viikko
+        <span th:text="${weekNumber}"></span> (<span
+          th:text="${weekRange}"
+        ></span
+        >)
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th class="day">Päivä</th>
+            <th>Työvuoro</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr th:each="row : ${page.rows}">
+            <td class="day" th:text="${row.day}"></td>
+            <td
+              th:text="${row.times.isEmpty()} ? '–' : ${row.times}"
+              th:classappend="${row.times.isEmpty()} ? 'empty'"
+            ></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="total">
+        Yhteensä: <span th:text="${page.total}"></span>
+      </div>
+    </div>
+  </body>
+</html>

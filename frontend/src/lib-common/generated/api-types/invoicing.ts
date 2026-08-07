@@ -665,6 +665,7 @@ export interface InvoiceRowDetailed {
   price: number
   product: string
   savedCostCenter: string | null
+  serviceNeed: string | null
   subCostCenter: string | null
   unitId: DaycareId
   unitName: string

@@ -67,6 +67,7 @@ import evaka.core.shared.auth.UserRole.REPORT_VIEWER
 import evaka.core.shared.auth.UserRole.SERVICE_WORKER
 import evaka.core.shared.auth.UserRole.SPECIAL_EDUCATION_TEACHER
 import evaka.core.shared.auth.UserRole.STAFF
+import evaka.core.shared.auth.UserRole.TYOVUOROSUUNNITTELIJA
 import evaka.core.shared.auth.UserRole.UNIT_SUPERVISOR
 import evaka.core.shared.security.actionrule.HasGlobalRole
 import evaka.core.shared.security.actionrule.HasGroupRole
@@ -134,6 +135,8 @@ sealed interface Action {
                 .inAnyUnit(),
         ),
         SETTINGS_PAGE(HasGlobalRole(ADMIN)),
+        SHIFT_PLANNING_PAGE(HasUnitRole(TYOVUOROSUUNNITTELIJA, UNIT_SUPERVISOR).inAnyUnit()),
+        SHIFT_WISH_PAGE(HasUnitRole(STAFF).inAnyUnit()),
         UNIT_FEATURES_PAGE(HasGlobalRole(ADMIN)),
         UNITS_PAGE(
             HasGlobalRole(ADMIN, SERVICE_WORKER, FINANCE_ADMIN, DIRECTOR, FINANCE_STAFF),
@@ -2082,6 +2085,8 @@ sealed interface Action {
         UPDATE_ACL_SPECIAL_EDUCATION_TEACHER(HasGlobalRole(ADMIN)),
         INSERT_ACL_EARLY_CHILDHOOD_EDUCATION_SECRETARY(HasGlobalRole(ADMIN)),
         UPDATE_ACL_EARLY_CHILDHOOD_EDUCATION_SECRETARY(HasGlobalRole(ADMIN)),
+        INSERT_ACL_TYOVUOROSUUNNITTELIJA(HasGlobalRole(ADMIN)),
+        UPDATE_ACL_TYOVUOROSUUNNITTELIJA(HasGlobalRole(ADMIN)),
         INSERT_ACL_STAFF(
             HasGlobalRole(ADMIN),
             HasUnitRole(UNIT_SUPERVISOR, EARLY_CHILDHOOD_EDUCATION_SECRETARY)
@@ -2093,6 +2098,11 @@ sealed interface Action {
             HasUnitRole(UNIT_SUPERVISOR, EARLY_CHILDHOOD_EDUCATION_SECRETARY).inUnit(),
         ),
         UPDATE_ACL_SCHEDULED(HasGlobalRole(ADMIN), HasUnitRole(UNIT_SUPERVISOR).inUnit()),
+        READ_SHIFT_PLAN(HasUnitRole(TYOVUOROSUUNNITTELIJA, UNIT_SUPERVISOR).inUnit()),
+        UPDATE_SHIFT_PLAN(HasUnitRole(TYOVUOROSUUNNITTELIJA, UNIT_SUPERVISOR).inUnit()),
+        DOWNLOAD_SHIFT_PLAN_PDF(HasUnitRole(TYOVUOROSUUNNITTELIJA, UNIT_SUPERVISOR).inUnit()),
+        CREATE_SHIFT_WISH(HasUnitRole(STAFF).inUnit()),
+        UPDATE_SHIFT_WISH(HasUnitRole(TYOVUOROSUUNNITTELIJA, UNIT_SUPERVISOR).inUnit()),
         UPDATE_STAFF_GROUP_ACL(
             HasGlobalRole(ADMIN),
             HasUnitRole(UNIT_SUPERVISOR, EARLY_CHILDHOOD_EDUCATION_SECRETARY).inUnit(),

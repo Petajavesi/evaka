@@ -15,7 +15,8 @@ import org.springframework.web.util.UriComponentsBuilder
 private val logger = KotlinLogging.logger {}
 
 fun generateApiFiles(): Map<TsFile, String> {
-    val allEndpoints = scanEndpoints("evaka.core")
+    val allEndpoints =
+        scanEndpoints("evaka.core") + scanEndpoints("evaka.instance.petajavesi")
     allEndpoints.forEach { it.validate() }
 
     val endpoints = allEndpoints.filterNot {
@@ -624,6 +625,7 @@ private fun getBasePackage(clazz: KClass<*>): String {
         when {
             pkg == basePackage -> return "base"
             pkg.startsWith("$basePackage.") -> pkg.substring(basePackage.length + 1)
+            pkg.startsWith("evaka.instance.petajavesi") -> return "petajavesi"
             else -> error("class not under base package")
         }
     return relativePackage.substringBefore('.')

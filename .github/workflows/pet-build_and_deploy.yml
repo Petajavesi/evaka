@@ -81,12 +81,13 @@ jobs:
           context: ./frontend
           cache-from: type=gha,scope=frontend-common
           cache-to: type=gha,mode=max,scope=frontend-common
-          build-args: 
+          build-args:
             CACHE_BUST=${{ needs.cache-bust.outputs.cache-bust }}
             build=${{ github.run_number }}
             commit=${{ github.sha }}
             ICONS=free
-          build-contexts: customizations=frontend/src/lib-customizations/espoo
+            EVAKA_CUSTOMIZATIONS=petajavesi
+          build-contexts: customizations=frontend/src/lib-customizations/petajavesi
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           push: true

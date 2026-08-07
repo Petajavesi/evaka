@@ -54,8 +54,8 @@ fun main(args: Array<String>) {
 }
 
 @Configuration
-@ComponentScan("evaka.instance.espoo")
-@ConfigurationPropertiesScan(basePackages = ["evaka.instance.espoo"])
+@ComponentScan("evaka.instance.espoo", "evaka.instance.petajavesi")
+@ConfigurationPropertiesScan(basePackages = ["evaka.instance.espoo", "evaka.instance.petajavesi"])
 class EspooInstance
 
 @Configuration

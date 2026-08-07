@@ -1,5 +1,24 @@
 # Petajavesi fork from Espoo eVaka
 
+## Petäjävesi customizations
+
+Petäjävesi-specific frontend customizations live in
+`frontend/src/lib-customizations/petajavesi/` (logo, login page texts, feature flags).
+The deploy workflow (`.github/workflows/pet-build_and_deploy.yml`) builds the frontend
+with `EVAKA_CUSTOMIZATIONS=petajavesi`.
+
+To run the local dev frontend with Petäjävesi customizations, set the environment
+variable before starting: `EVAKA_CUSTOMIZATIONS=petajavesi`. Without it the local dev
+build defaults to the `espoo` folder, which still contains the same overrides for
+backwards compatibility until it is cleaned up.
+
+## Työvuorosuunnittelu (shift planning)
+
+The shift planning add-on is documented in `docs/specs/features/shift-planning/`
+(requirements, design and implementation status). Backend code lives in
+`service/src/main/kotlin/evaka/instance/petajavesi/shiftplanning/` and database
+migrations are `V891`/`V892`.
+
 ## How to develop and deploy frontend changes
 
 ### Prerequisites

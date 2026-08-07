@@ -174,6 +174,12 @@ sealed interface DatabaseTable {
 
     sealed class ServiceNeedOptionVoucherValue : DatabaseTable
 
+    sealed class ShiftPlan : DatabaseTable
+
+    sealed class ShiftPlanShift : DatabaseTable
+
+    sealed class ShiftWish : DatabaseTable
+
     sealed class StaffAttendance : DatabaseTable
 
     sealed class StaffAttendanceRealtime : DatabaseTable
@@ -354,6 +360,12 @@ typealias ServiceNeedId = Id<DatabaseTable.ServiceNeed>
 typealias ServiceNeedOptionId = Id<DatabaseTable.ServiceNeedOption>
 
 typealias ServiceNeedOptionVoucherValueId = Id<DatabaseTable.ServiceNeedOptionVoucherValue>
+
+typealias ShiftPlanId = Id<DatabaseTable.ShiftPlan>
+
+typealias ShiftPlanShiftId = Id<DatabaseTable.ShiftPlanShift>
+
+typealias ShiftWishId = Id<DatabaseTable.ShiftWish>
 
 typealias StaffAttendanceExternalId = Id<DatabaseTable.StaffAttendanceExternal>
 

@@ -153,6 +153,7 @@ fun Database.Transaction.ensureDevData() {
                 "dev-data/employees.sql",
                 "dev-data/preschool-terms.sql",
                 "dev-data/club-terms.sql",
+                "dev-data/shift-planning-test-data.sql",
             )
             .forEach { runSqlScript(it) }
 

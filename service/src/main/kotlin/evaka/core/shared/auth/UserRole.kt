@@ -19,7 +19,10 @@ enum class UserRole : DatabaseEnum {
     SPECIAL_EDUCATION_TEACHER,
 
     /** Varhaiskasvatussihteeri */
-    EARLY_CHILDHOOD_EDUCATION_SECRETARY;
+    EARLY_CHILDHOOD_EDUCATION_SECRETARY,
+
+    /** Työvuorosuunnittelija (Petäjävesi) */
+    TYOVUOROSUUNNITTELIJA;
 
     fun isGlobalRole(): Boolean = GLOBAL_ROLES.contains(this)
 
@@ -34,6 +37,7 @@ enum class UserRole : DatabaseEnum {
                 STAFF,
                 SPECIAL_EDUCATION_TEACHER,
                 EARLY_CHILDHOOD_EDUCATION_SECRETARY,
+                TYOVUOROSUUNNITTELIJA,
             )
         val GLOBAL_ROLES = entries.filter { !SCOPED_ROLES.contains(it) }.toSet()
     }

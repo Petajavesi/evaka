@@ -1,0 +1,119 @@
+<!--
+SPDX-FileCopyrightText: 2017-2026 City of Espoo
+
+SPDX-License-Identifier: LGPL-2.1-or-later
+-->
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <style>
+      @page {
+        size: A4 landscape;
+        margin: 12mm;
+      }
+      body {
+        font-family: sans-serif;
+        font-size: 10px;
+        color: #0f0f0f;
+      }
+      h1 {
+        font-size: 15px;
+        margin: 0 0 2px 0;
+      }
+      .subtitle {
+        font-size: 11px;
+        margin-bottom: 10px;
+      }
+      h2 {
+        font-size: 12px;
+        margin: 10px 0 4px 0;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+      }
+      thead {
+        display: table-header-group; /* otsikkorivi toistuu sivun vaihtuessa */
+      }
+      tr {
+        page-break-inside: avoid;
+      }
+      th,
+      td {
+        border: 0.5pt solid #999999;
+        padding: 3px 4px;
+        text-align: center;
+        vertical-align: top;
+        white-space: pre-line; /* useampi vuoro/varaus riveittäin */
+      }
+      th {
+        background: #eeeeee;
+        font-weight: bold;
+      }
+      th.name,
+      td.name {
+        width: 17%;
+        text-align: left;
+      }
+      td.empty {
+        color: #999999;
+      }
+      tbody tr:nth-child(even) td {
+        background: #f7f7f7;
+      }
+      .children-section {
+        page-break-before: always;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Työvuorosuunnitelma</h1>
+    <div class="subtitle">
+      <span th:text="${unitName}"></span> — viikko
+      <span th:text="${weekNumber}"></span> (<span th:text="${weekRange}"></span>)
+    </div>
+
+    <h2>Työvuorot</h2>
+    <table>
+      <thead>
+        <tr>
+          <th class="name">Työntekijä</th>
+          <th th:each="day : ${dayHeaders}" th:text="${day}"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:each="row : ${employeeRows}">
+          <td class="name" th:text="${row.name}"></td>
+          <td
+            th:each="cell : ${row.cells}"
+            th:text="${cell.isEmpty()} ? '–' : ${cell}"
+            th:classappend="${cell.isEmpty()} ? 'empty'"
+          ></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="children-section">
+      <h2>Lasten varausajat</h2>
+      <table>
+        <thead>
+          <tr>
+            <th class="name">Lapsi</th>
+            <th th:each="day : ${dayHeaders}" th:text="${day}"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr th:each="row : ${childRows}">
+            <td class="name" th:text="${row.name}"></td>
+            <td
+              th:each="cell : ${row.cells}"
+              th:text="${cell.isEmpty()} ? '–' : ${cell}"
+              th:classappend="${cell.isEmpty()} ? 'empty'"
+            ></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>

@@ -11,6 +11,8 @@
 ;"Talous-sivu";FINANCE_PAGE;x;;x;x;x;;;;;;
 ;"Toimintojen avaukset -sivu";UNIT_FEATURES_PAGE;x;;;;;;;;;;
 ;"Työntekijät-sivu";EMPLOYEES_PAGE;x;;;;;;;;;;
+;"Työvuorosuunnittelu-sivu";SHIFT_PLANNING_PAGE;;;;;;;;x;;;
+;"Työvuorotoiveet-sivu";SHIFT_WISH_PAGE;;;;;;;;;x;;
 ;"Viestit-sivu";MESSAGES_PAGE;x;;;x;;x;x;x;x;x;x
 ;"Yksiköt-sivu";UNITS_PAGE;x;;x;x;x;x;;x;x;x;x
 ;"eVaka mobiilin PIN-koodi -sivu";PIN_CODE_PAGE;x;x;x;x;x;x;x;x;x;x;x
@@ -343,9 +345,16 @@ Yksikkö;"Erityisopettajan käyttöoikeuden luonti";"INSERT_ACL_SPECIAL_EDUCATIO
 Yksikkö;"Erityisopettajan käyttöoikeuden muokkaus";"UPDATE_ACL_SPECIAL_EDUCATION_TEACHER";x;;;;;;;;;;
 Yksikkö;"Varhaiskasvatussihteerin käyttöoikeuden luonti";"INSERT_ACL_EARLY_CHILDHOOD_EDUCATION_SECRETARY";x;;;;;;;;;;
 Yksikkö;"Varhaiskasvatussihteerin käyttöoikeuden muokkaus";"UPDATE_ACL_EARLY_CHILDHOOD_EDUCATION_SECRETARY";x;;;;;;;;;;
+Yksikkö;"Työvuorosuunnittelijan käyttöoikeuden luonti";"INSERT_ACL_TYOVUOROSUUNNITTELIJA";x;;;;;;;;;;
+Yksikkö;"Työvuorosuunnittelijan käyttöoikeuden muokkaus";"UPDATE_ACL_TYOVUOROSUUNNITTELIJA";x;;;;;;;;;;
 Yksikkö;"Henkilökunnan käyttöoikeuden luonti";INSERT_ACL_STAFF;x;;;;;;;x;;;x
 Yksikkö;"Henkilökunnan käyttöoikeuden muokkaus";UPDATE_ACL_STAFF;x;;;;;;;x;;;x
 Yksikkö;"Käyttöoikeuden muokkaus (ajastettu)";UPDATE_ACL_SCHEDULED;x;;;;;;;x;;;
+Yksikkö;"Työvuorosuunnitelman luku";READ_SHIFT_PLAN;;;;;;;;x;;;
+Yksikkö;"Työvuorosuunnitelman muokkaus";UPDATE_SHIFT_PLAN;;;;;;;;x;;;
+Yksikkö;"Työvuorosuunnitelman PDF-lataus";DOWNLOAD_SHIFT_PLAN_PDF;;;;;;;;x;;;
+Yksikkö;"Työvuorotoiveen luonti";CREATE_SHIFT_WISH;;;;;;;;;x;;
+Yksikkö;"Työvuorotoiveen käsittely";UPDATE_SHIFT_WISH;;;;;;;;x;;;
 Yksikkö;"Ryhmän käyttöoikeuden muokkaus";UPDATE_STAFF_GROUP_ACL;x;;;;;;;x;;;x
 Yksikkö;"Saapuneet hakemukset -raportti";READ_APPLICATIONS_REPORT;x;x;x;;;x;;x;;;x
 Yksikkö;"Varhaiskasvatuspaikkatakuu-raportti";"READ_PLACEMENT_GUARANTEE_REPORT";x;;x;;;x;;x;;;x

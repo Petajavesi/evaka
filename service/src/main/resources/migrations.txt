@@ -586,3 +586,8 @@ V587__income_statement_citizen_modified_at_constraint.sql
 V588__decision_reasoning.sql
 V589__unit_language_en.sql
 V590__decision_reasoning_generic_removed_at.sql
+V891__shift_planning.sql
+V892__shift_planning_acl_role.sql
+V893__shift_plan_balancing_period.sql
+V894__shift_wish.sql
+V895__shift_wish_important.sql

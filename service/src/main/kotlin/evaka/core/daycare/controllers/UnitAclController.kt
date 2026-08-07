@@ -245,6 +245,38 @@ class UnitAclController(
         Audit.UnitAclDelete.log(targetId = AuditId(unitId), objectId = AuditId(employeeId))
     }
 
+    @DeleteMapping("/employee/daycares/{unitId}/tyovuorosuunnittelija/{employeeId}")
+    fun deleteTyovuorosuunnittelija(
+        db: Database,
+        user: AuthenticatedUser.Employee,
+        clock: EvakaClock,
+        @PathVariable unitId: DaycareId,
+        @PathVariable employeeId: EmployeeId,
+    ) {
+        if (user.id == employeeId) throw Forbidden("Cannot modify own roles")
+        db.connect { dbc ->
+            dbc.transaction {
+                accessControl.requirePermissionFor(
+                    it,
+                    user,
+                    clock,
+                    Action.Unit.UPDATE_ACL_TYOVUOROSUUNNITTELIJA,
+                    unitId,
+                )
+                validateIsPermanentEmployee(it, employeeId)
+                removeDaycareAclForRole(
+                    it,
+                    asyncJobRunner,
+                    clock.now(),
+                    unitId,
+                    employeeId,
+                    UserRole.TYOVUOROSUUNNITTELIJA,
+                )
+            }
+        }
+        Audit.UnitAclDelete.log(targetId = AuditId(unitId), objectId = AuditId(employeeId))
+    }
+
     @DeleteMapping("/employee/daycares/{unitId}/staff/{employeeId}")
     fun deleteStaff(
         db: Database,
@@ -318,6 +350,7 @@ class UnitAclController(
                         Action.Unit.INSERT_ACL_EARLY_CHILDHOOD_EDUCATION_SECRETARY
                     UserRole.SPECIAL_EDUCATION_TEACHER ->
                         Action.Unit.INSERT_ACL_SPECIAL_EDUCATION_TEACHER
+                    UserRole.TYOVUOROSUUNNITTELIJA -> Action.Unit.INSERT_ACL_TYOVUOROSUUNNITTELIJA
                     else -> throw BadRequest("Invalid daycare acl role: $role")
                 }
 
@@ -331,6 +364,7 @@ class UnitAclController(
                         Action.Unit.UPDATE_ACL_EARLY_CHILDHOOD_EDUCATION_SECRETARY
                     UserRole.SPECIAL_EDUCATION_TEACHER ->
                         Action.Unit.UPDATE_ACL_SPECIAL_EDUCATION_TEACHER
+                    UserRole.TYOVUOROSUUNNITTELIJA -> Action.Unit.UPDATE_ACL_TYOVUOROSUUNNITTELIJA
                     else -> throw BadRequest("Invalid daycare acl role: $role")
                 }
     }

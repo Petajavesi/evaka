@@ -7,5 +7,5 @@
     "outDir": "../../dist/lib-components",
     "types": ["node"],
   },
-  "references": [{ "path": "../lib-common" }, { "path": "../lib-icons" }, { "path": "../lib-customizations"}]
+  "references": [{ "path": "../lib-common" }, { "path": "../lib-icons" }]
 }

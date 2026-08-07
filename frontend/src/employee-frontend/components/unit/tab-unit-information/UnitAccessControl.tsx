@@ -54,6 +54,7 @@ import {
   deleteStaffMutation,
   deleteTemporaryEmployeeAclMutation,
   deleteTemporaryEmployeeMutation,
+  deleteTyovuorosuunnittelijaMutation,
   deleteUnitSupervisorMutation,
   reactivateTemporaryEmployeeMutation,
   temporaryEmployeesQuery,
@@ -72,6 +73,7 @@ export type DaycareAclRole = Extract<
   | 'STAFF'
   | 'SPECIAL_EDUCATION_TEACHER'
   | 'EARLY_CHILDHOOD_EDUCATION_SECRETARY'
+  | 'TYOVUOROSUUNNITTELIJA'
 >
 
 function isUpdateAclPermitted(
@@ -89,6 +91,8 @@ function isUpdateAclPermitted(
       )
     case 'STAFF':
       return permittedActions.includes('UPDATE_ACL_STAFF')
+    case 'TYOVUOROSUUNNITTELIJA':
+      return permittedActions.includes('UPDATE_ACL_TYOVUOROSUUNNITTELIJA')
     default:
       return false
   }
@@ -102,8 +106,10 @@ const roleOrder = (role: UserRole) => {
       return 1
     case 'EARLY_CHILDHOOD_EDUCATION_SECRETARY':
       return 2
-    case 'STAFF':
+    case 'TYOVUOROSUUNNITTELIJA':
       return 3
+    case 'STAFF':
+      return 4
     default:
       return 999 // not expected
   }
@@ -164,9 +170,11 @@ function AclRow({
         ? deleteSpecialEducationTeacherMutation
         : row.role === 'EARLY_CHILDHOOD_EDUCATION_SECRETARY'
           ? deleteEarlyChildhoodEducationSecretaryMutation
-          : row.role === 'STAFF' && !row.employee.temporary
-            ? deleteStaffMutation
-            : null
+          : row.role === 'TYOVUOROSUUNNITTELIJA'
+            ? deleteTyovuorosuunnittelijaMutation
+            : row.role === 'STAFF' && !row.employee.temporary
+              ? deleteStaffMutation
+              : null
 
   const roleChangeDate =
     scheduledRow &&

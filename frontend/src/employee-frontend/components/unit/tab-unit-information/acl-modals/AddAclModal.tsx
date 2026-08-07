@@ -87,6 +87,9 @@ export default React.memo(function AddAclModal({
       ...(permittedActions.includes('INSERT_ACL_SPECIAL_EDUCATION_TEACHER')
         ? (['SPECIAL_EDUCATION_TEACHER'] as const)
         : []),
+      ...(permittedActions.includes('INSERT_ACL_TYOVUOROSUUNNITTELIJA')
+        ? (['TYOVUOROSUUNNITTELIJA'] as const)
+        : []),
       ...(permittedActions.includes('INSERT_ACL_STAFF')
         ? (['STAFF'] as const)
         : [])

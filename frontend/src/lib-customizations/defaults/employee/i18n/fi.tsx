@@ -276,6 +276,8 @@ export const fi = {
     valueDecisions: 'Arvopäätökset',
     reports: 'Raportit',
     messages: 'Viestit',
+    shiftPlanning: 'Työvuorosuunnittelu',
+    shiftWishes: 'Työvuorot',
     logout: 'Kirjaudu ulos'
   },
   footer: {
@@ -5040,6 +5042,7 @@ export const fi = {
       SERVICE_WORKER: 'Palveluohjaus',
       SPECIAL_EDUCATION_TEACHER: 'Erityisopettaja',
       EARLY_CHILDHOOD_EDUCATION_SECRETARY: 'Varhaiskasvatussihteeri',
+      TYOVUOROSUUNNITTELIJA: 'Työvuorosuunnittelija',
       STAFF: 'Henkilökunta',
       UNIT_SUPERVISOR: 'Johtaja'
     }

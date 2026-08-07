@@ -96,6 +96,8 @@ import VardaUnitErrors from './components/reports/VardaUnitErrors'
 import VoucherServiceProviderUnit from './components/reports/VoucherServiceProviderUnit'
 import VoucherServiceProviders from './components/reports/VoucherServiceProviders'
 import SettingsPage from './components/settings/SettingsPage'
+import ShiftPlanningPage from './components/shift-planning/ShiftPlanningPage'
+import ShiftWishPage from './components/shift-wishes/ShiftWishPage'
 import SystemNotificationsPage from './components/system-notifications/SystemNotificationsPage'
 import TimelinePage from './components/timeline/TimelinePage'
 import GroupCaretakers from './components/unit/group-caretakers/GroupCaretakers'
@@ -469,6 +471,8 @@ const routes: EmployeeRoute[] = [
     title: 'placementTool'
   },
   { path: '/out-of-office', component: OutOfOfficePage, title: 'outOfOffice' },
+  { path: '/shift-planning', component: ShiftPlanningPage },
+  { path: '/shift-wishes', component: ShiftWishPage },
   {
     path: '/close-after-login',
     component: CloseAfterLogin,

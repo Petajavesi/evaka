@@ -280,6 +280,8 @@ export const sv: typeof fi = {
     valueDecisions: 'Värdebeslut',
     reports: 'Rapporter',
     messages: 'Meddelanden',
+    shiftPlanning: 'Arbetsskiftsplanering',
+    shiftWishes: 'Arbetsskift',
     logout: 'Logga ut'
   },
   footer: {
@@ -5072,6 +5074,7 @@ export const sv: typeof fi = {
       SERVICE_WORKER: 'Servicehandledning',
       SPECIAL_EDUCATION_TEACHER: 'Speciallärare',
       EARLY_CHILDHOOD_EDUCATION_SECRETARY: 'Sekretarare',
+      TYOVUOROSUUNNITTELIJA: 'Arbetsskiftsplanerare',
       STAFF: 'Personal',
       UNIT_SUPERVISOR: 'Ledare'
     }

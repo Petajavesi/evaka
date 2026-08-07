@@ -28,6 +28,7 @@ import {
   deleteStaff,
   deleteTemporaryEmployee,
   deleteTemporaryEmployeeAcl,
+  deleteTyovuorosuunnittelija,
   deleteUnitSupervisor,
   getDaycare,
   getDaycareAcl,
@@ -136,6 +137,10 @@ export const deleteSpecialEducationTeacherMutation = q.mutation(
 )
 export const deleteEarlyChildhoodEducationSecretaryMutation = q.mutation(
   deleteEarlyChildhoodEducationSecretary,
+  [({ unitId }) => unitAclQuery({ unitId })]
+)
+export const deleteTyovuorosuunnittelijaMutation = q.mutation(
+  deleteTyovuorosuunnittelija,
   [({ unitId }) => unitAclQuery({ unitId })]
 )
 export const deleteStaffMutation = q.mutation(deleteStaff, [

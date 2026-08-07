@@ -854,6 +854,23 @@ export async function deleteTemporaryEmployeeAcl(
 
 
 /**
+* Generated from evaka.core.daycare.controllers.UnitAclController.deleteTyovuorosuunnittelija
+*/
+export async function deleteTyovuorosuunnittelija(
+  request: {
+    unitId: DaycareId,
+    employeeId: EmployeeId
+  }
+): Promise<void> {
+  const { data: json } = await client.request<JsonOf<void>>({
+    url: uri`/employee/daycares/${request.unitId}/tyovuorosuunnittelija/${request.employeeId}`.toString(),
+    method: 'DELETE'
+  })
+  return json
+}
+
+
+/**
 * Generated from evaka.core.daycare.controllers.UnitAclController.deleteUnitSupervisor
 */
 export async function deleteUnitSupervisor(

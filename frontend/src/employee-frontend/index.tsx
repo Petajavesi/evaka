@@ -5,8 +5,11 @@
 import 'lib-common/assets/fonts/fonts.css'
 import * as Sentry from '@sentry/browser'
 import {
+  BarElement,
+  CategoryScale,
   Chart,
   defaults,
+  Legend,
   LinearScale,
   LineElement,
   PointElement,
@@ -43,8 +46,11 @@ smoothScrollPolyfill()
 Chart.register(
   TimeScale,
   LinearScale,
+  CategoryScale,
   PointElement,
   LineElement,
+  BarElement,
+  Legend,
   Tooltip,
   annotationPlugin
 )

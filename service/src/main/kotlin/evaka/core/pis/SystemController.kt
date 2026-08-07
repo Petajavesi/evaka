@@ -342,6 +342,12 @@ class SystemController(
                                 env.decisionReasoningGenericRemovalEnabled,
                             allowEnglishChildDocumentsForAllTypes =
                                 featureConfig.allowEnglishChildDocumentsForAllTypes,
+                            shiftPlanning =
+                                permittedGlobalActions.contains(
+                                    Action.Global.SHIFT_PLANNING_PAGE
+                                ),
+                            shiftWishes =
+                                permittedGlobalActions.contains(Action.Global.SHIFT_WISH_PAGE),
                         )
 
                     EmployeeUserResponse(

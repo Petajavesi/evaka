@@ -142,6 +142,8 @@ export interface EmployeeFeatures {
   replacementInvoices: boolean
   reports: boolean
   settings: boolean
+  shiftPlanning: boolean
+  shiftWishes: boolean
   submitPatuReport: boolean
   systemNotifications: boolean
   unitFeatures: boolean
@@ -284,6 +286,12 @@ export type ServiceNeedOptionId = Id<'ServiceNeedOption'>
 
 export type ServiceNeedOptionVoucherValueId = Id<'ServiceNeedOptionVoucherValue'>
 
+export type ShiftPlanId = Id<'ShiftPlan'>
+
+export type ShiftPlanShiftId = Id<'ShiftPlanShift'>
+
+export type ShiftWishId = Id<'ShiftWish'>
+
 export type StaffAttendanceExternalId = Id<'StaffAttendanceExternal'>
 
 export type StaffAttendanceRealtimeId = Id<'StaffAttendanceRealtime'>
@@ -325,6 +333,7 @@ export type UserRole =
   | 'STAFF'
   | 'SPECIAL_EDUCATION_TEACHER'
   | 'EARLY_CHILDHOOD_EDUCATION_SECRETARY'
+  | 'TYOVUOROSUUNNITTELIJA'
 
 export type VoucherValueDecisionId = Id<'VoucherValueDecision'>
 
