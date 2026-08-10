@@ -4,12 +4,12 @@
 
 [tools]
 java = "zulu-25"
-lefthook = "2.1.8"
+lefthook = "2.1.9"
 node = "24.16.0"
 "npm:pm2" = "7.0.1"
-uv = "0.11.16"
+uv = "0.11.18"
 "pipx:reuse" = "6.2.0"
-yarn = "4.15.0"
+yarn = "4.16.0"
 
 [tasks.start]
 description = "Start the development environment"

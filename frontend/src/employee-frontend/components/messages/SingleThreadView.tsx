@@ -19,7 +19,6 @@ import type {
   Message,
   MessageChild,
   MessageThread,
-  MessageType,
   ThreadReply
 } from 'lib-common/generated/api-types/messaging'
 import type { MessageContentId } from 'lib-common/generated/api-types/shared'
@@ -110,7 +109,6 @@ const deletionWindowDays = 8
 
 function SingleMessage({
   account,
-  threadType,
   view,
   message,
   messageChildren,
@@ -122,7 +120,6 @@ function SingleMessage({
   onDelete
 }: {
   account: TypedMessageAccount
-  threadType: MessageType
   view: View
   message: Message
   messageChildren: MessageChild[]
@@ -159,7 +156,7 @@ function SingleMessage({
   const isOwnMessage = message.sender.id === account.id
   const isDeleted = message.contentDeletedAt !== null
   const canDelete =
-    threadType === 'MESSAGE' &&
+    account.type !== 'MUNICIPAL' &&
     isOwnMessage &&
     !isDeleted &&
     HelsinkiDateTime.now().isBefore(
@@ -276,7 +273,7 @@ export function SingleThreadView({
   const [, navigate] = useLocation()
   const { getReplyContent, onReplySent, setReplyContent } =
     useContext(MessageContext)
-  const { user } = useContext(UserContext)
+  const { featureConfig } = useContext(UserContext)
   const [deleteModalContentId, setDeleteModalContentId] =
     useState<MessageContentId | null>(null)
   const [justDeletedContentIds, setJustDeletedContentIds] = useState<
@@ -396,7 +393,7 @@ export function SingleThreadView({
     return messages.some((message) => message.sender.type === 'CITIZEN')
   }, [messages])
 
-  const supportEmail = user?.accessibleFeatures.messageSupportEmail ?? null
+  const supportEmail = featureConfig?.messageSupportEmail ?? null
 
   const firstMessage = messages.length > 0 ? messages[0] : undefined
   const ownDeletedFirstMessage = useMemo(
@@ -499,7 +496,6 @@ export function SingleThreadView({
               <SingleMessage
                 key={message.id}
                 account={account}
-                threadType={type}
                 view={view}
                 message={message}
                 messageChildren={children}

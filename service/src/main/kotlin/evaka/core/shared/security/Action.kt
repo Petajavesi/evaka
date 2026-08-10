@@ -713,17 +713,17 @@ sealed interface Action {
         override vararg val defaultRules: ScopedActionRule<in AssistanceActionId>
     ) : ScopedAction<AssistanceActionId> {
         UPDATE(
-            HasGlobalRole(ADMIN, SERVICE_WORKER),
+            HasGlobalRole(ADMIN),
             HasUnitRole(SPECIAL_EDUCATION_TEACHER).inPlacementUnitOfChildOfAssistanceAction(false),
             HasUnitRole(UNIT_SUPERVISOR).inPlacementUnitOfChildOfAssistanceAction(true),
         ),
         DELETE(
-            HasGlobalRole(ADMIN, SERVICE_WORKER),
+            HasGlobalRole(ADMIN),
             HasUnitRole(SPECIAL_EDUCATION_TEACHER).inPlacementUnitOfChildOfAssistanceAction(false),
             HasUnitRole(UNIT_SUPERVISOR).inPlacementUnitOfChildOfAssistanceAction(true),
         ),
         READ(
-            HasGlobalRole(ADMIN),
+            HasGlobalRole(ADMIN, SERVICE_WORKER),
             HasUnitRole(SPECIAL_EDUCATION_TEACHER).inPlacementUnitOfChildOfAssistanceAction(false),
             HasUnitRole(STAFF, UNIT_SUPERVISOR).inPlacementUnitOfChildOfAssistanceAction(true),
         );
@@ -735,12 +735,12 @@ sealed interface Action {
         override vararg val defaultRules: ScopedActionRule<in AssistanceFactorId>
     ) : ScopedAction<AssistanceFactorId> {
         UPDATE(
-            HasGlobalRole(ADMIN, SERVICE_WORKER),
+            HasGlobalRole(ADMIN),
             HasUnitRole(SPECIAL_EDUCATION_TEACHER).inPlacementUnitOfChildOfAssistanceFactor(false),
             HasUnitRole(UNIT_SUPERVISOR).inPlacementUnitOfChildOfAssistanceFactor(true),
         ),
         DELETE(
-            HasGlobalRole(ADMIN, SERVICE_WORKER),
+            HasGlobalRole(ADMIN),
             HasUnitRole(SPECIAL_EDUCATION_TEACHER).inPlacementUnitOfChildOfAssistanceFactor(false),
             HasUnitRole(UNIT_SUPERVISOR).inPlacementUnitOfChildOfAssistanceFactor(true),
         ),
@@ -841,11 +841,13 @@ sealed interface Action {
         ScopedAction<BackupPickupId> {
         UPDATE(
             HasGlobalRole(ADMIN),
-            HasUnitRole(UNIT_SUPERVISOR, STAFF).inPlacementUnitOfChildOfBackupPickup(),
+            HasUnitRole(UNIT_SUPERVISOR, STAFF, SPECIAL_EDUCATION_TEACHER)
+                .inPlacementUnitOfChildOfBackupPickup(),
         ),
         DELETE(
             HasGlobalRole(ADMIN),
-            HasUnitRole(UNIT_SUPERVISOR, STAFF).inPlacementUnitOfChildOfBackupPickup(),
+            HasUnitRole(UNIT_SUPERVISOR, STAFF, SPECIAL_EDUCATION_TEACHER)
+                .inPlacementUnitOfChildOfBackupPickup(),
         );
 
         override fun toString(): String = "${javaClass.name}.$name"
@@ -972,7 +974,7 @@ sealed interface Action {
                 .inPlacementUnitOfChild(),
         ),
         CREATE_ASSISTANCE_FACTOR(
-            HasGlobalRole(ADMIN, SERVICE_WORKER),
+            HasGlobalRole(ADMIN),
             HasUnitRole(UNIT_SUPERVISOR, SPECIAL_EDUCATION_TEACHER).inPlacementUnitOfChild(),
         ),
         READ_ASSISTANCE_FACTORS(
@@ -985,7 +987,7 @@ sealed interface Action {
                 .inPlacementUnitOfChild(),
         ), // used in UI
         CREATE_DAYCARE_ASSISTANCE(
-            HasGlobalRole(ADMIN, SERVICE_WORKER),
+            HasGlobalRole(ADMIN),
             HasUnitRole(UNIT_SUPERVISOR, SPECIAL_EDUCATION_TEACHER).inPlacementUnitOfChild(),
         ),
         READ_DAYCARE_ASSISTANCES(
@@ -998,7 +1000,7 @@ sealed interface Action {
                 .inPlacementUnitOfChild(),
         ), // used in UI
         CREATE_PRESCHOOL_ASSISTANCE(
-            HasGlobalRole(ADMIN, SERVICE_WORKER),
+            HasGlobalRole(ADMIN),
             HasUnitRole(UNIT_SUPERVISOR, SPECIAL_EDUCATION_TEACHER).inPlacementUnitOfChild(),
         ),
         READ_PRESCHOOL_ASSISTANCES(
@@ -1011,7 +1013,7 @@ sealed interface Action {
                 .inPlacementUnitOfChild(),
         ), // used in UI
         CREATE_ASSISTANCE_ACTION(
-            HasGlobalRole(ADMIN, SERVICE_WORKER),
+            HasGlobalRole(ADMIN),
             HasUnitRole(UNIT_SUPERVISOR, SPECIAL_EDUCATION_TEACHER).inPlacementUnitOfChild(),
         ),
         READ_ASSISTANCE_ACTION(
@@ -1024,7 +1026,7 @@ sealed interface Action {
                 .inPlacementUnitOfChild(),
         ), // used in UI
         CREATE_OTHER_ASSISTANCE_MEASURE(
-            HasGlobalRole(ADMIN, SERVICE_WORKER),
+            HasGlobalRole(ADMIN),
             HasUnitRole(UNIT_SUPERVISOR, SPECIAL_EDUCATION_TEACHER).inPlacementUnitOfChild(),
         ),
         READ_OTHER_ASSISTANCE_MEASURES(
@@ -1117,7 +1119,7 @@ sealed interface Action {
                 .inPlacementUnitOfChild(),
         ),
         READ_SERVICE_NEEDS(
-            HasGlobalRole(ADMIN, SERVICE_WORKER),
+            HasGlobalRole(ADMIN, SERVICE_WORKER, FINANCE_ADMIN, FINANCE_STAFF),
             HasUnitRole(
                     UNIT_SUPERVISOR,
                     STAFF,
@@ -1300,17 +1302,17 @@ sealed interface Action {
         override vararg val defaultRules: ScopedActionRule<in DaycareAssistanceId>
     ) : ScopedAction<DaycareAssistanceId> {
         UPDATE(
-            HasGlobalRole(ADMIN, SERVICE_WORKER),
+            HasGlobalRole(ADMIN),
             HasUnitRole(SPECIAL_EDUCATION_TEACHER).inPlacementUnitOfChildOfDaycareAssistance(false),
             HasUnitRole(UNIT_SUPERVISOR).inPlacementUnitOfChildOfDaycareAssistance(true),
         ),
         DELETE(
-            HasGlobalRole(ADMIN, SERVICE_WORKER),
+            HasGlobalRole(ADMIN),
             HasUnitRole(SPECIAL_EDUCATION_TEACHER).inPlacementUnitOfChildOfDaycareAssistance(false),
             HasUnitRole(UNIT_SUPERVISOR).inPlacementUnitOfChildOfDaycareAssistance(true),
         ),
         READ(
-            HasGlobalRole(ADMIN),
+            HasGlobalRole(ADMIN, SERVICE_WORKER),
             HasUnitRole(SPECIAL_EDUCATION_TEACHER).inPlacementUnitOfChildOfDaycareAssistance(false),
             HasUnitRole(STAFF, UNIT_SUPERVISOR).inPlacementUnitOfChildOfDaycareAssistance(true),
         );
@@ -1628,19 +1630,19 @@ sealed interface Action {
         override vararg val defaultRules: ScopedActionRule<in OtherAssistanceMeasureId>
     ) : ScopedAction<OtherAssistanceMeasureId> {
         UPDATE(
-            HasGlobalRole(ADMIN, SERVICE_WORKER),
+            HasGlobalRole(ADMIN),
             HasUnitRole(SPECIAL_EDUCATION_TEACHER)
                 .inPlacementUnitOfChildOfOtherAssistanceMeasure(false),
             HasUnitRole(UNIT_SUPERVISOR).inPlacementUnitOfChildOfOtherAssistanceMeasure(true),
         ),
         DELETE(
-            HasGlobalRole(ADMIN, SERVICE_WORKER),
+            HasGlobalRole(ADMIN),
             HasUnitRole(SPECIAL_EDUCATION_TEACHER)
                 .inPlacementUnitOfChildOfOtherAssistanceMeasure(false),
             HasUnitRole(UNIT_SUPERVISOR).inPlacementUnitOfChildOfOtherAssistanceMeasure(true),
         ),
         READ(
-            HasGlobalRole(ADMIN),
+            HasGlobalRole(ADMIN, SERVICE_WORKER),
             HasUnitRole(SPECIAL_EDUCATION_TEACHER, UNIT_SUPERVISOR)
                 .inPlacementUnitOfChildOfOtherAssistanceMeasure(false),
             HasUnitRole(STAFF).inPlacementUnitOfChildOfOtherAssistanceMeasure(true),
@@ -1856,13 +1858,13 @@ sealed interface Action {
         override vararg val defaultRules: ScopedActionRule<in PreschoolAssistanceId>
     ) : ScopedAction<PreschoolAssistanceId> {
         UPDATE(
-            HasGlobalRole(ADMIN, SERVICE_WORKER),
+            HasGlobalRole(ADMIN),
             HasUnitRole(SPECIAL_EDUCATION_TEACHER)
                 .inPlacementUnitOfChildOfPreschoolAssistance(false),
             HasUnitRole(UNIT_SUPERVISOR).inPlacementUnitOfChildOfPreschoolAssistance(true),
         ),
         DELETE(
-            HasGlobalRole(ADMIN, SERVICE_WORKER),
+            HasGlobalRole(ADMIN),
             HasUnitRole(SPECIAL_EDUCATION_TEACHER)
                 .inPlacementUnitOfChildOfPreschoolAssistance(false),
             HasUnitRole(UNIT_SUPERVISOR).inPlacementUnitOfChildOfPreschoolAssistance(true),

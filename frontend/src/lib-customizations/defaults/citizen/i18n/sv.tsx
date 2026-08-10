@@ -1040,6 +1040,10 @@ const sv: Translations = {
           otherInfoLabel: 'Tilläggsuppgifter till ansökan',
           dietLabel: 'Specialdiet',
           allergiesLabel: 'Allergier'
+        },
+        otherGuardianAgreement: {
+          title: 'Tilläggsuppgifter om ansökan',
+          text: 'Den andra vårdnadshavaren har meddelat att ni tillsammans har kommit överens om att skicka in ansökan.'
         }
       },
       serviceNeed: {
@@ -2166,8 +2170,8 @@ const sv: Translations = {
         <P>
           Antalet vuxna och barn som bor i samma hushåll påverkar
           klientavgifterna. Om uppgifterna om familjen har ändrats, kontakta
-          enheten för klientavgifter, tfn{' '}
-          <a href="tel:+358981627400">09 81627400</a>.
+          enheten för klientavgifter, e-post{' '}
+          <a href="mailto:vaka.maksut@espoo.fi">vaka.maksut@espoo.fi</a>.
         </P>
       ),
       adults: 'Vuxna',

@@ -16,7 +16,6 @@ import type { DecisionDraft } from './decision'
 import type { DecisionId } from './shared'
 import type { DecisionStatus } from './decision'
 import type { DecisionType } from './decision'
-import type { DecisionUnit } from './decision'
 import type { EmployeeId } from './shared'
 import type { EvakaUser } from './user'
 import type { EvakaUserId } from './shared'
@@ -34,6 +33,7 @@ import type { PersonJSON } from './pis'
 import type { PlacementPlanConfirmationStatus } from './placement'
 import type { PlacementPlanDetails } from './placement'
 import type { PlacementPlanRejectReason } from './placement'
+import type { PlacementPlanUnit } from './placement'
 import type { PlacementType } from './placement'
 import type { ServiceNeedOptionId } from './shared'
 import type { UUID } from '../../types'
@@ -320,6 +320,7 @@ export interface ApplicationSummary {
   id: ApplicationId
   lastName: string
   origin: ApplicationOrigin
+  permittedActions: Action.Application[]
   placementDraft: ApplicationSummaryPlacementDraft | null
   placementPlanStartDate: LocalDate | null
   placementPlanUnitName: string | null
@@ -525,11 +526,12 @@ export interface DaycarePlacementPlan {
 */
 export interface DecisionDraftGroup {
   child: ChildInfo
+  connectedDecision: DecisionDraft | null
   decisions: DecisionDraft[]
   guardian: GuardianInfo
   otherGuardian: GuardianInfo | null
-  placementUnitName: string
-  unit: DecisionUnit
+  placementUnit: PlacementPlanUnit
+  primaryDecision: DecisionDraft
 }
 
 /**
@@ -1112,7 +1114,9 @@ export function deserializeJsonDaycarePlacementPlan(json: JsonOf<DaycarePlacemen
 export function deserializeJsonDecisionDraftGroup(json: JsonOf<DecisionDraftGroup>): DecisionDraftGroup {
   return {
     ...json,
-    decisions: json.decisions.map(e => deserializeJsonDecisionDraft(e))
+    connectedDecision: (json.connectedDecision != null) ? deserializeJsonDecisionDraft(json.connectedDecision) : null,
+    decisions: json.decisions.map(e => deserializeJsonDecisionDraft(e)),
+    primaryDecision: deserializeJsonDecisionDraft(json.primaryDecision)
   }
 }
 

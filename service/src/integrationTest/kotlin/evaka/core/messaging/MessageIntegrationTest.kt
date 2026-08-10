@@ -1871,7 +1871,7 @@ class MessageIntegrationTest : FullApplicationTest(resetDbBeforeEach = true) {
             val employeeThreads = getEmployeeMessageThreads(employee1Account, employee1)
             assertEquals(
                 listOf(Pair(employee1Account, content), Pair(person1Account, "Hello")),
-                employeeThreads.map { it.toSenderContentPairs() }.flatten(),
+                employeeThreads.flatMap { it.toSenderContentPairs() },
             )
             val person1ThreadsAfterReply = getRegularMessageThreads(person1)
             assertEquals(
@@ -1905,7 +1905,7 @@ class MessageIntegrationTest : FullApplicationTest(resetDbBeforeEach = true) {
             )
             assertEquals(
                 listOf(Pair(employee1Account, content), Pair(person1Account, "Hello")),
-                getRegularMessageThreads(person2).map { it.toSenderContentPairs() }.flatten(),
+                getRegularMessageThreads(person2).flatMap { it.toSenderContentPairs() },
             )
 
             assertEquals(person3Threads, getRegularMessageThreads(person3))
@@ -3194,6 +3194,68 @@ class MessageIntegrationTest : FullApplicationTest(resetDbBeforeEach = true) {
         }
 
         @Test
+        fun `bulletin copy is not created for groups that have not opened yet, are closed, or are in a unit that has not opened yet`() {
+            val notOpenedGroup =
+                DevDaycareGroup(
+                    daycareId = daycare.id,
+                    startDate = sendTime.toLocalDate().plusDays(1),
+                    name = "Not opened yet",
+                )
+            val closedGroup =
+                DevDaycareGroup(
+                    daycareId = daycare.id,
+                    endDate = sendTime.toLocalDate().minusDays(1),
+                    name = "Closed",
+                )
+            val notOpenedUnit =
+                DevDaycare(
+                    areaId = area.id,
+                    name = "Unit not opened yet",
+                    openingDate = sendTime.toLocalDate().plusDays(1),
+                    enabledPilotFeatures = setOf(PilotFeature.MESSAGING),
+                )
+            // an open group, but in a unit that has not opened yet
+            val notOpenedUnitGroup =
+                DevDaycareGroup(
+                    daycareId = notOpenedUnit.id,
+                    startDate = sendTime.toLocalDate().minusYears(1),
+                    name = "Open group in unopened unit",
+                )
+            val (notOpenedGroupAccount, closedGroupAccount, notOpenedUnitGroupAccount) =
+                db.transaction { tx ->
+                    tx.insert(notOpenedGroup)
+                    tx.insert(closedGroup)
+                    tx.insert(notOpenedUnit)
+                    tx.insert(notOpenedUnitGroup)
+                    tx.insertDaycareAclRow(notOpenedUnit.id, employee1.id, UserRole.UNIT_SUPERVISOR)
+                    Triple(
+                        tx.createDaycareGroupMessageAccount(notOpenedGroup.id),
+                        tx.createDaycareGroupMessageAccount(closedGroup.id),
+                        tx.createDaycareGroupMessageAccount(notOpenedUnitGroup.id),
+                    )
+                }
+
+            postNewThread(
+                "title",
+                "content",
+                MessageType.BULLETIN,
+                employee1Account,
+                listOf(MessageRecipient.Unit(daycare.id), MessageRecipient.Unit(notOpenedUnit.id)),
+                user = employee1,
+                now = sendTime,
+            )
+
+            // then an open group in an opened unit gets a copy
+            assertEquals(1, getMessageCopies(employee1, group1Account, readTime).size)
+
+            // but the not-yet-opened group, the closed group, and the open group in a
+            // not-yet-opened unit do not
+            assertEquals(0, getMessageCopies(employee1, notOpenedGroupAccount, readTime).size)
+            assertEquals(0, getMessageCopies(employee1, closedGroupAccount, readTime).size)
+            assertEquals(0, getMessageCopies(employee1, notOpenedUnitGroupAccount, readTime).size)
+        }
+
+        @Test
         fun `message copy is not created for non-bulletins`() {
             // given
             db.transaction { tx -> insertChild(tx, DevPerson(), groupId1) }
@@ -3580,15 +3642,19 @@ class MessageIntegrationTest : FullApplicationTest(resetDbBeforeEach = true) {
             return messageIdOfContent(contentId) to attachmentId
         }
 
-        private fun sendBulletin(): MessageId {
+        private fun sendBulletinFrom(
+            sender: MessageAccountId,
+            recipients: List<MessageRecipient>,
+            user: AuthenticatedUser.Employee = employee1,
+        ): MessageId {
             val contentId =
                 postNewThread(
                     title = "Bulletin test",
                     message = "Important announcement",
                     messageType = MessageType.BULLETIN,
-                    sender = group1Account,
-                    recipients = listOf(MessageRecipient.Group(groupId1)),
-                    user = employee1,
+                    sender = sender,
+                    recipients = recipients,
+                    user = user,
                 )!!
             return messageIdOfContent(contentId)
         }
@@ -3637,6 +3703,23 @@ class MessageIntegrationTest : FullApplicationTest(resetDbBeforeEach = true) {
 
         private fun threadIdOf(messageId: MessageId): MessageThreadId = db.read { tx ->
             tx.createQuery { sql("SELECT thread_id FROM message WHERE id = ${bind(messageId)}") }
+                .exactlyOne<MessageThreadId>()
+        }
+
+        private fun threadIdOfContentFor(
+            contentId: MessageContentId,
+            participant: MessageAccountId,
+        ): MessageThreadId = db.read { tx ->
+            tx.createQuery {
+                    sql(
+                        """
+                        SELECT m.thread_id
+                        FROM message m
+                        JOIN message_thread_participant tp ON tp.thread_id = m.thread_id
+                        WHERE m.content_id = ${bind(contentId)} AND tp.participant_id = ${bind(participant)}
+                        """
+                    )
+                }
                 .exactlyOne<MessageThreadId>()
         }
 
@@ -3706,10 +3789,82 @@ class MessageIntegrationTest : FullApplicationTest(resetDbBeforeEach = true) {
         }
 
         @Test
-        fun `bulletin cannot be deleted`() {
-            val messageId = sendBulletin()
+        fun `sender can delete own bulletin sent from a personal account`() {
+            val messageId =
+                sendBulletinFrom(
+                    sender = employee1Account,
+                    recipients = listOf(MessageRecipient.Child(child1.id)),
+                )
 
-            assertThrows<Forbidden> { deleteContent(employee1, group1Account, messageId) }
+            deleteContent(employee1, employee1Account, messageId)
+
+            val info = deletionInfoOf(messageId)
+            assertNotNull(info.contentDeletedAt)
+            assertEquals(employee1.id, info.contentDeletedByEmployeeId)
+        }
+
+        @Test
+        fun `sender can delete own bulletin sent from a group account`() {
+            val messageId =
+                sendBulletinFrom(
+                    sender = group1Account,
+                    recipients = listOf(MessageRecipient.Group(groupId1)),
+                )
+
+            deleteContent(employee1, group1Account, messageId)
+
+            val info = deletionInfoOf(messageId)
+            assertNotNull(info.contentDeletedAt)
+            assertEquals(employee1.id, info.contentDeletedByEmployeeId)
+        }
+
+        @Test
+        fun `municipal bulletin cannot be deleted`() {
+            val messageId =
+                sendBulletinFrom(
+                    sender = municipalAccount,
+                    recipients = listOf(MessageRecipient.Child(child1.id)),
+                    user = messager.user,
+                )
+
+            val exception =
+                assertThrows<Forbidden> {
+                    deleteContent(messager.user, municipalAccount, messageId)
+                }
+            assertEquals(
+                "Messages sent by the municipal account cannot be deleted",
+                exception.message,
+            )
+            assertNull(deletionInfoOf(messageId).contentDeletedAt)
+        }
+
+        @Test
+        fun `deleting a bulletin redacts every recipient copy`() {
+            val contentId =
+                postNewThread(
+                    title = "Bulletin test",
+                    message = "Important announcement",
+                    messageType = MessageType.BULLETIN,
+                    sender = group1Account,
+                    recipients = listOf(MessageRecipient.Group(groupId1)),
+                    user = employee1,
+                )!!
+            val copies = db.read { tx ->
+                tx.createQuery {
+                        sql("SELECT id FROM message WHERE content_id = ${bind(contentId)}")
+                    }
+                    .toList<MessageId>()
+            }
+            assertTrue(copies.size > 1)
+
+            deleteContent(employee1, group1Account, messageIdOfContent(contentId))
+
+            copies.forEach { assertNotNull(deletionInfoOf(it).contentDeletedAt) }
+
+            val person1ThreadId = threadIdOfContentFor(contentId, person1Account)
+
+            val recipientView = getThreadAs(person1Account, person1ThreadId).messages.single()
+            assertEquals(DELETED_MESSAGE_PLACEHOLDER_BODY, recipientView.content)
         }
 
         @Test

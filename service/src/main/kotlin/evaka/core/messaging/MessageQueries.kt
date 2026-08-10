@@ -2150,8 +2150,8 @@ WITH groups AS (
         SELECT FROM daycare_acl acl
         WHERE acl.daycare_id = u.id AND sender.employee_id = acl.employee_id
       ))
-      AND (u.closing_date IS NULL OR u.closing_date >= ${bind(date)})
-      AND (g.end_date IS NULL OR g.end_date >= ${bind(date)})
+      AND daterange(u.opening_date, u.closing_date, '[]') @> ${bind(date)}
+      AND daterange(g.start_date, g.end_date, '[]') @> ${bind(date)}
 ), units AS (
     SELECT DISTINCT unit_id
     FROM groups
@@ -2252,17 +2252,21 @@ fun Database.Read.messageAttachmentsAllowedForCitizen(
 data class MessageDeletionTarget(
     val contentId: MessageContentId,
     val senderId: MessageAccountId,
+    val senderAccountType: AccountType,
     val sentAt: HelsinkiDateTime,
-    val messageType: MessageType,
 )
 
 fun Database.Read.getMessageDeletionTarget(contentId: MessageContentId): MessageDeletionTarget? =
     createQuery {
             sql(
                 """
-                SELECT m.content_id, m.sender_id, coalesce(m.sent_at, m.created) AS sent_at, t.message_type
+                SELECT
+                    m.content_id,
+                    m.sender_id,
+                    sender.type AS sender_account_type,
+                    coalesce(m.sent_at, m.created) AS sent_at
                 FROM message m
-                JOIN message_thread t ON t.id = m.thread_id
+                JOIN message_account sender ON sender.id = m.sender_id
                 WHERE m.content_id = ${bind(contentId)}
                 LIMIT 1
             """

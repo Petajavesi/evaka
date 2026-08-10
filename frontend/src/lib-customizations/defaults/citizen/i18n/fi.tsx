@@ -461,7 +461,7 @@ export default {
     attendance: 'Toteutunut läsnäolo',
     exceedStart: 'Saapunut ilmoitettua aikaisemmin.',
     exceedEnd: 'Lähtenyt ilmoitettua myöhemmin.',
-    exceedGeneric: 'Toteunut läsnäoloaika ylittää ilmoitetun ajan.',
+    exceedGeneric: 'Toteutunut läsnäoloaika ylittää ilmoitetun ajan.',
     calculatedUsedServiceTime:
       'Käytetty palveluntarve määräytyy kuukauden palveluntarpeen mukaan.',
     usedService: 'Käytetty palveluntarve',
@@ -1035,6 +1035,10 @@ export default {
           otherInfoLabel: 'Hakuun liittyvät lisätiedot',
           dietLabel: 'Erityisruokavalio',
           allergiesLabel: 'Allergiat'
+        },
+        otherGuardianAgreement: {
+          title: 'Hakemuksen lisätiedot',
+          text: 'Toinen huoltaja on ilmoittanut, että olette sopineet yhdessä hakemuksen lähettämisestä.'
         }
       },
       serviceNeed: {
@@ -2133,8 +2137,8 @@ export default {
         <P>
           Samassa taloudessa asuvien aikuisten ja lasten määrä vaikuttaa
           asiakasmaksuihin. Jos perheen tiedoissa on tapahtunut muutos, ole
-          yhteydessä asiakasmaksutiimiin, puh.{' '}
-          <a href="tel:+358981627400">09 81627400</a>.
+          yhteydessä asiakasmaksutiimiin, sähköposti{' '}
+          <a href="mailto:vaka.maksut@espoo.fi">vaka.maksut@espoo.fi</a>.
         </P>
       ),
       adults: 'Aikuiset',
