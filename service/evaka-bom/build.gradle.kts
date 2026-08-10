@@ -8,15 +8,15 @@ javaPlatform { allowDependencies() }
 
 dependencies {
     constraints {
-        api("ch.qos.logback.access:logback-access-tomcat:2.0.12")
-        api("com.auth0:java-jwt:4.5.2")
+        api("ch.qos.logback.access:logback-access-tomcat:2.0.13")
+        api("com.auth0:java-jwt:4.6.0")
         api("com.github.kagkarlsson:db-scheduler:16.12.0")
-        api("com.github.mwiede:jsch:2.28.3")
+        api("com.github.mwiede:jsch:2.28.4")
         api("com.google.guava:guava:33.6.0-jre")
-        api("com.networknt:json-schema-validator:3.0.5")
+        api("com.networknt:json-schema-validator:3.0.6")
         api("com.zaxxer:HikariCP:7.1.0")
         api("io.github.oshai:kotlin-logging-jvm:8.0.4")
-        api("io.kotest:kotest-property:6.2.1")
+        api("io.kotest:kotest-property:6.2.2")
         api("jakarta.annotation:jakarta.annotation-api:3.0.0")
         api("jakarta.jws:jakarta.jws-api:3.0.0")
         api("jakarta.xml.ws:jakarta.xml.ws-api:4.0.3")
@@ -55,20 +55,21 @@ dependencies {
         api("org.apache.groovy:groovy") { version { strictly("5.0.3") } }
 
         // These constraints are needed for CVE fixes
+        api("com.fasterxml.jackson.core:jackson-databind:2.22.1")
         api("org.apache.tomcat.embed:tomcat-embed-core:11.0.24")
         api("org.apache.tomcat.embed:tomcat-embed-websocket:11.0.24")
         api("org.postgresql:postgresql:42.7.13")
         api("org.apache.neethi:neethi:3.2.2")
     }
 
-    api(platform("tools.jackson:jackson-bom:3.2.0"))
+    api(platform("tools.jackson:jackson-bom:3.2.1"))
     api(platform("com.squareup.okhttp3:okhttp-bom:5.4.0"))
-    api(platform("io.opentelemetry:opentelemetry-bom:1.63.0"))
+    api(platform("io.opentelemetry:opentelemetry-bom:1.64.0"))
     api(platform("io.netty:netty-bom:4.2.16.Final"))
     api(platform("org.apache.cxf:cxf-bom:4.2.2"))
     api(platform("org.jdbi:jdbi3-bom:3.54.0"))
     api(platform(libs.kotlin.bom))
-    api(platform("org.junit:junit-bom:6.1.1"))
+    api(platform("org.junit:junit-bom:6.1.2"))
     api(platform(libs.spring.boot.dependencies))
-    api(platform("software.amazon.awssdk:bom:2.47.1"))
+    api(platform("software.amazon.awssdk:bom:2.47.6"))
 }

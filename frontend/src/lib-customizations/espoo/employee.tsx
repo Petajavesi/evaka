@@ -71,6 +71,12 @@ const customizations: EmployeeCustomizations = {
     'PARENTLEAVE',
     'FORCE_MAJEURE'
   ],
+  absenceTypesNotSelectableInWeekCalendar: [
+    'FREE_ABSENCE',
+    'PARENTLEAVE',
+    'PLANNED_ABSENCE',
+    'FORCE_MAJEURE'
+  ],
   daycareAssistanceLevels: [...daycareAssistanceLevels],
   otherAssistanceMeasureTypes: [
     'TRANSPORT_BENEFIT',
