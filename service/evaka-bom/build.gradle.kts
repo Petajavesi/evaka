@@ -37,7 +37,7 @@ dependencies {
         api(libs.mockito.core)
         api(libs.mockito.junit.jupiter)
         api("org.mockito.kotlin:mockito-kotlin:6.3.0")
-        api("org.postgresql:postgresql:42.7.11")
+        api("org.postgresql:postgresql:42.7.12")
         api("org.checkerframework:checker-qual:4.2.0")
         api("org.skyscreamer:jsonassert:1.5.3")
         api("org.thymeleaf.extras:thymeleaf-extras-java8time:3.0.4.RELEASE")
@@ -57,7 +57,7 @@ dependencies {
         // These constraints are needed for CVE fixes
         api("org.apache.tomcat.embed:tomcat-embed-core:11.0.23")
         api("org.apache.tomcat.embed:tomcat-embed-websocket:11.0.23")
-        api("org.postgresql:postgresql:42.7.11")
+        api("org.postgresql:postgresql:42.7.12")
         api("org.apache.neethi:neethi:3.2.2")
     }
 
@@ -68,7 +68,7 @@ dependencies {
     api(platform("org.apache.cxf:cxf-bom:4.2.2"))
     api(platform("org.jdbi:jdbi3-bom:3.53.0"))
     api(platform(libs.kotlin.bom))
-    api(platform("org.junit:junit-bom:6.1.0"))
+    api(platform("org.junit:junit-bom:6.1.1"))
     api(platform(libs.spring.boot.dependencies))
-    api(platform("software.amazon.awssdk:bom:2.46.17"))
+    api(platform("software.amazon.awssdk:bom:2.46.18"))
 }

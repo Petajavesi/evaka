@@ -71,10 +71,17 @@ export const sv: typeof fi = {
     yes: 'Ja',
     no: 'Nej',
     and: 'Ja',
-    loadingFailed: 'Hämtning av information misslyckades',
-    noAccess: 'Rättigheter saknas',
-    endpointDisabled:
-      'eVaka genomgår för närvarande ett partiellt underhållsavbrott. Vissa funktioner är inte tillgängliga just nu. Försök igen om en stund.',
+    loadingFailed: 'Datahämtningen misslyckades',
+    loadingFailedInfo:
+      'Försök att uppdatera sidan om en stund. Problemet är oftast tillfälligt.',
+    noAccess: 'Ingen tillgång',
+    noAccessInfo:
+      'Kontakta din chef eller systemadministratör om du behöver åtkomst.',
+    endpointDisabled: 'Delvis serviceavbrott',
+    endpointDisabledInfo:
+      'En del av funktionerna är inte tillgängliga just nu. Försök igen om en stund.',
+    networkError: 'Ingen internetanslutning',
+    networkErrorInfo: 'Kontrollera din internetanslutning och försök igen.',
     edit: 'Redigera',
     add: 'Lägg till',
     addNew: 'Lägg till ny',
@@ -428,6 +435,22 @@ export const sv: typeof fi = {
       confirmDecisionMailed: 'Markera som posterad',
       checked: (count: number) =>
         count === 1 ? `${count} ansökan vald` : `${count} ansökningar valda`
+    },
+    decisionReasoning: {
+      individualCountTooltip: (count: number) =>
+        count === 1
+          ? `Besluten har ${count} individuell motivering.`
+          : `Besluten har ${count} individuella motiveringar.`,
+      genericNotReadyTooltip:
+        'Den allmänna motiveringen för besluten är inte i bruk. Besluten kan skickas när motiveringen har tagits i bruk.',
+      sendBlockedTitle: (applicationCount: number): string =>
+        applicationCount === 1
+          ? 'Beslutet kunde inte skickas'
+          : 'Besluten kunde inte skickas',
+      sendBlockedText: (applicationCount: number): string =>
+        applicationCount === 1
+          ? 'Beslutets motiveringstexter är inte färdiga. Du kan skicka beslutet först när huvudanvändaren har färdigställt motiveringarna.'
+          : 'De valda ansökningarna har beslut vars motiveringstexter inte är färdiga. Du kan skicka besluten först när huvudanvändaren har färdigställt motiveringarna. Ingen ansökan flyttades vidare.'
     },
     distinctiveDetails: {
       SECONDARY: 'Visa även om enhet sökts som 2. eller 3. önskemål'
@@ -1770,6 +1793,7 @@ export const sv: typeof fi = {
       noIncomeStatements: 'Inga inkomstutredningar',
       incomeStatementHeading: 'Klientens inkomstutredningsblankett',
       sentAtHeading: 'Ankomstdatum',
+      citizenModifiedAtHeading: 'Redigerad',
       handledHeading: 'Behandlad',
       open: 'Öppna blankett',
       handled: 'Inkomstutredning behandlad',

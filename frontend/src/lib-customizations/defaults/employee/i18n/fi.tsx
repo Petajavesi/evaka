@@ -70,10 +70,17 @@ export const fi = {
     yes: 'Kyllä',
     no: 'Ei',
     and: 'Ja',
-    loadingFailed: 'Tietojen haku epäonnistui',
+    loadingFailed: 'Tietojen hakeminen ei onnistunut',
+    loadingFailedInfo:
+      'Kokeile päivittää sivu hetken kuluttua. Ongelma on yleensä hetkellinen.',
     noAccess: 'Oikeudet puuttuvat',
-    endpointDisabled:
-      'eVakassa on käynnissä osittainen huoltokatko. Osa toiminnoista ei ole tällä hetkellä käytettävissä. Yritä hetken kuluttua uudelleen.',
+    noAccessInfo:
+      'Jos tarvitset pääsyn, ota yhteys esihenkilöösi tai järjestelmänvalvojaan.',
+    endpointDisabled: 'Osittainen huoltokatko',
+    endpointDisabledInfo:
+      'Osa toiminnoista ei ole juuri nyt käytettävissä. Yritä uudelleen hetken kuluttua.',
+    networkError: 'Ei verkkoyhteyttä',
+    networkErrorInfo: 'Tarkista internet-yhteytesi ja kokeile uudelleen.',
     edit: 'Muokkaa',
     add: 'Lisää',
     addNew: 'Lisää uusi',
@@ -425,6 +432,22 @@ export const fi = {
       confirmDecisionMailed: 'Merkitse postitetuksi',
       checked: (count: number) =>
         count === 1 ? `${count} hakemus valittu` : `${count} hakemusta valittu`
+    },
+    decisionReasoning: {
+      individualCountTooltip: (count: number) =>
+        count === 1
+          ? `Päätöksillä on ${count} yksilöllinen perustelu.`
+          : `Päätöksillä on ${count} yksilöllistä perustelua.`,
+      genericNotReadyTooltip:
+        'Päätösten yleinen perustelu ei ole käytössä. Päätökset voidaan lähettää, kun perustelu on otettu käyttöön.',
+      sendBlockedTitle: (applicationCount: number): string =>
+        applicationCount === 1
+          ? 'Päätöksen lähettäminen ei onnistunut'
+          : 'Päätösten lähettäminen ei onnistunut',
+      sendBlockedText: (applicationCount: number): string =>
+        applicationCount === 1
+          ? 'Päätöksen perustelutekstit eivät ole valmiita. Voit lähettää päätöksen vasta, kun pääkäyttäjä on viimeistellyt perustelut.'
+          : 'Valituilla hakemuksilla on päätöksiä, joiden perustelutekstit eivät ole valmiita. Voit lähettää päätökset vasta, kun pääkäyttäjä on viimeistellyt perustelut. Yhtään hakemusta ei siirretty eteenpäin.'
     },
     distinctiveDetails: {
       SECONDARY: 'Näytä myös, jos yksikköön on haettu 2. tai 3. toiveena'
@@ -1761,6 +1784,7 @@ export const fi = {
       noIncomeStatements: 'Ei tuloselvityksiä',
       incomeStatementHeading: 'Asiakkaan tuloselvityslomake',
       sentAtHeading: 'Saapumispäivä',
+      citizenModifiedAtHeading: 'Muokattu',
       handledHeading: 'Käsitelty',
       open: 'Avaa lomake',
       handled: 'Tuloselvitys käsitelty',

@@ -19,14 +19,14 @@
     "e2e": "LC_ALL=fi_FI.UTF-8 tsx node_modules/.bin/playwright test -c src/e2e-test/playwright.config.ts"
   },
   "dependencies": {
-    "@fortawesome/fontawesome-svg-core": "7.2.0",
-    "@fortawesome/free-regular-svg-icons": "7.2.0",
-    "@fortawesome/free-solid-svg-icons": "7.2.0",
+    "@fortawesome/fontawesome-svg-core": "7.3.0",
+    "@fortawesome/free-regular-svg-icons": "7.3.0",
+    "@fortawesome/free-solid-svg-icons": "7.3.0",
     "@fortawesome/react-fontawesome": "3.3.1",
-    "@react-spring/web": "10.1.1",
-    "@sentry/browser": "10.60.0",
-    "@sentry/react": "10.60.0",
-    "@tanstack/react-query": "5.101.1",
+    "@react-spring/web": "10.1.2",
+    "@sentry/browser": "10.62.0",
+    "@sentry/react": "10.62.0",
+    "@tanstack/react-query": "5.101.2",
     "autosize": "6.0.1",
     "axios": "1.18.1",
     "chart.js": "4.5.1",
@@ -59,7 +59,7 @@
     "wouter": "3.10.0"
   },
   "devDependencies": {
-    "@playwright/test": "1.61.0",
+    "@playwright/test": "1.61.1",
     "@sentry/vite-plugin": "5.3.0",
     "@testing-library/dom": "10.4.1",
     "@testing-library/jest-dom": "6.9.1",
@@ -79,18 +79,18 @@
     "eslint-plugin-lodash": "8.0.0",
     "jsdom": "29.1.1",
     "make-error-cause": "2.3.0",
-    "oxfmt": "0.56.0",
-    "oxlint": "1.71.0",
-    "oxlint-tsgolint": "0.23.0",
-    "playwright": "1.61.0",
-    "postcss": "8.5.15",
-    "postcss-preset-env": "11.3.1",
+    "oxfmt": "0.57.0",
+    "oxlint": "1.72.0",
+    "oxlint-tsgolint": "0.24.0",
+    "playwright": "1.61.1",
+    "postcss": "8.5.16",
+    "postcss-preset-env": "11.3.2",
     "rollup": "4.62.2",
     "terser": "5.48.0",
     "ts-node": "10.9.2",
     "tsx": "4.22.4",
     "typescript": "6.0.3",
-    "vite": "8.1.0",
+    "vite": "8.1.1",
     "vitest": "4.1.9"
   },
   "peerDependencies": {
@@ -111,8 +111,8 @@
   },
   "resolutions": {
     "@react-leaflet/core@npm:^3.0.0": "patch:@react-leaflet/core@npm%3A3.0.0#~/.yarn/patches/@react-leaflet-core-npm-3.0.0-4e3f2d62b5.patch",
-    "postcss": "8.5.15",
-    "tar": "7.5.16"
+    "postcss": "8.5.16",
+    "tar": "7.5.19"
   },
   "browserslist": [
     "Firefox ESR",

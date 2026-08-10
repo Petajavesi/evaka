@@ -6,7 +6,6 @@ package evaka.core.application
 
 import evaka.core.Audit
 import evaka.core.AuditId
-import evaka.core.ChildAudit
 import evaka.core.ConstList
 import evaka.core.EvakaEnv
 import evaka.core.decision.Decision
@@ -15,6 +14,7 @@ import evaka.core.decision.DecisionDraftUpdate
 import evaka.core.decision.DecisionType
 import evaka.core.decision.fetchDecisionDrafts
 import evaka.core.decision.getDecisionsByApplication
+import evaka.core.decision.reasoning.getApplicationDecisionReasoningStats
 import evaka.core.decision.reasoning.resolveApplicableGenericReasoning
 import evaka.core.decision.updateDecisionDrafts
 import evaka.core.identity.ExternalIdentifier
@@ -214,10 +214,24 @@ class ApplicationControllerV2(
                             clock,
                             summaries.data.map { it.id },
                         )
+                    val reasoningStats =
+                        if (evakaEnv.decisionReasoningEnabled)
+                            tx.getApplicationDecisionReasoningStats(
+                                summaries.data
+                                    .filter { it.status == ApplicationStatus.WAITING_DECISION }
+                                    .map { it.id }
+                                    .toSet()
+                            )
+                        else emptyMap()
                     summaries.copy(
                         data =
                             summaries.data.map {
-                                it.copy(permittedActions = permittedActions[it.id] ?: emptySet())
+                                val stats = reasoningStats[it.id]
+                                it.copy(
+                                    permittedActions = permittedActions[it.id] ?: emptySet(),
+                                    individualReasoningCount = stats?.individualReasoningCount ?: 0,
+                                    reasoningWarningCount = stats?.reasoningWarningCount ?: 0,
+                                )
                             }
                     )
                 }
@@ -244,13 +258,7 @@ class ApplicationControllerV2(
                     it.fetchApplicationSummariesForGuardian(guardianId)
                 }
             }
-            .also {
-                val childIds = it.map { application -> application.childId }.toSet()
-                ChildAudit.ApplicationRead.log(
-                    targetId = AuditId(guardianId),
-                    childId = AuditId(childIds),
-                )
-            }
+            .also { Audit.ApplicationRead.log(targetId = AuditId(guardianId)) }
     }
 
     @GetMapping("/by-child/{childId}")
@@ -281,10 +289,7 @@ class ApplicationControllerV2(
             }
             .also {
                 val applicationIds = it.map { application -> application.applicationId }.toSet()
-                ChildAudit.ApplicationRead.log(
-                    targetId = AuditId(applicationIds),
-                    childId = AuditId(childId),
-                )
+                Audit.ApplicationRead.log(targetId = AuditId(applicationIds))
             }
     }
 
@@ -360,10 +365,7 @@ class ApplicationControllerV2(
                 }
             }
             .also {
-                ChildAudit.ApplicationRead.log(
-                    targetId = AuditId(applicationId),
-                    childId = AuditId(it.application.childId),
-                )
+                Audit.ApplicationRead.log(targetId = AuditId(applicationId))
                 Audit.DecisionReadByApplication.log(
                     targetId = AuditId(applicationId),
                     objectId = AuditId(it.application.childId),
