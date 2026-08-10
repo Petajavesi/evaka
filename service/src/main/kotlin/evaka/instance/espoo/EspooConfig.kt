@@ -245,6 +245,7 @@ class EspooConfig {
                 "Petäjäveden varhaiskasvatus",
             financeMessageAccountName =
                 "Varhaiskasvatuksen asiakasmaksut",
+            messageSupportEmail = "varhaiskasvatus@petajavesi.fi",
             applyPlacementUnitFromDecision = false,
             preferredStartRelativeApplicationDueDate = false,
             fiveYearsOldDaycareEnabled = false,

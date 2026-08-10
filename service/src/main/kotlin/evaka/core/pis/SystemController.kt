@@ -76,7 +76,7 @@ class SystemController(
                     tx.updateLastStrongLogin(now, citizen.id)
                     tx.updateCitizenOnLogin(now, citizen.id)
                     tx.upsertCitizenUser(citizen.id)
-                    personService.getPersonWithChildren(tx, user, citizen.id)
+                    personService.getPersonWithChildren(tx, user, now, citizen.id)
                     citizen
                 }
             }
@@ -144,7 +144,7 @@ class SystemController(
                     val now = clock.now()
                     tx.updateLastWeakLogin(now, citizen.id)
                     tx.updateCitizenOnLogin(now, citizen.id)
-                    personService.getPersonWithChildren(tx, user, citizen.id)
+                    personService.getPersonWithChildren(tx, user, now, citizen.id)
                     CitizenUserIdentity(citizen.id)
                 }
                 .also {
@@ -342,6 +342,7 @@ class SystemController(
                                 env.decisionReasoningGenericRemovalEnabled,
                             allowEnglishChildDocumentsForAllTypes =
                                 featureConfig.allowEnglishChildDocumentsForAllTypes,
+                            messageSupportEmail = featureConfig.messageSupportEmail,
                         )
 
                     EmployeeUserResponse(

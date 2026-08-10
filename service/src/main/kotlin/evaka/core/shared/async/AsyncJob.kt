@@ -90,6 +90,18 @@ sealed interface AsyncJob : AsyncJobPayload {
         override val user: AuthenticatedUser? = null
     }
 
+    data class SendMessageDeletionSenderEmail(val contentId: MessageContentId) : AsyncJob {
+        override val user: AuthenticatedUser? = null
+    }
+
+    data class SendMessageDeletionNotificationEmail(
+        val contentId: MessageContentId,
+        val recipientEmail: String,
+        val recipientLabel: String,
+    ) : AsyncJob {
+        override val user: AuthenticatedUser? = null
+    }
+
     data class SendAbsencePushNotification(val absenceId: AbsenceId, val device: MobileDeviceId) :
         AsyncJob {
         override val user: AuthenticatedUser? = null
@@ -229,7 +241,13 @@ sealed interface AsyncJob : AsyncJobPayload {
         override val user: AuthenticatedUser? = null
     }
 
-    data class DeleteExpiredChildDocuments(override val user: AuthenticatedUser? = null) : AsyncJob
+    data class DeleteChildImage(val imageId: ChildImageId) : AsyncJob {
+        override val user: AuthenticatedUser? = null
+    }
+
+    data object DeleteExpiredData : AsyncJob {
+        override val user: AuthenticatedUser? = null
+    }
 
     data class SendCalendarEventDigestEmail(
         val parentId: PersonId,
@@ -494,7 +512,8 @@ sealed interface AsyncJob : AsyncJobPayload {
                     CreateExpiredIncome::class,
                     DeleteAttachment::class,
                     DeleteChildDocumentPdf::class,
-                    DeleteExpiredChildDocuments::class,
+                    DeleteChildImage::class,
+                    DeleteExpiredData::class,
                     DeletePersonalDevicesIfNeeded::class,
                     DvvModificationsRefresh::class,
                     GarbageCollectPairing::class,
@@ -546,6 +565,8 @@ sealed interface AsyncJob : AsyncJobPayload {
                     SendDiscussionSurveyReservationCancellationEmail::class,
                     SendDiscussionSurveyReservationEmail::class,
                     SendEmailChangedEmail::class,
+                    SendMessageDeletionNotificationEmail::class,
+                    SendMessageDeletionSenderEmail::class,
                     SendMessageNotificationEmail::class,
                     SendMissingHolidayReservationsReminder::class,
                     SendMissingReservationsReminder::class,
