@@ -379,7 +379,10 @@ const sv: Translations = {
     serviceVoucherLink:
       'https://www.espoo.fi/sv/fostran-och-utbildning/smabarnspedagogik/ansokan-till-privat-smabarnspedagogik#section-55369',
     noApplying: 'Ingen sökning via eVaka, kontakta tjänsten',
-    backToSearch: 'Tillbaka till sökning'
+    backToSearch: 'Tillbaka till sökning',
+    zoomIn: 'Zooma in',
+    zoomOut: 'Zooma ut',
+    closePopup: 'Stäng enhetens information'
   },
   calendar: {
     title: 'Kalender',
@@ -2572,14 +2575,7 @@ const sv: Translations = {
       timeRange: 'Under perioden'
     },
     limitedCompany: {
-      info: (
-        <>
-          <strong>
-            Verifikaten över dividendinkomster ska skickas som bilaga.
-          </strong>{' '}
-          Välj ett lämpligt sätt att överföra övriga uppgifter nedan.
-        </>
-      ),
+      info: 'Välj ett lämplight sätt att överföra övriga uppgifter nedan',
       incomesRegister:
         'Mina inkomster kan kontrolleras direkt hos FPA och i inkomstregistret.',
       attachments:

@@ -389,7 +389,10 @@ const en: Translations = {
     serviceVoucherLink:
       'https://www.espoo.fi/en/childcare-and-education/early-childhood-education/applying-private-early-childhood-education#section-55369',
     noApplying: 'No applying via eVaka, contact the unit',
-    backToSearch: 'Back to search'
+    backToSearch: 'Back to search',
+    zoomIn: 'Zoom in',
+    zoomOut: 'Zoom out',
+    closePopup: 'Close unit information'
   },
   calendar: {
     title: 'Calendar',
@@ -2318,14 +2321,7 @@ const en: Translations = {
       timeRange: 'Time range'
     },
     limitedCompany: {
-      info: (
-        <>
-          <strong>
-            Documents of dividend income must be submitted as an attachment.
-          </strong>{' '}
-          Select the appropriate method to provide other information below.
-        </>
-      ),
+      info: 'Select the appropriate method to provide other information below',
       incomesRegister:
         'My income can be checked directly from Kela and the Incomes Register.',
       attachments:

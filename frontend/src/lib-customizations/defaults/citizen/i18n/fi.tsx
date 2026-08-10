@@ -389,7 +389,10 @@ export default {
     serviceVoucherLink:
       'https://www.petajavesi.fi/lapset-ja-nuoret/varhaiskasvatus/varhaiskasvatuspalveluihin-hakeminen',
     noApplying: 'Ei hakua eVakan kautta, ota yhteys yksikköön',
-    backToSearch: 'Takaisin hakuun'
+    backToSearch: 'Takaisin hakuun',
+    zoomIn: 'Lähennä',
+    zoomOut: 'Loitonna',
+    closePopup: 'Sulje yksikön tiedot'
   },
   calendar: {
     title: 'Kalenteri',
@@ -2532,15 +2535,7 @@ export default {
       timeRange: 'Aikavälillä'
     },
     limitedCompany: {
-      info: (
-        <>
-          <strong>
-            Kirjanpitäjän selvitys luontoiseduista ja osingoista tulee toimittaa
-            liitteenä.
-          </strong>{' '}
-          Valitse alta sopiva tapa muiden tietojen toimittamiseen.
-        </>
-      ),
+      info: 'Valitse alta sopiva tapa muiden tietojen toimittamiseen',
       incomesRegister:
         'Tuloni voi tarkastaa tulorekisteristä sekä tarvittaessa Kelasta.',
       attachments:

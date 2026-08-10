@@ -37,8 +37,8 @@ dependencies {
         api(libs.mockito.core)
         api(libs.mockito.junit.jupiter)
         api("org.mockito.kotlin:mockito-kotlin:6.3.0")
-        api("org.postgresql:postgresql:42.7.12")
-        api("org.checkerframework:checker-qual:4.2.0")
+        api("org.postgresql:postgresql:42.7.13")
+        api("org.checkerframework:checker-qual:4.2.1")
         api("org.skyscreamer:jsonassert:1.5.3")
         api("org.thymeleaf.extras:thymeleaf-extras-java8time:3.0.4.RELEASE")
         api("org.thymeleaf:thymeleaf:3.1.5.RELEASE")
@@ -55,20 +55,20 @@ dependencies {
         api("org.apache.groovy:groovy") { version { strictly("5.0.3") } }
 
         // These constraints are needed for CVE fixes
-        api("org.apache.tomcat.embed:tomcat-embed-core:11.0.23")
-        api("org.apache.tomcat.embed:tomcat-embed-websocket:11.0.23")
-        api("org.postgresql:postgresql:42.7.12")
+        api("org.apache.tomcat.embed:tomcat-embed-core:11.0.24")
+        api("org.apache.tomcat.embed:tomcat-embed-websocket:11.0.24")
+        api("org.postgresql:postgresql:42.7.13")
         api("org.apache.neethi:neethi:3.2.2")
     }
 
     api(platform("tools.jackson:jackson-bom:3.2.0"))
     api(platform("com.squareup.okhttp3:okhttp-bom:5.4.0"))
     api(platform("io.opentelemetry:opentelemetry-bom:1.63.0"))
-    api(platform("io.netty:netty-bom:4.2.15.Final"))
+    api(platform("io.netty:netty-bom:4.2.16.Final"))
     api(platform("org.apache.cxf:cxf-bom:4.2.2"))
-    api(platform("org.jdbi:jdbi3-bom:3.53.0"))
+    api(platform("org.jdbi:jdbi3-bom:3.54.0"))
     api(platform(libs.kotlin.bom))
     api(platform("org.junit:junit-bom:6.1.1"))
     api(platform(libs.spring.boot.dependencies))
-    api(platform("software.amazon.awssdk:bom:2.46.18"))
+    api(platform("software.amazon.awssdk:bom:2.47.1"))
 }
