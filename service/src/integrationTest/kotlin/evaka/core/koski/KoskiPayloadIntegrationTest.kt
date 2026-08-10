@@ -34,7 +34,12 @@ class KoskiPayloadIntegrationTest : FullApplicationTest(resetDbBeforeEach = true
     private val area = DevCareArea()
     private val daycare =
         DevDaycare(areaId = area.id, ophOrganizerOid = defaultMunicipalOrganizerOid)
-    private val daycare2 = DevDaycare(areaId = area.id, name = "Test Daycare 2")
+    private val daycare2 =
+        DevDaycare(
+            areaId = area.id,
+            name = "Test Daycare 2",
+            ophOrganizerOid = defaultMunicipalOrganizerOid,
+        )
     private val child1 =
         DevPerson(
             ssn = "010617A123U",
@@ -155,6 +160,114 @@ class KoskiPayloadIntegrationTest : FullApplicationTest(resetDbBeforeEach = true
                                 "osasuoritukset": null
                             }
                         ],                        
+                        "tyyppi": {
+                            "koodiarvo": "esiopetus",
+                            "koodistoUri": "opiskeluoikeudentyyppi"
+                        },
+                        "lähdejärjestelmänId":{
+                            "id": "${stored.id}",
+                            "lähdejärjestelmä":{
+                                "koodiarvo": "TestSystemCode",
+                                "koodistoUri": "lahdejarjestelma"
+                            }
+                        },
+                        "oid": "${stored.studyRightOid}",
+                        "lisätiedot": null
+                    }
+                ]
+            }
+            """
+                .trimIndent()
+        JSONAssert.assertEquals(expected, stored.payload, JSONCompareMode.STRICT)
+    }
+
+    @Test
+    fun `preschool manager name is used as approver when set`() {
+        val preschoolManagerDaycare =
+            DevDaycare(
+                areaId = area.id,
+                name = "Preschool Manager Daycare",
+                ophOrganizerOid = defaultMunicipalOrganizerOid,
+                preschoolManagerName = "Preschool Manager",
+            )
+        db.transaction {
+            it.insert(preschoolManagerDaycare)
+            it.setUnitOid(preschoolManagerDaycare.id, "1.2.246.562.10.3333333333")
+            it.insert(
+                DevPlacement(
+                    childId = child1.id,
+                    unitId = preschoolManagerDaycare.id,
+                    startDate = preschoolTerm2019.start,
+                    endDate = preschoolTerm2019.end,
+                    type = PlacementType.PRESCHOOL,
+                )
+            )
+        }
+
+        koskiTester.triggerUploads(today = preschoolTerm2019.end.plusDays(1))
+
+        val stored = db.read { it.getStoredResults() }.single()
+        val expected =
+            """
+            {
+                "henkilö": {
+                    "hetu": "010617A123U",
+                    "etunimet": "Ricky",
+                    "sukunimi": "Doe"
+                },
+                "opiskeluoikeudet": [
+                    {
+                        "tila": {
+                            "opiskeluoikeusjaksot": [
+                                {
+                                    "alku": "2019-08-08",
+                                    "tila": {
+                                        "koodiarvo": "lasna",
+                                        "koodistoUri": "koskiopiskeluoikeudentila"
+                                    }
+                                },
+                                {
+                                    "alku": "2020-05-29",
+                                    "tila": {
+                                        "koodiarvo": "valmistunut",
+                                        "koodistoUri": "koskiopiskeluoikeudentila"
+                                    }
+                                }
+                            ]
+                        },
+                        "suoritukset": [
+                            {
+                                "koulutusmoduuli": {
+                                    "perusteenDiaarinumero": "102/011/2014",
+                                    "tunniste": {
+                                        "koodiarvo": "001102",
+                                        "koodistoUri": "koulutus"
+                                    }
+                                },
+                                "toimipiste": {
+                                    "oid": "1.2.246.562.10.3333333333"
+                                },
+                                "suorituskieli": {
+                                    "koodiarvo": "FI",
+                                    "koodistoUri": "kieli"
+                                },
+                                "tyyppi": {
+                                    "koodiarvo": "esiopetuksensuoritus",
+                                    "koodistoUri": "suorituksentyyppi"
+                                },
+                                "vahvistus": {
+                                    "päivä":"2020-05-29",
+                                    "paikkakunta":{"koodiarvo":"049","koodistoUri":"kunta"},
+                                    "myöntäjäOrganisaatio":{"oid":$defaultMunicipalOrganizerOid},
+                                    "myöntäjäHenkilöt":[{
+                                        "nimi":"Preschool Manager",
+                                        "titteli":{"fi":"Esiopetusyksikön johtaja"},
+                                        "organisaatio":{"oid":$defaultMunicipalOrganizerOid}
+                                    }]
+                                },
+                                "osasuoritukset": null
+                            }
+                        ],
                         "tyyppi": {
                             "koodiarvo": "esiopetus",
                             "koodistoUri": "opiskeluoikeudentyyppi"
@@ -335,7 +448,7 @@ class KoskiPayloadIntegrationTest : FullApplicationTest(resetDbBeforeEach = true
                                         "myöntäjäHenkilöt":[{
                                             "nimi":"Unit Manager",
                                             "titteli":{"fi":"Esiopetusyksikön johtaja"},
-                                            "organisaatio":{"oid":"1.2.3.4.5"}
+                                            "organisaatio":{"oid":"$defaultMunicipalOrganizerOid"}
                                         }]
                                     },
                                     "osasuoritukset": null
@@ -605,7 +718,7 @@ class KoskiPayloadIntegrationTest : FullApplicationTest(resetDbBeforeEach = true
                                         "myöntäjäHenkilöt":[{
                                             "nimi":"Unit Manager",
                                             "titteli":{"fi":"Esiopetusyksikön johtaja"},
-                                            "organisaatio":{"oid":"1.2.3.4.5"}
+                                            "organisaatio":{"oid":"$defaultMunicipalOrganizerOid"}
                                         }]
                                     },
                                     "osasuoritukset": null

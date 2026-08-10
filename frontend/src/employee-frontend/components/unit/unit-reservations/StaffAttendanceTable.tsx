@@ -197,12 +197,19 @@ export default React.memo(function StaffAttendanceTable({
                 setDetailsModalConfig({
                   date,
                   name: row.name,
-                  attendances: row.attendances
-                    .filter((a) => a.type !== null)
-                    .map((a) => ({
-                      ...a,
-                      type: a.type!
-                    })),
+                  attendances: row.attendances.flatMap((a) =>
+                    a.type !== null
+                      ? ({
+                          id: a.id,
+                          groupId: a.groupId,
+                          type: a.type,
+                          arrived: a.arrived,
+                          departed: a.departed,
+                          departedAutomatically: a.departedAutomatically,
+                          occupancyCoefficient: a.occupancyCoefficient
+                        } satisfies ModalAttendance)
+                      : []
+                  ),
                   plannedAttendances: row.plannedAttendances,
                   target: {
                     type: 'employee',
@@ -822,12 +829,7 @@ const DetailsToggle = React.memo(function DetailsToggle({
   departedAutomatically
 }: DetailsToggleProps) {
   const { i18n } = useTranslation()
-  const icon =
-    departedAutomatically && !hovered
-      ? fasExclamationTriangle
-      : allowDetailsModal && hovered
-        ? faCircleEllipsisVertical
-        : undefined
+  const showWarning = departedAutomatically && !hovered
 
   return (
     <DetailsCell
@@ -835,10 +837,11 @@ const DetailsToggle = React.memo(function DetailsToggle({
         departedAutomatically ? 'departed-automatically-icon' : undefined
       }
     >
-      {icon ? (
-        <IconOnlyButton
-          icon={icon}
-          color={departedAutomatically && !hovered ? 'warning' : 'default'}
+      {allowDetailsModal || showWarning ? (
+        <OpenDetailsButton
+          $dimmed={!hovered && !departedAutomatically}
+          icon={showWarning ? fasExclamationTriangle : faCircleEllipsisVertical}
+          color={showWarning ? 'warning' : 'default'}
           bubble={departedAutomatically && hovered ? 'warning' : undefined}
           onClick={allowDetailsModal ? onOpen : undefined}
           data-qa="open-details"
@@ -857,6 +860,10 @@ const DetailsCell = styled.div`
   align-items: center;
   justify-content: flex-end;
   padding: ${defaultMargins.xxs};
+`
+
+const OpenDetailsButton = styled(IconOnlyButton)<{ $dimmed: boolean }>`
+  opacity: ${(p) => (p.$dimmed ? 0 : 1)};
 `
 
 function getAttendancesForGroupAndDate(
@@ -938,16 +945,21 @@ function computeModalAttendances(
     const attendances: ModalAttendance[] = uniqBy(
       combined
         .flatMap((employee) => employee.attendances)
-        .filter(
-          (attendance) =>
-            attendance.type !== null &&
-            attendance.arrived <= endOfDay &&
-            (attendance.departed === null || startOfDay <= attendance.departed)
-        )
-        .map((a) => ({
-          ...a,
-          type: a.type!
-        })),
+        .flatMap((attendance) =>
+          attendance.type !== null &&
+          attendance.arrived <= endOfDay &&
+          (attendance.departed === null || startOfDay <= attendance.departed)
+            ? ({
+                id: attendance.id,
+                groupId: attendance.groupId,
+                type: attendance.type,
+                arrived: attendance.arrived,
+                departed: attendance.departed,
+                departedAutomatically: attendance.departedAutomatically,
+                occupancyCoefficient: attendance.occupancyCoefficient
+              } satisfies ModalAttendance)
+            : []
+        ),
       (attendance) => attendance.id
     )
     const plannedAttendances: ModalPlannedAttendance[] = uniq(

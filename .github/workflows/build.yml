@@ -44,27 +44,57 @@ jobs:
   lint-shell:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: espoon-voltti/voltti-actions/shellcheck@v1
 
   check-licenses:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Reuse Compliance Check
       uses: fsfe/reuse-action@v6
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.16.0'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Lint apigw
+        working-directory: apigw
+        run: |
+          yarn install --immutable
+          yarn lint
+
+      - name: Lint frontend
+        working-directory: frontend
+        run: |
+          yarn install --immutable
+          yarn lint
+
+      - name: Lint dummy-idp
+        working-directory: dummy-idp
+        run: |
+          npm ci
+          npm run lint
 
   frontend:
     runs-on: ubuntu-latest
     needs:
       - cache-bust
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Cache fortawesome
         if: ${{ !github.event.pull_request.head.repo.fork }}
         id: fortawesome
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: frontend/node_modules
           key: fortawesome-${{ hashFiles('frontend/bin/unpack-pro-icons.sh') }}
@@ -168,7 +198,7 @@ jobs:
       - frontend
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Login to GitHub Container Registry
         if: ${{ !github.event.pull_request.head.repo.fork }}
@@ -177,10 +207,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Lint
-        if: ${{ !github.event.pull_request.head.repo.fork }}
-        run: docker run --rm "${{ needs.frontend.outputs.builder_image }}" yarn lint
 
       - name: Type check
         if: ${{ !github.event.pull_request.head.repo.fork }}
@@ -206,7 +232,7 @@ jobs:
     needs:
       - cache-bust
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Setup Docker building
         if: ${{ !github.event.pull_request.head.repo.fork }}
@@ -263,7 +289,7 @@ jobs:
     needs:
       - cache-bust
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Setup Docker building
         if: ${{ !github.event.pull_request.head.repo.fork }}
@@ -323,7 +349,7 @@ jobs:
       - service
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Setup Docker building
         if: ${{ !github.event.pull_request.head.repo.fork }}
@@ -368,7 +394,7 @@ jobs:
       - service
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Login to GitHub Container Registry
         if: ${{ !github.event.pull_request.head.repo.fork }}
@@ -378,23 +404,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Start database
-        if: ${{ !github.event.pull_request.head.repo.fork }}
-        run: |
-          cd compose
-          docker compose up -d --wait db
-
-      - name: Apply migrations
-        if: ${{ !github.event.pull_request.head.repo.fork }}
-        env:
-          TAG: "${{ github.event.pull_request.head.sha || github.sha }}"
-        run: |
-          docker run --rm --network=host \
-            "ghcr.io/espoon-voltti/evaka/service-builder:${TAG}" \
-            ./gradlew --no-daemon -Dorg.gradle.configuration-cache=false flywayMigrate
-
       - name: Check schema documentation is up-to-date
         if: ${{ !github.event.pull_request.head.repo.fork }}
+        env:
+          SCHEMA_DUMP_MIGRATE_IMAGE: "ghcr.io/espoon-voltti/evaka/service-builder:${{ github.event.pull_request.head.sha || github.sha }}"
         run: |
           bin/dump-db-schema.sh > /tmp/schema.sql
           if ! diff -q docs/db/schema.sql /tmp/schema.sql > /dev/null 2>&1; then
@@ -418,7 +431,7 @@ jobs:
         test_chunk_count: [6] # must max value of above list
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Login to GitHub Container Registry
         if: ${{ !github.event.pull_request.head.repo.fork }}
@@ -497,7 +510,7 @@ jobs:
     if: ${{ !github.event.pull_request.head.repo.fork }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v4
@@ -568,7 +581,7 @@ jobs:
     env:
       PLAYWRIGHT_TAG: "${{ inputs.playwright_tag || 'master' }}"
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Login to Docker Hub
         if: ${{ !github.event.pull_request.head.repo.fork }}
@@ -628,7 +641,7 @@ jobs:
           retention-days: 2
 
   ecr-push:
-    if: ${{ !github.event.pull_request.head.repo.fork && inputs.push != 'false' }}
+    if: ${{ github.actor != 'dependabot[bot]' && !github.event.pull_request.head.repo.fork && inputs.push != 'false' }}
     needs:
       - frontend
       - service
@@ -682,7 +695,11 @@ jobs:
           PREFIX: "${{ matrix.ecr_prefix }}"
         run: |
           set -euo pipefail
-          for image in frontend service api-gateway; do
+          images=(frontend service api-gateway)
+          if [ "$PREFIX" = "evaka" ]; then
+            images+=(service-builder)
+          fi
+          for image in "${images[@]}"; do
             src="ghcr.io/espoon-voltti/evaka/${image}:${SHA}"
             dst="${ECR}/${PREFIX}/${image}:${SHA}"
             echo "Copying ${src} -> ${dst}"
@@ -744,6 +761,7 @@ jobs:
       - municipality-smoke-test
       - e2e
       - frontend-test
+      - lint
       - lint-shell
       - check-licenses
       - check-schema
@@ -799,7 +817,11 @@ jobs:
             tags+=("latest")
           fi
 
-          for image in frontend service api-gateway; do
+          images=(frontend service api-gateway)
+          if [ "$PREFIX" = "evaka" ]; then
+            images+=(service-builder)
+          fi
+          for image in "${images[@]}"; do
             repository="${PREFIX}/${image}"
             sha_digest=$(aws ecr describe-images \
               --repository-name "$repository" \

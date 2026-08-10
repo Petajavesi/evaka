@@ -2021,8 +2021,10 @@ export const fi = {
       role: 'Rooli',
       name: 'Nimi',
       email: 'Sähköpostiosoite',
-      aclStartDate: 'Luvitus alkaa',
-      aclEndDate: 'Luvitus päättyy',
+      aclStartDate: 'Luvitus yksikköön alkaa',
+      aclEndDate: 'Luvitus yksikköön päättyy',
+      aclEndDateHelp:
+        'Päättymispäivän jälkeen henkilön pääsy yksikköön ja kaikkiin ryhmiin poistuu.',
       removeConfirmation:
         'Haluatko poistaa pääsyoikeuden valitulta henkilöltä?',
       removeScheduledConfirmation: 'Haluatko poistaa tulevan luvituksen?',
@@ -2039,6 +2041,8 @@ export const fi = {
       chooseRole: 'Valitse rooli',
       choosePerson: 'Valitse henkilö',
       chooseGroup: 'Valitse ryhmä',
+      chooseGroupHelp:
+        'Luvitus ryhmään noudattaa yksikön luvituksen voimassaoloa.',
       temporaryEmployees: {
         title: 'Tilapäiset sijaiset',
         previousEmployeesTitle: 'Aiemmat tilapäiset sijaiset',
@@ -2430,7 +2434,7 @@ export const fi = {
         groupNotesHeader: 'Ryhmän muistiinpanot',
         stickyNotesHeader: 'Huomioitavaa lähipäivinä',
         notesHint:
-          'Leikkejä, onnistumisia, ilonaiheita ja opittuja asioita tänään (ei terveystietoja tai salassapidettäviä tietoja).',
+          'Leikkejä, aktiivista liikkumista, onnistumisia, ilonaiheita ja opittuja asioita tänään (ei terveystietoja tai salassapidettäviä tietoja).',
         childStickyNoteHint:
           'Muistiinpano henkilökunnalle (ei terveystietoja tai salassapidettäviä tietoja).',
         otherThings: 'Muut asiat',
@@ -4089,6 +4093,7 @@ export const fi = {
         'Raportti hetuttomista sijoitetuista lapsista OID-tietojen tarkistamiseen',
       childName: 'Lapsen nimi',
       dateOfBirth: 'Syntymäpäivä',
+      placementStartDate: 'Sijoituksen alkupäivä',
       personOid: 'Lapsen tietojen OID',
       lastSentToVarda: 'Viety Vardaan viimeksi',
       lastSentToKoski: 'Viety Koskeen viimeksi',
@@ -4260,6 +4265,33 @@ export const fi = {
           label: 'Esiopetuskausi:',
           placeholder: 'Valitse esiopetuskausi'
         },
+        includeClosed: 'Näytä lopetetut yksiköt ja ryhmät'
+      }
+    },
+    childAbsences: {
+      title: 'Lasten poissaoloraportti',
+      description:
+        'Raportti listaa lasten koko päivän poissaolojen määrät päivinä valitulla aikavälillä. Auttaa esimerkiksi ilmoittamattomien poissaolojen seurannassa.',
+      firstName: 'Etunimi',
+      lastName: 'Sukunimi',
+      daycareName: 'Yksikkö',
+      groupName: 'Ryhmä',
+      days: '(päivää)',
+      total: 'Yhteensä',
+      filters: {
+        areaSelection: {
+          label: 'Alue:',
+          placeHolder: 'Valitse alue'
+        },
+        daycareSelection: {
+          label: 'Yksikkö:',
+          placeholder: 'Valitse yksikkö'
+        },
+        groupSelection: {
+          label: 'Ryhmä:',
+          placeholder: 'Valitse ryhmä'
+        },
+        range: 'Aikaväli:',
         includeClosed: 'Näytä lopetetut yksiköt ja ryhmät'
       }
     },
@@ -5254,23 +5286,24 @@ export const fi = {
   decisionReasonings: {
     tabs: {
       DAYCARE: 'Varhaiskasvatus',
-      PRESCHOOL: 'Esiopetus'
+      PRESCHOOL: 'Esiopetus',
+      CLUB: 'Kerho'
     },
     collectionInfo: {
       DAYCARE:
         'Varhaiskasvatusperusteluja käytetään päätöksissä, jotka koskevat sijoitustyyppejä:',
       PRESCHOOL:
-        'Esiopetusperusteluja käytetään päätöksissä, jotka koskevat sijoitustyyppejä:'
+        'Esiopetusperusteluja käytetään päätöksissä, jotka koskevat sijoitustyyppejä:',
+      CLUB: 'Kerhoperusteluja käytetään päätöksissä, jotka koskevat sijoitustyyppejä:'
     },
     placementTypes: {
       DAYCARE: [
         'Varhaiskasvatuspäätökset',
         'Osa-aikainen varhaiskasvatus',
-        'Liittyvä varhaiskasvatus',
-        'Kerho',
-        'Esiopetuksen kerho'
+        'Liittyvä varhaiskasvatus'
       ],
-      PRESCHOOL: ['Esiopetus', 'Valmistava opetus']
+      PRESCHOOL: ['Esiopetus', 'Valmistava opetus'],
+      CLUB: ['Kerho', 'Esiopetuksen kerho']
     },
     generic: {
       title: 'Yleiset perustelut',

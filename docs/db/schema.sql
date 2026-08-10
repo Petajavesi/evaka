@@ -198,7 +198,8 @@ CREATE TYPE public.daycare_assistance_level AS ENUM (
 
 CREATE TYPE public.decision_reasoning_collection_type AS ENUM (
     'DAYCARE',
-    'PRESCHOOL'
+    'PRESCHOOL',
+    'CLUB'
 );
 
 -- Name: decision_status; Type: TYPE; Schema: public
@@ -1439,7 +1440,7 @@ CREATE VIEW public.koski_unit AS
  SELECT id,
     language AS unit_language,
     provider_type,
-    unit_manager_name AS approver_name,
+    COALESCE(NULLIF(preschool_manager_name, ''::text), unit_manager_name) AS approver_name,
     NULLIF(oph_unit_oid, ''::text) AS oph_unit_oid,
     NULLIF(oph_organizer_oid, ''::text) AS oph_organizer_oid
    FROM public.daycare

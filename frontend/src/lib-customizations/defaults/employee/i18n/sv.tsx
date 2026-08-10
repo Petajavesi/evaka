@@ -2036,8 +2036,10 @@ export const sv: typeof fi = {
       role: 'Roll',
       name: 'Namn',
       email: 'E-postadress',
-      aclStartDate: 'Tillstånd börjar',
-      aclEndDate: 'Tillstånd upphör',
+      aclStartDate: 'Tillstånd till enheten börjar',
+      aclEndDate: 'Tillstånd till enheten upphör',
+      aclEndDateHelp:
+        'Efter slutdatumet upphör personens tillgång till enheten och alla grupper.',
       removeConfirmation:
         'Vill du ta bort åtkomsträttigheterna från den valda personen?',
       removeScheduledConfirmation: 'Vill du ta bort det kommande tillståndet?',
@@ -2054,6 +2056,8 @@ export const sv: typeof fi = {
       chooseRole: 'Välj roll',
       choosePerson: 'Välj person',
       chooseGroup: 'Välj grupp',
+      chooseGroupHelp:
+        'Tillståndet för gruppen gäller under samma tidsperiod som enhetens tillstånd.',
       temporaryEmployees: {
         title: 'Tillfälliga vikarier',
         previousEmployeesTitle: 'Tidigare tillfälliga vikarier',
@@ -2449,7 +2453,7 @@ export const sv: typeof fi = {
         groupNotesHeader: 'Gruppens anteckningar',
         stickyNotesHeader: 'Att uppmärksamma under närmaste dagarna',
         notesHint:
-          'Lekar, lyckanden, glädjeämnen och inlärda saker idag (inga hälsouppgifter eller sekretessbelagda uppgifter).',
+          'Lekar, aktiv rörelse, lyckanden, glädjeämnen och inlärda saker idag (inga hälsouppgifter eller sekretessbelagda uppgifter).',
         childStickyNoteHint:
           'Anteckning för personalen (inga hälsouppgifter eller sekretessbelagda uppgifter).',
         otherThings: 'Övriga ärenden',
@@ -4125,6 +4129,7 @@ export const sv: typeof fi = {
         'Rapport över placerade barn utan personbeteckning för kontroll av OID-uppgifter',
       childName: 'Barnets namn',
       dateOfBirth: 'Födelsedatum',
+      placementStartDate: 'Placeringens startdatum',
       personOid: 'Barnets uppgifters OID',
       lastSentToVarda: 'Exporterat till Varda senast',
       lastSentToKoski: 'Exporterat till Koski senast',
@@ -4295,6 +4300,33 @@ export const sv: typeof fi = {
           label: 'Förskoleperiod:',
           placeholder: 'Välj förskoleperiod'
         },
+        includeClosed: 'Visa avslutade enheter och grupper'
+      }
+    },
+    childAbsences: {
+      title: 'Frånvarorapport för barn',
+      description:
+        'Rapporten listar antalet heldagsfrånvaron för barn i dagar under vald tidsperiod. Hjälper t.ex. med uppföljning av oanmälda frånvaron.',
+      firstName: 'Förnamn',
+      lastName: 'Efternamn',
+      daycareName: 'Enhet',
+      groupName: 'Grupp',
+      days: '(dagar)',
+      total: 'Totalt',
+      filters: {
+        areaSelection: {
+          label: 'Område:',
+          placeHolder: 'Välj område'
+        },
+        daycareSelection: {
+          label: 'Enhet:',
+          placeholder: 'Välj enhet'
+        },
+        groupSelection: {
+          label: 'Grupp:',
+          placeholder: 'Välj grupp'
+        },
+        range: 'Tidsperiod:',
         includeClosed: 'Visa avslutade enheter och grupper'
       }
     },
@@ -5287,23 +5319,24 @@ export const sv: typeof fi = {
   decisionReasonings: {
     tabs: {
       DAYCARE: 'Småbarnspedagogik',
-      PRESCHOOL: 'Förskoleundervisning'
+      PRESCHOOL: 'Förskoleundervisning',
+      CLUB: 'Klubb'
     },
     collectionInfo: {
       DAYCARE:
         'Småbarnspedagogikmotiveringar används i beslut som gäller placeringstyper:',
       PRESCHOOL:
-        'Förskolemotiveringar används i beslut som gäller placeringstyper:'
+        'Förskolemotiveringar används i beslut som gäller placeringstyper:',
+      CLUB: 'Klubbmotiveringar används i beslut som gäller placeringstyper:'
     },
     placementTypes: {
       DAYCARE: [
         'Småbarnspedagogikbeslut',
         'Deltid småbarnspedagogik',
-        'Ansluten småbarnspedagogik',
-        'Klubb',
-        'Förskoleklubb'
+        'Ansluten småbarnspedagogik'
       ],
-      PRESCHOOL: ['Förskoleundervisning', 'Förberedande undervisning']
+      PRESCHOOL: ['Förskoleundervisning', 'Förberedande undervisning'],
+      CLUB: ['Klubb', 'Förskoleklubb']
     },
     generic: {
       title: 'Allmänna motiveringar',

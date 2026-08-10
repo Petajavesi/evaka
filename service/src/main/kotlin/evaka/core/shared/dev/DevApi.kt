@@ -51,6 +51,7 @@ import evaka.core.decision.DecisionType
 import evaka.core.decision.getDecision
 import evaka.core.decision.getDecisionsByApplication
 import evaka.core.decision.reasoning.DecisionReasoningCollectionType
+import evaka.core.decision.reasoning.setDecisionReasoningIndividualSelections
 import evaka.core.document.ChildDocumentType
 import evaka.core.document.DocumentDeletionBasis
 import evaka.core.document.DocumentTemplate
@@ -428,6 +429,8 @@ UPDATE placement SET end_date = ${bind(req.endDate)}, termination_requested_date
         val startDate: LocalDate,
         val endDate: LocalDate,
         val status: DecisionStatus,
+        val genericReasoningId: DecisionGenericReasoningId? = null,
+        val individualReasoningIds: List<DecisionIndividualReasoningId> = emptyList(),
     )
 
     @PostMapping("/decisions")
@@ -455,8 +458,17 @@ UPDATE placement SET end_date = ${bind(req.endDate)}, termination_requested_date
                             resolved = null,
                             pendingDecisionEmailsSentCount = null,
                             pendingDecisionEmailSent = null,
+                            genericReasoningId = decision.genericReasoningId,
                         )
                     )
+                    if (decision.individualReasoningIds.isNotEmpty()) {
+                        tx.setDecisionReasoningIndividualSelections(
+                            decision.id,
+                            decision.individualReasoningIds.toSet(),
+                            evakaClock.now(),
+                            EvakaUserId(decision.employeeId.raw),
+                        )
+                    }
                 }
             }
         }
@@ -1909,7 +1921,7 @@ data class DevCareArea(
     val id: AreaId = AreaId(UUID.randomUUID()),
     val name: String = "Test Care Area",
     val shortName: String = "test_area",
-    val areaCode: Int? = 200,
+    val areaCode: Int? = null,
     val subCostCenter: String? = "00",
 )
 
@@ -1953,12 +1965,11 @@ data class DevDaycare(
     val openingDate: LocalDate? = null,
     val closingDate: LocalDate? = null,
     val areaId: AreaId,
-    val type: Set<CareType> =
-        setOf(CareType.CENTRE, CareType.PRESCHOOL, CareType.PREPARATORY_EDUCATION),
-    val dailyPreschoolTime: TimeRange? = TimeRange(LocalTime.of(9, 0), LocalTime.of(13, 0)),
-    val dailyPreparatoryTime: TimeRange? = TimeRange(LocalTime.of(9, 0), LocalTime.of(14, 0)),
-    val daycareApplyPeriod: DateRange? = DateRange(LocalDate.of(2020, 3, 1), null),
-    val preschoolApplyPeriod: DateRange? = DateRange(LocalDate.of(2020, 3, 1), null),
+    val type: Set<CareType> = setOf(CareType.CENTRE),
+    val dailyPreschoolTime: TimeRange? = null,
+    val dailyPreparatoryTime: TimeRange? = null,
+    val daycareApplyPeriod: DateRange? = null,
+    val preschoolApplyPeriod: DateRange? = null,
     val clubApplyPeriod: DateRange? = null,
     val providerType: ProviderType = ProviderType.MUNICIPAL,
     val capacity: Int = 0,
@@ -1969,7 +1980,7 @@ data class DevDaycare(
     val uploadToKoski: Boolean = true,
     val invoicedByMunicipality: Boolean = true,
     val costCenter: String? = "31500",
-    val dwCostCenter: String? = "dw-test",
+    val dwCostCenter: String? = null,
     val additionalInfo: String? = null,
     val phone: String? = null,
     val email: String? = null,
@@ -1979,6 +1990,7 @@ data class DevDaycare(
     val location: Coordinate? = null,
     val mailingAddress: MailingAddress = MailingAddress(),
     val unitManager: UnitManager = UnitManager(name = "Unit Manager", phone = "", email = ""),
+    val preschoolManagerName: String = "",
     val decisionCustomization: DaycareDecisionCustomization =
         DaycareDecisionCustomization(
             daycareName = name,
@@ -1986,8 +1998,8 @@ data class DevDaycare(
             handler = "Decision Handler",
             handlerAddress = "Decision Handler Street 1",
         ),
-    val ophUnitOid: String? = "1.2.3.4.5",
-    val ophOrganizerOid: String? = "1.2.3.4.5",
+    val ophUnitOid: String? = null,
+    val ophOrganizerOid: String? = null,
     val operationTimes: List<TimeRange?> =
         listOf(
             TimeRange(LocalTime.parse("00:00"), LocalTime.parse("23:59")),
@@ -2088,7 +2100,7 @@ data class DevPlacement(
     val createdBy: EvakaUserId? = AuthenticatedUser.SystemInternalUser.evakaUserId,
     val modifiedAt: HelsinkiDateTime? = HelsinkiDateTime.now(),
     val modifiedBy: EvakaUserId? = AuthenticatedUser.SystemInternalUser.evakaUserId,
-    val source: PlacementSource? = PlacementSource.MANUAL,
+    val source: PlacementSource? = null,
     val sourceApplicationId: ApplicationId? = null,
     val sourceServiceApplicationId: ServiceApplicationId? = null,
 )
@@ -2193,12 +2205,12 @@ data class DevEmployee(
     val preferredFirstName: String? = null,
     val firstName: String = "Test",
     val lastName: String = "Person",
-    val email: String? = "test.person@espoo.fi",
+    val email: String? = null,
     val externalId: ExternalId? = null,
     val employeeNumber: String? = null,
     val roles: Set<UserRole> = setOf(),
     val created: HelsinkiDateTime = HelsinkiDateTime.now(),
-    val lastLogin: HelsinkiDateTime? = HelsinkiDateTime.now(),
+    val lastLogin: HelsinkiDateTime? = null,
     val active: Boolean = true,
     val ssn: String? = null,
 ) {

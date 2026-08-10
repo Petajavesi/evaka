@@ -167,7 +167,9 @@ export interface DecisionRequest {
   applicationId: ApplicationId
   employeeId: EmployeeId
   endDate: LocalDate
+  genericReasoningId: DecisionGenericReasoningId | null
   id: DecisionId
+  individualReasoningIds: DecisionIndividualReasoningId[]
   startDate: LocalDate
   status: DecisionStatus
   type: DecisionType
@@ -499,6 +501,7 @@ export interface DevDaycare {
   partnerCode: string
   phone: string | null
   preschoolApplyPeriod: DateRange | null
+  preschoolManagerName: string
   providerId: string
   providerType: ProviderType
   serviceWorkerNote: string

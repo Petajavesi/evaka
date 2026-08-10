@@ -288,7 +288,7 @@ export const fi = {
         LAUNDRY: 'Repussa pyykkiä'
       },
       placeholders: {
-        note: 'Leikkejä, onnistumisia, ilonaiheita ja opittuja asioita tänään (ei terveystietoja tai salassapidettäviä tietoja).',
+        note: 'Leikkejä, aktiivista liikkumista, onnistumisia, ilonaiheita ja opittuja asioita tänään (ei terveystietoja tai salassapidettäviä tietoja).',
         childStickyNote:
           'Muistiinpano henkilökunnalle (ei terveystietoja tai salassapidettäviä tietoja).',
         groupNote: 'Koko ryhmää koskeva muistiinpano',
@@ -311,14 +311,18 @@ export const fi = {
         employeeNotFound: 'Työntekijää ei löytynyt',
         wrongPin: 'Väärä PIN-koodi'
       },
+      searchPlaceholder: 'Etsi nimellä',
       previousDays: 'Aiemmat kirjaukset',
       nextDays: 'Tulevat työvuorot ja poissaolot',
       continuationAttendance: '* edellisenä päivänä alkanut kirjaus',
       editContinuationAttendance: 'Siirry muokkaamaan',
       absent: 'Poissa',
-      externalPerson: 'Muu henkilö',
+      externalPersonCantFindYourName: 'Etkö löydä nimeäsi?',
       markExternalPerson: 'Kirjaa muu henkilö',
       markExternalPersonTitle: 'Kirjaa muu työntekijä sisään',
+      markExternalPersonNotificationTitle: 'Jos olet yksikön työntekijä',
+      markExternalPersonNotificationMessage:
+        'Pyydä yksikön johtajaa luvittamaan sinut yksikköön, niin nimesi ilmestyy listalle. Sen jälkeen voit kirjautua normaalisti listalta. Sinun tulee myös asettaa PIN-koodi tietokoneella.',
       markArrived: 'Kirjaudu läsnäolevaksi',
       markDeparted: 'Kirjaudu poissaolevaksi',
       loginWithPin: 'Kirjaudu PIN-koodilla',

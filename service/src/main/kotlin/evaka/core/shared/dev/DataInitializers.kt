@@ -259,7 +259,7 @@ INSERT INTO daycare (
     additional_info, phone, email, url,
     street_address, postal_code, post_office,
     location, mailing_street_address, mailing_po_box, mailing_postal_code, mailing_post_office,
-    unit_manager_name, unit_manager_phone, unit_manager_email,
+    unit_manager_name, unit_manager_phone, unit_manager_email, preschool_manager_name,
     decision_daycare_name, decision_preschool_name, decision_handler, decision_handler_address,
     oph_unit_oid, oph_organizer_oid, operation_times, shift_care_operation_times, shift_care_open_on_holidays, enabled_pilot_features,
     finance_decision_handler, business_id, iban, provider_id, partner_code, mealtime_breakfast, mealtime_lunch, mealtime_snack,
@@ -274,7 +274,7 @@ INSERT INTO daycare (
     ${bind(row.additionalInfo)}, ${bind(row.phone)}, ${bind(row.email)}, ${bind(row.url)}, ${bind(row.visitingAddress.streetAddress)},
     ${bind(row.visitingAddress.postalCode)}, ${bind(row.visitingAddress.postOffice)}, ${bind(row.location)},
     ${bind(row.mailingAddress.streetAddress)}, ${bind(row.mailingAddress.poBox)}, ${bind(row.mailingAddress.postalCode)},
-    ${bind(row.mailingAddress.postOffice)}, ${bind(row.unitManager.name)}, ${bind(row.unitManager.phone)}, ${bind(row.unitManager.email)},
+    ${bind(row.mailingAddress.postOffice)}, ${bind(row.unitManager.name)}, ${bind(row.unitManager.phone)}, ${bind(row.unitManager.email)}, ${bind(row.preschoolManagerName)},
     ${bind(row.decisionCustomization.daycareName)}, ${bind(row.decisionCustomization.preschoolName)}, ${bind(row.decisionCustomization.handler)},
     ${bind(row.decisionCustomization.handlerAddress)}, ${bind(row.ophUnitOid)}, ${bind(row.ophOrganizerOid)},
     ${bind(row.operationTimes)}, ${bind(row.shiftCareOperationTimes)}, ${bind(row.shiftCareOpenOnHolidays)}, ${bind(row.enabledPilotFeatures)}::pilot_feature[], ${bind(row.financeDecisionHandler)}, ${bind(row.businessId)},
@@ -793,14 +793,15 @@ data class TestDecision(
     val pendingDecisionEmailsSentCount: Int? = 0,
     val pendingDecisionEmailSent: HelsinkiDateTime? = null,
     val documentKey: String? = null,
+    val genericReasoningId: DecisionGenericReasoningId? = null,
 )
 
 fun Database.Transaction.insertTestDecision(decision: TestDecision): DecisionId =
     createUpdate {
             sql(
                 """
-INSERT INTO decision (id, created_by, sent_date, unit_id, application_id, type, start_date, end_date, status, requested_start_date, resolved, resolved_by, pending_decision_emails_sent_count, pending_decision_email_sent, document_key)
-VALUES (${bind(decision.id)}, ${bind(decision.createdBy)}, ${bind(decision.sentDate)}, ${bind(decision.unitId)}, ${bind(decision.applicationId)}, ${bind(decision.type)}, ${bind(decision.startDate)}, ${bind(decision.endDate)}, ${bind(decision.status)}, ${bind(decision.requestedStartDate)}, ${bind(decision.resolved)}, ${bind(decision.resolvedBy)}, ${bind(decision.pendingDecisionEmailsSentCount)}, ${bind(decision.pendingDecisionEmailSent)}, ${bind(decision.documentKey)})
+INSERT INTO decision (id, created_by, sent_date, unit_id, application_id, type, start_date, end_date, status, requested_start_date, resolved, resolved_by, pending_decision_emails_sent_count, pending_decision_email_sent, document_key, generic_reasoning_id)
+VALUES (${bind(decision.id)}, ${bind(decision.createdBy)}, ${bind(decision.sentDate)}, ${bind(decision.unitId)}, ${bind(decision.applicationId)}, ${bind(decision.type)}, ${bind(decision.startDate)}, ${bind(decision.endDate)}, ${bind(decision.status)}, ${bind(decision.requestedStartDate)}, ${bind(decision.resolved)}, ${bind(decision.resolvedBy)}, ${bind(decision.pendingDecisionEmailsSentCount)}, ${bind(decision.pendingDecisionEmailSent)}, ${bind(decision.documentKey)}, ${bind(decision.genericReasoningId)})
 RETURNING id
 """
             )
@@ -1975,6 +1976,15 @@ val defaultPreschoolDecisionReasoningGeneric =
         createdAt = HelsinkiDateTime.of(LocalDate.of(2000, 1, 1), LocalTime.of(12, 0, 0)),
         modifiedAt = HelsinkiDateTime.of(LocalDate.of(2000, 1, 1), LocalTime.of(12, 0, 0)),
     )
+val defaultClubDecisionReasoningGeneric =
+    DevDecisionReasoningGeneric(
+        collectionType = DecisionReasoningCollectionType.CLUB,
+        textFi = "Generic club reasoning",
+        textSv = "Generic club reasoning sv",
+        validFrom = LocalDate.of(2000, 1, 1),
+        createdAt = HelsinkiDateTime.of(LocalDate.of(2000, 1, 1), LocalTime.of(12, 0, 0)),
+        modifiedAt = HelsinkiDateTime.of(LocalDate.of(2000, 1, 1), LocalTime.of(12, 0, 0)),
+    )
 
 fun Database.Transaction.insertDefaultDecisionGenericReasonings():
     Map<DecisionReasoningCollectionType, DecisionGenericReasoningId> {
@@ -1982,6 +1992,7 @@ fun Database.Transaction.insertDefaultDecisionGenericReasonings():
         DecisionReasoningCollectionType.DAYCARE to insert(defaultDaycareDecisionReasoningGeneric),
         DecisionReasoningCollectionType.PRESCHOOL to
             insert(defaultPreschoolDecisionReasoningGeneric),
+        DecisionReasoningCollectionType.CLUB to insert(defaultClubDecisionReasoningGeneric),
     )
 }
 

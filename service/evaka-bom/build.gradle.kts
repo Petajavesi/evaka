@@ -13,10 +13,10 @@ dependencies {
         api("com.github.kagkarlsson:db-scheduler:16.12.0")
         api("com.github.mwiede:jsch:2.28.3")
         api("com.google.guava:guava:33.6.0-jre")
-        api("com.networknt:json-schema-validator:3.0.4")
+        api("com.networknt:json-schema-validator:3.0.5")
         api("com.zaxxer:HikariCP:7.1.0")
         api("io.github.oshai:kotlin-logging-jvm:8.0.4")
-        api("io.kotest:kotest-property:6.2.0")
+        api("io.kotest:kotest-property:6.2.1")
         api("jakarta.annotation:jakarta.annotation-api:3.0.0")
         api("jakarta.jws:jakarta.jws-api:3.0.0")
         api("jakarta.xml.ws:jakarta.xml.ws-api:4.0.3")
@@ -55,8 +55,8 @@ dependencies {
         api("org.apache.groovy:groovy") { version { strictly("5.0.3") } }
 
         // These constraints are needed for CVE fixes
-        api("org.apache.tomcat.embed:tomcat-embed-core:11.0.22")
-        api("org.apache.tomcat.embed:tomcat-embed-websocket:11.0.22")
+        api("org.apache.tomcat.embed:tomcat-embed-core:11.0.23")
+        api("org.apache.tomcat.embed:tomcat-embed-websocket:11.0.23")
         api("org.postgresql:postgresql:42.7.11")
         api("org.apache.neethi:neethi:3.2.2")
     }
@@ -70,5 +70,5 @@ dependencies {
     api(platform(libs.kotlin.bom))
     api(platform("org.junit:junit-bom:6.1.0"))
     api(platform(libs.spring.boot.dependencies))
-    api(platform("software.amazon.awssdk:bom:2.46.12"))
+    api(platform("software.amazon.awssdk:bom:2.46.17"))
 }
