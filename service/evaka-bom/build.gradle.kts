@@ -16,7 +16,7 @@ dependencies {
         api("com.networknt:json-schema-validator:3.0.6")
         api("com.zaxxer:HikariCP:7.1.0")
         api("io.github.oshai:kotlin-logging-jvm:8.0.4")
-        api("io.kotest:kotest-property:6.2.2")
+        api("io.kotest:kotest-property:6.2.3")
         api("jakarta.annotation:jakarta.annotation-api:3.0.0")
         api("jakarta.jws:jakarta.jws-api:3.0.0")
         api("jakarta.xml.ws:jakarta.xml.ws-api:4.0.3")
@@ -26,7 +26,7 @@ dependencies {
         api("org.apache.commons:commons-text:1.15.0")
         api("org.apache.commons:commons-imaging:1.0.0-alpha6")
         api("org.apache.httpcomponents:httpclient:4.5.14")
-        api("org.apache.tika:tika-core:3.3.1")
+        api("org.apache.tika:tika-core:3.3.2")
         api(libs.bouncycastle.bcpkix)
         api(libs.bouncycastle.bcprov)
         api(libs.flyway.core)
@@ -59,7 +59,7 @@ dependencies {
         api("org.apache.tomcat.embed:tomcat-embed-core:11.0.24")
         api("org.apache.tomcat.embed:tomcat-embed-websocket:11.0.24")
         api("org.postgresql:postgresql:42.7.13")
-        api("org.apache.neethi:neethi:3.2.2")
+        api("org.apache.neethi:neethi:3.2.3")
     }
 
     api(platform("tools.jackson:jackson-bom:3.2.1"))
@@ -71,5 +71,5 @@ dependencies {
     api(platform(libs.kotlin.bom))
     api(platform("org.junit:junit-bom:6.1.2"))
     api(platform(libs.spring.boot.dependencies))
-    api(platform("software.amazon.awssdk:bom:2.47.6"))
+    api(platform("software.amazon.awssdk:bom:2.49.0"))
 }
