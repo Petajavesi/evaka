@@ -3511,7 +3511,10 @@ export const fi = {
         `${validFrom}–${validUntil} alkavat sijoitukset`,
       modalTitle: 'Valitse yksilölliset perustelut',
       modalCloseButton: 'Sulje',
-      modalEntryTextLabel: 'Päätökselle tuleva teksti'
+      modalEntryTextLabel: 'Päätökselle tuleva teksti',
+      removedFromUse: 'Poistettu käytöstä',
+      unitLanguageUnsupported:
+        'Valittu yksikkö on ruotsinkielinen, mutta ruotsinkieliset päätökset eivät ole käytössä. Vaihda yksikkö tai ota yhteyttä pääkäyttäjään.'
     }
   },
   reports: {
@@ -3682,9 +3685,6 @@ export const fi = {
         'application.other_guardian_id': 'Hakemuksia (toisena huoltajana)',
         'assistance_action.child_id': 'Tuki- toimia',
         'assistance_need.child_id': 'Tuen tarpeita',
-        'assistance_need_decision.child_id': 'Tuen tarpeen päätöksiä',
-        'assistance_need_decision_guardian.person_id':
-          'Tuen päätöksen huoltajana',
         'assistance_need_voucher_coefficient.child_id':
           'Tuen palvelusetelikertoimia',
         'attachment.uploaded_by_person': 'Liitteitä',
@@ -4622,11 +4622,6 @@ export const fi = {
         title: 'Viestin poistaminen',
         intro:
           'Toiminto on tarkoitettu vain tilanteeseen, jossa viesti on lähetetty vahingossa väärälle vastaanottajalle. Poistetun viestin sisältö korvataan jokaisen vastaanottajan eVakassa seuraavalla tekstillä:',
-        placeholderQuote: [
-          'Lähettäjä on poistanut viestin. Sinun ei tarvitse tehdä mitään.',
-          'Avsändaren har tagit bort meddelandet. Du behöver inte göra något.',
-          'The sender has deleted this message. No action is needed on your part.'
-        ],
         stepsHeader: 'Toimenpiteet välittömästi poiston jälkeen',
         stepsBody1:
           'Väärälle vastaanottajalle lähetetystä viestistä tulee aina tehdä tietosuojailmoitus. Ota poiston jälkeen yhteyttä kunnan eVaka-tukeen jatkotoimenpiteitä varten.',

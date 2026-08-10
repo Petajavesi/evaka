@@ -83,6 +83,7 @@ class OuluConfig {
     @Bean
     fun featureConfig(): FeatureConfig =
         FeatureConfig(
+            placementDecisionSwedishLanguageEnabled = false,
             valueDecisionCapacityFactorEnabled = false,
             // (7*24) - 3 = 165
             citizenReservationThresholdHours = 165,
@@ -145,6 +146,10 @@ class OuluConfig {
             holidayQuestionnaireType = QuestionnaireType.OPEN_RANGES,
             minimumInvoiceAmount = 800,
             daycarePlacementPlanEndMonthDay = MonthDay.of(8, 20),
+            deletedMessagePlaceholderBody =
+                "Lähettäjä on poistanut viestin. Sinun ei tarvitse tehdä mitään.\n\n" +
+                    "The sender has deleted this message. No action is needed on your part.",
+            deletedMessagePlaceholderTitle = "Viesti on poistettu / Message was deleted",
         )
 
     @Bean fun actionRuleMapping(): ActionRuleMapping = OuluActionRuleMapping()

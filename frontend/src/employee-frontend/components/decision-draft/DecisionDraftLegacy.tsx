@@ -570,7 +570,9 @@ export default React.memo(function DecisionDraftLegacy() {
                         unitId: decisionDraft.unitId,
                         startDate: decisionDraft.startDate,
                         endDate: decisionDraft.endDate,
-                        planned: decisionDraft.planned
+                        planned: decisionDraft.planned,
+                        individualReasoningIds:
+                          decisionDraft.individualReasoningIds
                       })
                     )
                     return updateDecisionDrafts({
@@ -594,10 +596,7 @@ export default React.memo(function DecisionDraftLegacy() {
   Since there is no separate decision type for preparatory daycare but it needs
   its own label, infer it from existence of a preparatory decision
 */
-const decisionTypeForLabel = (
-  type: DecisionType,
-  decisions: DecisionDraft[]
-) =>
+const decisionTypeForLabel = (type: DecisionType, decisions: DecisionDraft[]) =>
   (type === 'PRESCHOOL_DAYCARE' || type === 'PRESCHOOL_CLUB') &&
   decisions.some((d) => d.type === 'PREPARATORY_EDUCATION')
     ? 'PREPARATORY_DAYCARE'

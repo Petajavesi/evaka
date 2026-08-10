@@ -353,12 +353,16 @@ class SystemController(
                             decisionReasoningGenericRemoval =
                                 env.decisionReasoningGenericRemovalEnabled,
                             decisionReasoningsEnabled = env.decisionReasoningEnabled,
+                            placementDecisionSwedishLanguageEnabled =
+                                featureConfig.placementDecisionSwedishLanguageEnabled,
                             openRangesHolidayQuestionnaire =
                                 featureConfig.holidayQuestionnaireType ==
                                     QuestionnaireType.OPEN_RANGES,
                             allowEnglishChildDocumentsForAllTypes =
                                 featureConfig.allowEnglishChildDocumentsForAllTypes,
                             messageSupportEmail = featureConfig.messageSupportEmail,
+                            deletedMessagePlaceholderBody =
+                                featureConfig.deletedMessagePlaceholderBody,
                         )
 
                     EmployeeAuthResponse(

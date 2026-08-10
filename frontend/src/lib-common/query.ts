@@ -180,12 +180,10 @@ export class Queries {
     return <Arg, Data>(
       api: (arg: Arg) => Promise<Data>,
       invalidations?: Invalidations<Arg & MutationArg>
-    ): MutationDescription<Arg & MutationArg, Data> => {
-      return {
-        api,
-        invalidateQueryKeys: invalidateQueryKeysFn(invalidations)
-      }
-    }
+    ): MutationDescription<Arg & MutationArg, Data> => ({
+      api,
+      invalidateQueryKeys: invalidateQueryKeysFn(invalidations)
+    })
   }
 
   private getQueryName(name: string): string {
@@ -239,11 +237,12 @@ export interface QueryOptions {
   enabled?: boolean
   refetchOnMount?: boolean | 'always'
   refetchOnWindowFocus?: boolean | 'always'
+  refetchOnReconnect?: boolean | 'always'
   staleTime?: number
   refetchInterval?: number
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// oxlint-disable-next-line typescript/no-explicit-any
 type AnyUseQueryOptions = UseQueryOptions<any, unknown>
 
 type DataOf<T extends AnyUseQueryOptions> =

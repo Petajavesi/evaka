@@ -88,6 +88,14 @@ data class FeatureConfig(
      */
     val messageSupportEmail: String? = null,
 
+    /** Title and body shown in place of a deleted message. */
+    val deletedMessagePlaceholderBody: String =
+        "Lähettäjä on poistanut viestin. Sinun ei tarvitse tehdä mitään.\n\n" +
+            "Avsändaren har tagit bort meddelandet. Du behöver inte göra något.\n\n" +
+            "The sender has deleted this message. No action is needed on your part.",
+    val deletedMessagePlaceholderTitle: String =
+        "Viesti on poistettu / Meddelandet har raderats / Message was deleted",
+
     /**
      * true = placement unit is resolved from decision when it's accepted, false = placement unit is
      * resolved from placement plan
@@ -146,11 +154,8 @@ data class FeatureConfig(
     /** Allow English as a language for every child document type, not only `CITIZEN_BASIC` */
     val allowEnglishChildDocumentsForAllTypes: Boolean = false,
 
-    /**
-     * How many days before a placement starts a guardian-fillable (`CITIZEN_BASIC`) child document
-     * can be created for the child.
-     */
-    val citizenDocumentCreationDaysBeforePlacement: Int = 60,
+    /** Whether placement decisions can be made in Swedish. */
+    val placementDecisionSwedishLanguageEnabled: Boolean,
 )
 
 enum class ArchiveProcessType {

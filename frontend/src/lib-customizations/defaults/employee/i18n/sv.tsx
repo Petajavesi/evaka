@@ -3545,7 +3545,10 @@ export const sv: typeof fi = {
         `Placeringar som börjar ${validFrom}–${validUntil}`,
       modalTitle: 'Välj individuella motiveringar',
       modalCloseButton: 'Stäng',
-      modalEntryTextLabel: 'Text som visas i beslutet'
+      modalEntryTextLabel: 'Text som visas i beslutet',
+      removedFromUse: 'Tagen ur bruk',
+      unitLanguageUnsupported:
+        'Den valda enheten är svenskspråkig, men svenskspråkiga beslut är inte i bruk. Byt enhet eller kontakta administratören.'
     }
   },
   reports: {
@@ -3717,9 +3720,6 @@ export const sv: typeof fi = {
           'Ansökningar (som andra vårdnads- havare)',
         'assistance_action.child_id': 'Stöd- åtgärder',
         'assistance_need.child_id': 'Stödbehov',
-        'assistance_need_decision.child_id': 'Stödbehov- beslut',
-        'assistance_need_decision_guardian.person_id':
-          'Vårdnads- havare i stödbeslut',
         'assistance_need_voucher_coefficient.child_id':
           'Stödets servicesedel- koefficienter',
         'attachment.uploaded_by_person': 'Bilagor',
@@ -4660,11 +4660,6 @@ export const sv: typeof fi = {
         title: 'Radera meddelandet',
         intro:
           'Funktionen är endast avsedd för situationer där ett meddelande av misstag har skickats till fel mottagare. Det raderade meddelandets innehåll ersätts hos varje mottagare i eVaka med följande text:',
-        placeholderQuote: [
-          'Lähettäjä on poistanut viestin. Sinun ei tarvitse tehdä mitään.',
-          'Avsändaren har tagit bort meddelandet. Du behöver inte göra något.',
-          'The sender has deleted this message. No action is needed on your part.'
-        ],
         stepsHeader: 'Åtgärder omedelbart efter raderingen',
         stepsBody1:
           'För ett meddelande som skickats till fel mottagare ska alltid en dataskyddsanmälan göras. Kontakta kommunens eVaka-stöd efter raderingen för fortsatta åtgärder.',

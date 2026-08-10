@@ -291,6 +291,7 @@ class EspooConfig {
                 }
             },
             holidayQuestionnaireType = QuestionnaireType.FIXED_PERIOD,
+            placementDecisionSwedishLanguageEnabled = true,
         )
 
     @Bean

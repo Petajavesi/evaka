@@ -115,22 +115,25 @@ export default React.memo(function PersonFinanceNotesAndMessages({
   const [personName, hasSsn] = useMemo(
     () =>
       person
-        .map<
-          [string | undefined, boolean]
-        >((p) => [formatPersonName(p, 'Last First'), p.hasSsn])
+        .map<[string | undefined, boolean]>((p) => [
+          formatPersonName(p, 'Last First'),
+          p.hasSsn
+        ])
         .getOrElse([undefined, false]),
     [person]
   )
 
-  const draftContent = useMemo((): DraftContent | undefined => {
-    return personName && messageDrafts.isSuccess
-      ? messageDrafts.value.find(
-          (draft) =>
-            draft.recipientNames.length === 1 &&
-            draft.recipientNames[0] === personName
-        )
-      : undefined
-  }, [personName, messageDrafts])
+  const draftContent = useMemo(
+    (): DraftContent | undefined =>
+      personName && messageDrafts.isSuccess
+        ? messageDrafts.value.find(
+            (draft) =>
+              draft.recipientNames.length === 1 &&
+              draft.recipientNames[0] === personName
+          )
+        : undefined,
+    [personName, messageDrafts]
+  )
 
   const { mutateAsync: deleteDraftResult } =
     useMutationResult(deleteDraftMutation)
