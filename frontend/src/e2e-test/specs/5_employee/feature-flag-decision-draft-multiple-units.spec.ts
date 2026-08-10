@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2017-2024 City of Espoo
+// SPDX-FileCopyrightText: 2017-2026 City of Espoo
 //
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
@@ -108,11 +108,11 @@ test.describe('Application transitions', () => {
 
     await applicationListView.filterByApplicationStatus('WAITING_DECISION')
     await applicationListView.searchButton.click()
-    const decisionEditorPage = await applicationListView
+    const decisionDraftPage = await applicationListView
       .applicationRow(applicationId)
-      .primaryActionEditDecisions()
-    await decisionEditorPage.waitUntilLoaded()
-    await decisionEditorPage.save()
+      .primaryActionEditDecisionsRedesign()
+    await decisionDraftPage.waitUntilLoaded()
+    await decisionDraftPage.save()
 
     await applicationListView.searchButton.click()
 
@@ -171,11 +171,11 @@ test.describe('Application transitions', () => {
 
     await applicationListView.filterByApplicationStatus('WAITING_DECISION')
     await applicationListView.searchButton.click()
-    const decisionEditorPage = await applicationListView
+    const decisionDraftPage = await applicationListView
       .applicationRow(applicationId)
-      .primaryActionEditDecisions()
-    await decisionEditorPage.selectUnit('PRESCHOOL_DAYCARE', testDaycare.id)
-    await decisionEditorPage.save()
+      .primaryActionEditDecisionsRedesign()
+    await decisionDraftPage.selectUnit('PRESCHOOL_DAYCARE', testDaycare.id)
+    await decisionDraftPage.save()
 
     await applicationListView.searchButton.click()
 

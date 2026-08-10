@@ -19,9 +19,9 @@ import {
   resetServiceState
 } from '../../generated/api-clients'
 import CitizenApplicationsPage from '../../pages/citizen/citizen-applications'
-import type { DecisionEditorPage } from '../../pages/employee/applications/application-list-view'
 import ApplicationListView from '../../pages/employee/applications/application-list-view'
 import ApplicationReadView from '../../pages/employee/applications/application-read-view'
+import type { DecisionDraftPage } from '../../pages/employee/applications/decision-draft-page'
 import { test } from '../../playwright'
 import type { NewEvakaPage } from '../../playwright'
 import type { Page } from '../../utils/page'
@@ -101,12 +101,10 @@ test.describe('Additional daycare application decision drafts', () => {
       daycareA,
       newEvakaPage
     )
-    const decisionEditorPage = await navigateToDecisionDrafts(applicationId)
+    const decisionDraftPage = await navigateToDecisionDrafts(applicationId)
 
-    await decisionEditorPage
-      .plannedCheckbox('PRESCHOOL')
-      .waitUntilChecked(false)
-    await decisionEditorPage
+    await decisionDraftPage.plannedCheckbox('PRESCHOOL').waitUntilChecked(false)
+    await decisionDraftPage
       .plannedCheckbox('PRESCHOOL_DAYCARE')
       .waitUntilChecked(true)
   })
@@ -119,10 +117,10 @@ test.describe('Additional daycare application decision drafts', () => {
       daycareB,
       newEvakaPage
     )
-    const decisionEditorPage = await navigateToDecisionDrafts(applicationId)
+    const decisionDraftPage = await navigateToDecisionDrafts(applicationId)
 
-    await decisionEditorPage.plannedCheckbox('PRESCHOOL').waitUntilChecked(true)
-    await decisionEditorPage
+    await decisionDraftPage.plannedCheckbox('PRESCHOOL').waitUntilChecked(true)
+    await decisionDraftPage
       .plannedCheckbox('PRESCHOOL_DAYCARE')
       .waitUntilChecked(true)
   })
@@ -197,7 +195,7 @@ async function citizenCreatesPreschoolDaycareApplication(
 
 async function navigateToDecisionDrafts(
   applicationId: ApplicationId
-): Promise<DecisionEditorPage> {
+): Promise<DecisionDraftPage> {
   await execSimpleApplicationActions(
     applicationId,
     ['MOVE_TO_WAITING_PLACEMENT', 'CREATE_DEFAULT_PLACEMENT_PLAN'],
@@ -209,9 +207,9 @@ async function navigateToDecisionDrafts(
   await page.goto(ApplicationListView.url)
   await applicationListView.filterByApplicationStatus('WAITING_DECISION')
   await applicationListView.searchButton.click()
-  const decisionEditorPage = await applicationListView
+  const decisionDraftPage = await applicationListView
     .applicationRow(applicationId)
-    .primaryActionEditDecisions()
-  await decisionEditorPage.waitUntilLoaded()
-  return decisionEditorPage
+    .primaryActionEditDecisionsRedesign()
+  await decisionDraftPage.waitUntilLoaded()
+  return decisionDraftPage
 }
