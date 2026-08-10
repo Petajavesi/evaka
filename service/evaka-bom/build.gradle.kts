@@ -61,14 +61,14 @@ dependencies {
         api("org.apache.neethi:neethi:3.2.2")
     }
 
-    api(platform("tools.jackson:jackson-bom:3.1.4"))
-    api(platform("com.squareup.okhttp3:okhttp-bom:5.3.2"))
-    api(platform("io.opentelemetry:opentelemetry-bom:1.62.0"))
+    api(platform("tools.jackson:jackson-bom:3.2.0"))
+    api(platform("com.squareup.okhttp3:okhttp-bom:5.4.0"))
+    api(platform("io.opentelemetry:opentelemetry-bom:1.63.0"))
     api(platform("io.netty:netty-bom:4.2.15.Final"))
-    api(platform("org.apache.cxf:cxf-bom:4.2.1"))
+    api(platform("org.apache.cxf:cxf-bom:4.2.2"))
     api(platform("org.jdbi:jdbi3-bom:3.53.0"))
     api(platform(libs.kotlin.bom))
     api(platform("org.junit:junit-bom:6.1.0"))
     api(platform(libs.spring.boot.dependencies))
-    api(platform("software.amazon.awssdk:bom:2.46.2"))
+    api(platform("software.amazon.awssdk:bom:2.46.6"))
 }
