@@ -283,6 +283,7 @@ val testFeatureConfig =
         preferredStartRelativeApplicationDueDate = false,
         fiveYearsOldDaycareEnabled = true,
         archiveMetadataOrganization = "Petäjäveden esiopetus ja varhaiskasvatus",
+        metadataBusinessId = "0176769-2",
         archiveMetadataConfigs = { type: ArchiveProcessType, _: Int ->
             when (type) {
                 ArchiveProcessType.APPLICATION_DAYCARE -> {

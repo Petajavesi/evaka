@@ -112,6 +112,13 @@ export function createSamlIntegration<T extends SessionType>(
       : `${defaultPageUrl}?loginError=true`
   }
 
+  // User not found or similar errors return 4xx status code
+  const isExpectedDownstreamError = (err: unknown) =>
+    err instanceof AxiosError &&
+    err.response !== undefined &&
+    err.response.status >= 400 &&
+    err.response.status < 500
+
   const validateSamlLoginResponse = async (
     req: express.Request
   ): Promise<Profile> => {
@@ -189,8 +196,14 @@ export function createSamlIntegration<T extends SessionType>(
     try {
       profile = await validateSamlLoginResponse(req)
     } catch (err) {
-      if (err instanceof Error && err.message === 'InResponseTo is not valid')
-        // These errors can happen for example when the user browses back to the login callback after login
+      if (
+        err instanceof Error &&
+        (err.message === 'InResponseTo is not valid' ||
+          err.message === 'InResponseTo is missing from response')
+      )
+        // These errors can happen for example when the user browses back to
+        // the login callback after login, or when an unsolicited login
+        // response is received
         throw new SamlError('Login failed', {
           redirectUrl: sessions.isAuthenticated(req)
             ? (validateRelayStateUrl(req)?.toString() ?? defaultPageUrl)
@@ -263,7 +276,8 @@ export function createSamlIntegration<T extends SessionType>(
       )
       throw new SamlError('Login failed', {
         redirectUrl: errorRedirectUrl(err),
-        cause: err
+        cause: err,
+        silent: isExpectedDownstreamError(err)
       })
     }
   }
@@ -371,6 +385,7 @@ export function createSamlIntegration<T extends SessionType>(
       if (
         err instanceof Error &&
         (err.message === 'InResponseTo is not valid' ||
+          err.message === 'InResponseTo is missing from response' ||
           err.message.startsWith('Bad status code:'))
       ) {
         throw new SamlError('Logout failed', {

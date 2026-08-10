@@ -6,10 +6,14 @@ package evaka.core.caseprocess
 
 import evaka.core.Audit
 import evaka.core.AuditId
+import evaka.core.application.ApplicationType
+import evaka.core.decision.DecisionType
 import evaka.core.document.ChildDocumentType
 import evaka.core.document.childdocument.getChildDocument
+import evaka.core.invoicing.domain.FinanceDecisionType
 import evaka.core.shared.ApplicationId
 import evaka.core.shared.ChildDocumentId
+import evaka.core.shared.FeatureConfig
 import evaka.core.shared.FeeDecisionId
 import evaka.core.shared.VoucherValueDecisionId
 import evaka.core.shared.auth.AuthenticatedUser
@@ -41,6 +45,41 @@ enum class SfiMethod {
     PENDING,
 }
 
+enum class ProcessType {
+    APPLICATION_DAYCARE,
+    APPLICATION_PRESCHOOL,
+    APPLICATION_CLUB,
+    FEE_DECISION,
+    VOUCHER_VALUE_DECISION,
+    CHILD_DOCUMENT_VASU,
+    CHILD_DOCUMENT_LEOPS,
+    CHILD_DOCUMENT_HOJKS,
+    CHILD_DOCUMENT_PEDAGOGICAL_ASSESSMENT,
+    CHILD_DOCUMENT_PEDAGOGICAL_REPORT,
+}
+
+private fun childDocumentProcessNameAndType(type: ChildDocumentType): Pair<String?, ProcessType?> =
+    when (type) {
+        ChildDocumentType.VASU,
+        ChildDocumentType.MIGRATED_VASU ->
+            "Lapsen varhaiskasvatussuunnitelma" to ProcessType.CHILD_DOCUMENT_VASU
+        ChildDocumentType.LEOPS,
+        ChildDocumentType.MIGRATED_LEOPS ->
+            "Lapsen esiopetuksen oppimissuunnitelma" to ProcessType.CHILD_DOCUMENT_LEOPS
+        ChildDocumentType.HOJKS ->
+            "Henkilökohtainen opetuksen järjestämistä koskeva suunnitelma" to
+                ProcessType.CHILD_DOCUMENT_HOJKS
+        ChildDocumentType.PEDAGOGICAL_ASSESSMENT ->
+            "Esiopetuksen pedagoginen arvio" to ProcessType.CHILD_DOCUMENT_PEDAGOGICAL_ASSESSMENT
+        ChildDocumentType.PEDAGOGICAL_REPORT ->
+            "Esiopetuksen pedagoginen selvitys" to ProcessType.CHILD_DOCUMENT_PEDAGOGICAL_REPORT
+        ChildDocumentType.MIGRATED_DAYCARE_ASSISTANCE_NEED_DECISION,
+        ChildDocumentType.MIGRATED_PRESCHOOL_ASSISTANCE_NEED_DECISION,
+        ChildDocumentType.CITIZEN_BASIC,
+        ChildDocumentType.OTHER_DECISION,
+        ChildDocumentType.OTHER -> null to null
+    }
+
 data class SfiDelivery(val time: HelsinkiDateTime, val method: SfiMethod, val recipientName: String)
 
 data class DocumentConfidentiality(val durationYears: Int, @PropagateNull val basis: String)
@@ -63,6 +102,9 @@ data class DocumentMetadata(
     val downloadPath: String?,
     val receivedBy: DocumentOrigin?,
     val sfiDeliveries: List<SfiDelivery>,
+    val applicationType: ApplicationType? = null,
+    val decisionType: DecisionType? = null,
+    val financeDecisionType: FinanceDecisionType? = null,
     val publishedVersions: List<DocumentVersion>? = null,
 )
 
@@ -71,6 +113,8 @@ data class ProcessMetadata(
     val processName: String?,
     val primaryDocument: DocumentMetadata,
     val secondaryDocuments: List<DocumentMetadata>,
+    val businessId: String,
+    val processType: ProcessType? = null,
 ) {
     fun redactForCitizen() =
         this.copy(
@@ -93,6 +137,7 @@ data class ProcessMetadataResponse(val data: ProcessMetadata?)
 class ProcessMetadataController(
     private val accessControl: AccessControl,
     private val processMetadataService: ProcessMetadataService,
+    private val featureConfig: FeatureConfig,
 ) {
 
     @GetMapping("/child-documents/{childDocumentId}")
@@ -116,38 +161,14 @@ class ProcessMetadataController(
                             ?: return@read ProcessMetadataResponse(null)
                     val type =
                         tx.getChildDocument(childDocumentId)?.template?.type ?: throw NotFound()
+                    val (processName, processType) = childDocumentProcessNameAndType(type)
                     val document = tx.getChildDocumentMetadata(childDocumentId)
                     ProcessMetadataResponse(
                         ProcessMetadata(
                             process = process,
-                            processName =
-                                when (type) {
-                                    ChildDocumentType.VASU,
-                                    ChildDocumentType.MIGRATED_VASU -> {
-                                        "Lapsen varhaiskasvatussuunnitelma"
-                                    }
-
-                                    ChildDocumentType.LEOPS,
-                                    ChildDocumentType.MIGRATED_LEOPS -> {
-                                        "Lapsen esiopetuksen oppimissuunnitelma"
-                                    }
-
-                                    ChildDocumentType.HOJKS -> {
-                                        "Henkilökohtainen opetuksen järjestämistä koskeva suunnitelma"
-                                    }
-
-                                    ChildDocumentType.PEDAGOGICAL_ASSESSMENT -> {
-                                        "Esiopetuksen pedagoginen arvio"
-                                    }
-
-                                    ChildDocumentType.PEDAGOGICAL_REPORT -> {
-                                        "Esiopetuksen pedagoginen selvitys"
-                                    }
-
-                                    else -> {
-                                        null
-                                    }
-                                },
+                            processName = processName,
+                            processType = processType,
+                            businessId = featureConfig.metadataBusinessId,
                             primaryDocument =
                                 document.copy(
                                     downloadPath =
@@ -248,8 +269,10 @@ class ProcessMetadataController(
                         ProcessMetadata(
                             process = process,
                             processName = "Varhaiskasvatuksen maksupäätös",
+                            processType = ProcessType.FEE_DECISION,
                             primaryDocument = decisionDocument,
                             secondaryDocuments = emptyList(),
+                            businessId = featureConfig.metadataBusinessId,
                         )
                     )
                 }
@@ -291,8 +314,10 @@ class ProcessMetadataController(
                         ProcessMetadata(
                             process = process,
                             processName = "Varhaiskasvatuksen palvelusetelin arvopäätös",
+                            processType = ProcessType.VOUCHER_VALUE_DECISION,
                             primaryDocument = decisionDocument,
                             secondaryDocuments = emptyList(),
+                            businessId = featureConfig.metadataBusinessId,
                         )
                     )
                 }

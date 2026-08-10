@@ -8,6 +8,7 @@ import evaka.core.FullApplicationTest
 import evaka.core.caseprocess.CaseProcessState
 import evaka.core.caseprocess.DocumentConfidentiality
 import evaka.core.caseprocess.ProcessMetadataController
+import evaka.core.caseprocess.ProcessType
 import evaka.core.caseprocess.SfiMethod
 import evaka.core.caseprocess.getCaseProcess
 import evaka.core.daycare.domain.Language
@@ -309,6 +310,8 @@ class ChildDocumentControllerIntegrationTest : FullApplicationTest(resetDbBefore
                                 archiveExternally = false,
                                 endDecisionWhenUnitChanges =
                                     devTemplatePed.endDecisionWhenUnitChanges,
+                                deletionRetentionDays = devTemplatePed.deletionRetentionDays,
+                                deletionRetentionBasis = devTemplatePed.deletionRetentionBasis,
                             ),
                         archivedAt = null,
                     ),
@@ -405,6 +408,7 @@ class ChildDocumentControllerIntegrationTest : FullApplicationTest(resetDbBefore
             assertEquals("Petäjäveden esiopetus ja varhaiskasvatus", it.process.organization)
             assertEquals(120, it.process.archiveDurationMonths)
             assertEquals("HOJKS", it.primaryDocument.name)
+            assertEquals(ProcessType.CHILD_DOCUMENT_HOJKS, it.processType)
             assertEquals(
                 devTemplateHojks.confidentiality?.durationYears,
                 it.primaryDocument.confidentiality?.durationYears,
@@ -783,6 +787,32 @@ class ChildDocumentControllerIntegrationTest : FullApplicationTest(resetDbBefore
     }
 
     @Test
+    fun `status change advances status_modified_at`() {
+        val documentId = createDocument()
+        assertEquals(clock.now(), getStatusModifiedAt(documentId))
+
+        val laterClock = MockEvakaClock(clock.now().plusHours(1))
+        nextState(documentId, DocumentStatus.COMPLETED, laterClock)
+
+        assertEquals(laterClock.now(), getStatusModifiedAt(documentId))
+    }
+
+    @Test
+    fun `content update does not advance status_modified_at`() {
+        val documentId = createDocument()
+        val initialStatusModifiedAt = getStatusModifiedAt(documentId)
+
+        val laterClock = MockEvakaClock(clock.now().plusHours(1))
+        updateDocumentContent(
+            documentId,
+            DocumentContent(answers = listOf(AnsweredQuestion.TextAnswer("q1", "hello"))),
+            now = laterClock,
+        )
+
+        assertEquals(initialStatusModifiedAt, getStatusModifiedAt(documentId))
+    }
+
+    @Test
     fun `deleting draft document`() {
         val documentId = createDocument()
         controller.deleteDraftDocument(dbInstance(), employeeUser.user, clock, documentId)
@@ -987,7 +1017,11 @@ class ChildDocumentControllerIntegrationTest : FullApplicationTest(resetDbBefore
         assertThrows<Forbidden> {
             acceptChildDocumentDecision(documentId, validity, employeeUser.user)
         }
+        val statusModifiedBeforeAccept = getStatusModifiedAt(documentId)
+        clock.tick()
         acceptChildDocumentDecision(documentId, validity, user = unitSupervisorUser)
+        assertEquals(clock.now(), getStatusModifiedAt(documentId))
+        assertNotEquals(statusModifiedBeforeAccept, getStatusModifiedAt(documentId))
         getDocument(documentId).also { doc ->
             assertEquals(DocumentStatus.COMPLETED, doc.status)
             assertEquals(ChildDocumentDecisionStatus.ACCEPTED, doc.decision?.status)
@@ -1058,7 +1092,11 @@ class ChildDocumentControllerIntegrationTest : FullApplicationTest(resetDbBefore
             rejectChildDocumentDecision(documentId, user = employeeUser.user)
         }
 
+        val statusModifiedBeforeReject = getStatusModifiedAt(documentId)
+        clock.tick()
         rejectChildDocumentDecision(documentId, user = unitSupervisorUser)
+        assertEquals(clock.now(), getStatusModifiedAt(documentId))
+        assertNotEquals(statusModifiedBeforeReject, getStatusModifiedAt(documentId))
         getDocument(documentId).also { doc ->
             assertEquals(DocumentStatus.COMPLETED, doc.status)
             assertEquals(ChildDocumentDecisionStatus.REJECTED, doc.decision?.status)
@@ -1396,6 +1434,13 @@ class ChildDocumentControllerIntegrationTest : FullApplicationTest(resetDbBefore
 
     private fun getDocument(id: ChildDocumentId) =
         controller.getDocument(dbInstance(), employeeUser.user, clock, id).data
+
+    private fun getStatusModifiedAt(id: ChildDocumentId): HelsinkiDateTime = db.read { tx ->
+        tx.createQuery {
+                sql("SELECT status_modified_at FROM child_document WHERE id = ${bind(id)}")
+            }
+            .exactlyOne<HelsinkiDateTime>()
+    }
 
     private fun updateDocumentContent(
         id: ChildDocumentId,

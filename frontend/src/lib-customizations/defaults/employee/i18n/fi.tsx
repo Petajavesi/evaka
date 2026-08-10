@@ -4956,7 +4956,13 @@ export const fi = {
         'Tiedonohjaussuunnitelmassa määritelty tehtäväluokan numero. Jätä tyhjäksi jos asiakirjaa ei arkistoida.',
       archiveDurationMonths: 'Arkistointiaika (kuukautta)',
       archiveExternally: 'Siirrettävä ulkoiseen arkistoon ennen poistoa',
-      endDecisionWhenUnitChanges: 'Päätös katkeaa, jos lapsi vaihtaa yksikköä'
+      endDecisionWhenUnitChanges: 'Päätös katkeaa, jos lapsi vaihtaa yksikköä',
+      deletionRetentionDays: 'Säilytysaika eVakassa (päivää)',
+      deletionRetention: 'Säilytysaika eVakassa',
+      deletionRetentionBasis: {
+        PLACEMENT_END: 'lapsen viimeisen sijoituksen päättymisestä',
+        STATUS_TRANSITION: 'asiakirjan viimeisestä tilasiirtymästä'
+      }
     },
     templateEditor: {
       confidential: 'Salassapidettävä',
@@ -5140,49 +5146,6 @@ export const fi = {
       'Voit määritellä eVakassa käytössä olevan kutsumanimesi. Kutsumanimen tulee olla jokin etunimistäsi. Jos nimesi on vaihtunut ja sinulla on tarve päivittää eVakaan uusi nimesi, ole yhteydessä Espoon HelpDeskiin.',
     select: 'Valitse kutsumanimi',
     confirm: 'Vahvista'
-  },
-  metadata: {
-    title: 'Arkistoitava metadata',
-    notFound: 'Asiakirjalle ei ole arkistoitavaa metadataa',
-    caseIdentifier: 'Asiatunnus',
-    processName: 'Asiaprosessi',
-    organization: 'Organisaatio',
-    archiveDurationMonths: 'Arkistointiaika',
-    primaryDocument: 'Ensisijainen asiakirja',
-    secondaryDocuments: 'Muut asiakirjat',
-    documentId: 'Asiakirjan tunniste',
-    name: 'Asiakirjan nimi',
-    createdAt: 'Laatimisajankohta',
-    createdBy: 'Laatija',
-    monthsUnit: 'kuukautta',
-    confidentiality: 'Julkisuus',
-    confidential: 'Salassapidettävä',
-    public: 'Julkinen',
-    notSet: 'Asettamatta',
-    confidentialityDuration: 'Salassapitoaika',
-    confidentialityBasis: 'Salassapitoperuste',
-    years: 'vuotta',
-    receivedBy: {
-      label: 'Saapumistapa',
-      PAPER: 'Paperilla',
-      ELECTRONIC: 'Sähköisesti'
-    },
-    sfiDelivery: {
-      label: 'Suomi.fi -toimitukset',
-      method: {
-        ELECTRONIC: 'Sähköisesti',
-        PAPER_MAIL: 'Postitse',
-        PENDING: 'Odottaa toimitusta'
-      }
-    },
-    history: 'Prosessin historia',
-    downloadPdf: 'Lataa PDF',
-    states: {
-      INITIAL: 'Asian vireillepano / -tulo',
-      PREPARATION: 'Asian valmistelu',
-      DECIDING: 'Päätöksenteko',
-      COMPLETED: 'Toimeenpano / Päättäminen / Sulkeminen'
-    }
   },
   systemNotifications: {
     title: {

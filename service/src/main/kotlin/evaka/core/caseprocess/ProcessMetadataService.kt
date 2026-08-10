@@ -16,7 +16,10 @@ import evaka.core.shared.security.Action
 import org.springframework.stereotype.Service
 
 @Service
-class ProcessMetadataService(private val accessControl: AccessControl) {
+class ProcessMetadataService(
+    private val accessControl: AccessControl,
+    private val featureConfig: FeatureConfig,
+) {
     fun getApplicationProcessMetadata(
         tx: Database.Read,
         user: AuthenticatedUser,
@@ -32,9 +35,12 @@ class ProcessMetadataService(private val accessControl: AccessControl) {
                 it to tx.getApplicationDecisionDocumentMetadata(it, isCitizen)
             }
 
+        val (processName, processType) = applicationProcessNameAndType(application.type)
         return ProcessMetadata(
             process = process,
-            processName = getProcessName(application.type),
+            processName = processName,
+            processType = processType,
+            businessId = featureConfig.metadataBusinessId,
             primaryDocument = applicationDocument,
             secondaryDocuments =
                 decisionDocuments.map { (decisionId, doc) ->
@@ -54,19 +60,17 @@ class ProcessMetadataService(private val accessControl: AccessControl) {
                 },
         )
     }
-
-    private fun getProcessName(applicationType: ApplicationType): String =
-        when (applicationType) {
-            ApplicationType.CLUB -> {
-                "Kerhohakemus"
-            }
-
-            ApplicationType.DAYCARE -> {
-                "Varhaiskasvatushakemus / palvelusetelihakemus varhaiskasvatukseen"
-            }
-
-            ApplicationType.PRESCHOOL -> {
-                "Esiopetushakemus / hakemus esiopetuksessa järjestettävään perusopetukseen valmistavaan opetukseen"
-            }
-        }
 }
+
+private fun applicationProcessNameAndType(
+    applicationType: ApplicationType
+): Pair<String, ProcessType> =
+    when (applicationType) {
+        ApplicationType.CLUB -> "Kerhohakemus" to ProcessType.APPLICATION_CLUB
+        ApplicationType.DAYCARE ->
+            "Varhaiskasvatushakemus / palvelusetelihakemus varhaiskasvatukseen" to
+                ProcessType.APPLICATION_DAYCARE
+        ApplicationType.PRESCHOOL ->
+            "Esiopetushakemus / hakemus esiopetuksessa järjestettävään perusopetukseen valmistavaan opetukseen" to
+                ProcessType.APPLICATION_PRESCHOOL
+    }

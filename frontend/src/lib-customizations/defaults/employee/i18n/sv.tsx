@@ -3572,7 +3572,7 @@ export const sv: typeof fi = {
     },
     childDocumentDecisions: {
       title: 'Stödbeslut',
-      description: 'Till beslutsfattaren skickade stödbeslut.',
+      description: 'Stödbeslut skickade till beslutsfattaren.',
       statusFilter: 'Status till påseende',
       otherFilters: 'Andra val',
       includeEnded: 'Visa avslutade beslut',
@@ -3608,7 +3608,7 @@ export const sv: typeof fi = {
         'Mindre bearbetat omfattande datamaterial, utifrån vilket man själv kan skapa olika rapporter.'
     },
     attendanceReservation: {
-      title: 'Dagliga barnets ankomst- och avgångstider',
+      title: 'Barnets dagliga ankomst- och avgångstider',
       description: 'Rapport om barnens reserveringar och behovet av personal',
       ungrouped: 'Barn som väntar på grupp',
       capacityFactor: 'Deb',
@@ -3947,9 +3947,9 @@ export const sv: typeof fi = {
         'Förhöjd koefficient för småbarnspedagogik'
     },
     occupancies: {
-      title: 'Fyllnads- och utnyttjandegrader',
+      title: 'Beläggnings- och belastningsgrader',
       description:
-        'Rapporten erbjuder uppgifter om en serviceområdes och en månads utnyttjande- eller fyllnadsgrader.',
+        'Rapporten erbjuder uppgifter om en serviceområdes och en månads beläggnings- och belastningsgrader.',
       filters: {
         areaPlaceholder: 'Välj serviceområde',
         unitPlaceholder: 'Välj enhet',
@@ -3959,13 +3959,13 @@ export const sv: typeof fi = {
             CONFIRMED: 'Bekräftad beläggningsgrad i enheten',
             PLANNED: 'Planerad beläggningsgrad i enheten',
             DRAFT: 'Utkast till beläggningsgrad i enheten',
-            REALIZED: 'Beläggningsgrad i enheten'
+            REALIZED: 'Belastningsgrad i enheten'
           },
           GROUPS: {
             CONFIRMED: 'Bekräftad beläggningsgrad i grupper',
             PLANNED: 'Planerad beläggningsgrad i grupper',
             DRAFT: 'Utkast till beläggningsgrad i grupper',
-            REALIZED: 'Gruppernas belstningsgrad'
+            REALIZED: 'Gruppernas belastningsgrad'
           }
         },
         valueOnReport: 'Visa uppgifter',
@@ -4110,8 +4110,9 @@ export const sv: typeof fi = {
       total: 'Totalt'
     },
     placementGuarantee: {
-      title: 'Platsgaranti för småbarnspedagogik',
-      description: 'Rapporten visar barn med platsgaranti för småbarnspedagogik'
+      title: 'Vårdplatsgaranti för småbarnspedagogik',
+      description:
+        'Rapporten visar barn med vårdplatsgaranti för småbarnspedagogik'
     },
     placementSketching: {
       title: 'Utkastrapport för förskoleplaceringar',
@@ -4165,7 +4166,7 @@ export const sv: typeof fi = {
     },
     titaniaErrors: {
       title: 'Titania-fel',
-      description: 'Fel funna i skiftlistor importerade från Titania',
+      description: 'Fel i arbetsturer',
       header: 'Titania-export',
       date: 'Datum',
       shift1: 'Första skiftet',
@@ -4279,7 +4280,7 @@ export const sv: typeof fi = {
     holidayPeriodAttendance: {
       title: 'Semesterenkätsrapport',
       description:
-        'Enhetens uppföljning av närvaro på dagsnivå under tiden för semesterenkäten',
+        'Enhetens uppföljning av daglig närvaro under lovvårdsperioden',
       periodFilter: 'Semesterenkät',
       periodFilterPlaceholder: 'Välj semesterenkät',
       unitFilter: 'Enhet',
@@ -4404,7 +4405,7 @@ export const sv: typeof fi = {
       }
     },
     citizenDocumentResponseReport: {
-      title: 'Kommuninnvånarens dokument',
+      title: 'Kommuninvånarens dokument',
       description:
         'Rapporten listar gruppvis kommuninvånarens senaste dokumentsvar på ja/nej- eller flervalsfrågorna',
       filters: {
@@ -4639,7 +4640,7 @@ export const sv: typeof fi = {
         received: 'Mottagna',
         sent: 'Skickade',
         drafts: 'Utkast',
-        copies: 'Ledares/kommunens meddelanden',
+        copies: 'Ledarens/kommunens meddelanden',
         archive: 'Arkiv',
         thread: 'Meddelandetråd'
       },
@@ -4651,7 +4652,7 @@ export const sv: typeof fi = {
         received: 'Mottagna meddelanden',
         sent: 'Skickade meddelanden',
         drafts: 'Utkast',
-        copies: 'Ledares/kommunens meddelanden',
+        copies: 'Ledarens/kommunens meddelanden',
         archive: 'Arkiv',
         thread: 'Meddelandetråd'
       }
@@ -4703,7 +4704,7 @@ export const sv: typeof fi = {
       type: {
         label: 'Meddelandetyp',
         message: 'Meddelande',
-        bulletin: 'Nyhetsbrev (kan inte besvaras)'
+        bulletin: 'Infobrev (kan inte besvaras)'
       },
       flags: {
         heading: 'Meddelandets tilläggsmarkeringar',
@@ -4989,7 +4990,13 @@ export const sv: typeof fi = {
         'Uppgiftsklassens nummer som definierats i informationsstyrningsplanen. Lämna tomt om dokumentet inte arkiveras.',
       archiveDurationMonths: 'Arkiveringstid (månader)',
       archiveExternally: 'Ska överföras till externt arkiv före radering',
-      endDecisionWhenUnitChanges: 'Beslutet avbryts om barnet byter enhet'
+      endDecisionWhenUnitChanges: 'Beslutet avbryts om barnet byter enhet',
+      deletionRetentionDays: 'Bevarandetid i eVaka (dagar)',
+      deletionRetention: 'Bevarandetid i eVaka',
+      deletionRetentionBasis: {
+        PLACEMENT_END: 'från barnets senaste placerings slutdatum',
+        STATUS_TRANSITION: 'från dokumentets senaste statusbyte'
+      }
     },
     templateEditor: {
       confidential: 'Sekretessbelagt',
@@ -5171,49 +5178,6 @@ export const sv: typeof fi = {
       'Du kan definiera ditt tilltalsnamn som används i eVaka. Tilltalsnamnet ska vara ett av dina förnamn. Om ditt namn har ändrats och du behöver uppdatera ditt nya namn i eVaka, kontakta Esbo HelpDesk.',
     select: 'Välj tilltalsnamn',
     confirm: 'Bekräfta'
-  },
-  metadata: {
-    title: 'Arkiverbar metadata',
-    notFound: 'Dokumentet har ingen arkiverbar metadata',
-    caseIdentifier: 'Ärendetunnus',
-    processName: 'Ärendeprocess',
-    organization: 'Organisation',
-    archiveDurationMonths: 'Arkiveringstid',
-    primaryDocument: 'Primärt dokument',
-    secondaryDocuments: 'Övriga dokument',
-    documentId: 'Dokumentidentifierare',
-    name: 'Dokumentnamn',
-    createdAt: 'Upprättandetidpunkt',
-    createdBy: 'Upprättare',
-    monthsUnit: 'månader',
-    confidentiality: 'Offentlighet',
-    confidential: 'Sekretessbelagt',
-    public: 'Offentligt',
-    notSet: 'Ej angiven',
-    confidentialityDuration: 'Sekretessperiod',
-    confidentialityBasis: 'Sekretessgrund',
-    years: 'år',
-    receivedBy: {
-      label: 'Ankomstsätt',
-      PAPER: 'På papper',
-      ELECTRONIC: 'Elektroniskt'
-    },
-    sfiDelivery: {
-      label: 'Suomi.fi -leveranser',
-      method: {
-        ELECTRONIC: 'Elektroniskt',
-        PAPER_MAIL: 'Per post',
-        PENDING: 'Väntar på leverans'
-      }
-    },
-    history: 'Processhistoria',
-    downloadPdf: 'Ladda ner PDF',
-    states: {
-      INITIAL: 'Ärendets initiering / -ankomst',
-      PREPARATION: 'Ärendeberedning',
-      DECIDING: 'Beslutfattande',
-      COMPLETED: 'Verkställighet / Avslutande / Stängning'
-    }
   },
   systemNotifications: {
     title: {

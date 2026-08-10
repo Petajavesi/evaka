@@ -634,10 +634,14 @@ data class SftpEnv(
     val username: String,
     val password: Sensitive<String>?,
     val privateKey: Sensitive<String>?,
+    val skipHostKeyVerification: Boolean = false,
 ) {
     init {
         check(listOfNotNull(password, privateKey).size == 1) {
             "Either password or private key must be provided"
+        }
+        check(hostKeys.isNotEmpty() || skipHostKeyVerification) {
+            "Either hostKeys must be provided or skipHostKeyVerification must be true"
         }
     }
 }
@@ -716,6 +720,19 @@ data class ChildDocumentArchivalEnv(val delayDays: Int, val limit: Int) {
             ChildDocumentArchivalEnv(
                 delayDays = env.lookup("evaka.child_document_archival_delay_days") ?: 30,
                 limit = env.lookup("evaka.child_document_archival_limit") ?: 0,
+            )
+    }
+}
+
+/**
+ * Per-task batch limits for [evaka.core.dataremoval] scheduled jobs. `null` means unlimited; any
+ * backlog beyond the limit is processed on subsequent runs.
+ */
+data class DataRemovalEnv(val childDocumentLimit: Int?) {
+    companion object {
+        fun fromEnvironment(env: Environment) =
+            DataRemovalEnv(
+                childDocumentLimit = env.lookup("evaka.data_removal.child_document_limit") ?: 5000
             )
     }
 }

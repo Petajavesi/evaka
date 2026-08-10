@@ -250,6 +250,7 @@ class EspooConfig {
             fiveYearsOldDaycareEnabled = false,
             freeJulyStartOnSeptember = true,
             archiveMetadataOrganization = "Petäjäveden esiopetus ja varhaiskasvatus",
+            metadataBusinessId = "0176769-2",
             archiveMetadataConfigs = { type: ArchiveProcessType, year: Int ->
                 when (type) {
                     ArchiveProcessType.APPLICATION_DAYCARE -> {
