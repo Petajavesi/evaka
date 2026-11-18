@@ -9,7 +9,7 @@ import { P } from 'lib-components/typography'
 import type { CitizenCustomizations } from 'lib-customizations/types'
 
 import { appConfig } from './appConfigs'
-import PetajavesiLogo from './assets/eVakaPetajavesi1_web.svg'
+import EspooLogo from './assets/EspooLogoPrimary.svg'
 import featureFlags from './featureFlags'
 import mapConfig from './mapConfig'
 
@@ -24,33 +24,6 @@ const customizations: CitizenCustomizations = {
   langs: ['fi', 'sv', 'en'],
   translations: {
     fi: {
-      footer: {
-        cityLabel: '© Petäjäveden kunta',
-        privacyPolicyLink: (
-          <a
-            href="https://www.petajavesi.fi/asiointi/tietopalvelu/tietosuojaselosteet"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Tietosuojaseloste
-          </a>
-        ),
-        sendFeedbackLink: (
-          <a
-            href="https://www.petajavesi.fi/asiointi/palaute"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Anna palautetta
-          </a>
-        ),
-      },
-      loginPage: {
-        title: 'Petäjäveden kunnan varhaiskasvatus',
-        applying: {
-          title: 'Kuntalaisen kirjautuminen'
-        }
-      },
       applications: {
         editor: {
           heading: {
@@ -85,7 +58,7 @@ const customizations: CitizenCustomizations = {
                   <P>
                     Palvelusetelipäiväkodit voivat periä lisämaksun,{' '}
                     <a
-                      href="https://www.petajavesi.fi/lapset-ja-nuoret/varhaiskasvatus/varhaiskasvatuspalveluihin-hakeminen"
+                      href="https://www.espoo.fi/kasvatus-ja-opetus/varhaiskasvatus/yksityiseen-varhaiskasvatukseen-hakeminen"
                       target="_blank"
                       rel="noreferrer"
                     >
@@ -97,18 +70,18 @@ const customizations: CitizenCustomizations = {
                   </P>
                   <P>
                     <a
-                      href="https://www.petajavesi.fi/lapset-ja-nuoret/varhaiskasvatus/asiakasmaksut"
+                      href="https://www.espoo.fi/kasvatus-ja-opetus/varhaiskasvatus/varhaiskasvatuksen-asiakasmaksut"
                       target="_blank"
                       rel="noreferrer"
                     >
-                      Lisätietoa kunnallisen varhaiskasvatuksen
+                      Lisätietoa kunnallisen ja ostopalveluvarhaiskasvatuksen
                       asiakasmaksuista ja tuloselvityksen toimittamisesta löydät
                       täältä.
                     </a>
                   </P>
                   <P>
                     <a
-                      href="https://www.petajavesi.fi/lapset-ja-nuoret/varhaiskasvatus/asiakasmaksut"
+                      href="https://www.espoo.fi/fi/kasvatus-ja-opetus/varhaiskasvatus/maksut-palvelusetelipaivakodeissa"
                       target="_blank"
                       rel="noreferrer"
                     >
@@ -126,8 +99,8 @@ const customizations: CitizenCustomizations = {
                   <P>
                     Esiopetukseen osallistutaan oppivelvollisuuden alkamista
                     edeltävänä vuonna. Esiopetus on maksutonta. Lukuvuoden
-                    2026–2027 esiopetukseen ilmoittaudutaan 1.3.2026 mennessä
-                    Esiopetus alkaa 12.8.2026.
+                    2026–2027 esiopetukseen ilmoittaudutaan 8.–20.1.2026.
+                    Suomen- ja ruotsinkielinen esiopetus alkaa 13.8.2026.
                   </P>
                   <P>
                     Päätökset tulevat{' '}
@@ -153,7 +126,7 @@ const customizations: CitizenCustomizations = {
                   'Valitse hakemukseen aloituspäiväksi päivämäärä, jolloin lapsi jää ensimmäistä kertaa varhaiskasvatukseen tutustumisen jälkeen ilman huoltajaa. Varhaiskasvatuksen maksu alkaa vasta virallisesta huoltajan vahvistamasta aloituspäivästä.',
                   <a
                     key="link"
-                    href="https://www.petajavesi.fi/lapset-ja-nuoret/varhaiskasvatus"
+                    href="https://www.espoo.fi/fi/kasvatus-ja-opetus/varhaiskasvatus/paikan-vastaanottaminen-ja-varhaiskasvatuksen-aloitus"
                     target="_blank"
                     rel="noreferrer"
                   >
@@ -161,7 +134,7 @@ const customizations: CitizenCustomizations = {
                   </a>
                 ],
                 PRESCHOOL: [
-                  'Esiopetus alkaa 12.8.2026. Jos tarvitset varhaiskasvatusta esiopetuksen lisäksi, hae sitä tällä hakemuksella "Haen myös esiopetukseen liittyvää varhaiskasvatusta".'
+                  'Suomen- ja ruotsinkielinen esiopetus alkaa 13.8.2026. Jos tarvitset varhaiskasvatusta elokuun alusta ennen esiopetuksen alkua, hae sitä tällä hakemuksella valitsemalla ”Haen myös esiopetukseen liittyvää varhaiskasvatusta”.'
                 ]
               },
               instructions: {
@@ -170,7 +143,7 @@ const customizations: CitizenCustomizations = {
                     Voit muuttaa toivottua aloituspäivää myöhemmäksi niin kauan
                     kuin hakemusta ei ole otettu käsittelyyn. Jos haluat tämän
                     jälkeen muuttaa aloituspäivää, sinun tulee ottaa yhteyttä
-                    päiväkodin johtajaan (puh. 040 700 1879).
+                    varhaiskasvatuksen palveluohjaukseen (puh. 09 816 31000).
                   </>
                 ),
                 PRESCHOOL: (
@@ -178,7 +151,7 @@ const customizations: CitizenCustomizations = {
                     Voit muuttaa toivottua aloituspäivää myöhemmäksi niin kauan
                     kuin hakemusta ei ole otettu käsittelyyn. Jos haluat tämän
                     jälkeen muuttaa aloituspäivää, sinun tulee ottaa yhteyttä
-                    päiväkodin johtajaan (puh. 040 700 1879).
+                    varhaiskasvatuksen palveluohjaukseen (puh. 09 816 31000).
                   </>
                 )
               }
@@ -196,6 +169,11 @@ const customizations: CitizenCustomizations = {
                       toimittamaan liitteet sähköisesti, sillä voimme ottaa
                       hakemuksen käsittelyyn vasta sitten, kun tarvittavat
                       liitteet ovat saapuneet perille.
+                    </P>
+                    <P>
+                      Jos et voi lisätä liitteitä hakemukselle sähköisesti,
+                      lähetä ne postilla osoitteeseen Varhaiskasvatuksen
+                      palveluohjaus, PL 3125, 02070 Espoon kaupunki.
                     </P>
                   </>
                 )
@@ -273,6 +251,11 @@ const customizations: CitizenCustomizations = {
                       todistus molemmilta samassa taloudessa asuvilta
                       huoltajilta.
                     </P>
+                    <P>
+                      Jos et voi lisätä liitteitä hakemukselle sähköisesti,
+                      lähetä ne postilla osoitteeseen Varhaiskasvatuksen
+                      palveluohjaus, PL 3125, 02070 Espoon kaupunki.
+                    </P>
                   </>
                 ),
                 PRESCHOOL: (
@@ -297,6 +280,11 @@ const customizations: CitizenCustomizations = {
                       päätoimisesta ilta- tai viikonloppuopiskelusta. Toimita
                       todistus molemmilta samassa taloudessa asuvilta
                       huoltajilta.
+                    </P>
+                    <P>
+                      Jos et voi lisätä liitteitä hakemukselle sähköisesti,
+                      lähetä ne postilla osoitteeseen Varhaiskasvatuksen
+                      palveluohjaus, PL 3125, 02070 Espoon kaupunki.{' '}
                     </P>
                   </>
                 )
@@ -387,7 +375,16 @@ const customizations: CitizenCustomizations = {
                         sisarus, jolla on päätöksentekohetkellä ja tulevana
                         esiopetusvuonna paikka esiopetuspäiväkodissa.
                       </li>
+                      <li>
+                        Kunnan osoittamaan lähikouluun, jota esioppilaan sisarus
+                        käy tulevana lukuvuonna.
+                      </li>
                     </ol>
+                    <P>
+                      Valitse käytätkö sisarusperustetta kohdan a vai b
+                      mukaisesti, jos esioppilaalla on sisarusperuste molempien
+                      kohtien mukaan.
+                    </P>
                     <P>
                       Täytä nämä tiedot vain, jos käytät sisarusperustetta.
                       Valitse lisäksi alla olevasta valikosta ensisijaiseksi
@@ -402,10 +399,16 @@ const customizations: CitizenCustomizations = {
                 DAYCARE: (
                   <>
                     <P $fitted>
-                      Voit hakea 1-2 paikkaa toivomassasi järjestyksessä.
+                      Voit hakea 1-3 paikkaa toivomassasi järjestyksessä.
                       Hakutoiveet eivät takaa paikkaa toivotussa yksikössä,
                       mutta mahdollisuus toivotun paikan saamiseen kasvaa, kun
                       annat useamman vaihtoehdon.
+                    </P>
+                    <P>
+                      Hae palveluseteliä valitsemalla hakutoiveeksi se
+                      palveluseteliyksikkö, johon haluat hakea. Kun haet
+                      palveluseteliyksikköön, myös yksikön johtaja saa tiedon
+                      hakemuksestasi.
                     </P>
                     <P>
                       Näet eri varhaiskasvatusyksiköiden sijainnin valitsemalla
@@ -416,10 +419,16 @@ const customizations: CitizenCustomizations = {
                 PRESCHOOL: (
                   <>
                     <P>
-                      Voit hakea 1-2 eri yksikköön toivomassasi järjestyksessä.
+                      Voit hakea 1-3 eri yksikköön toivomassasi järjestyksessä.
                       Hakutoiveet eivät takaa paikkaa toivotusta yksiköstä,
                       mutta mahdollisuus toivotun paikan saamiseen kasvaa, kun
                       annat useamman vaihtoehdon.
+                    </P>
+                    <P>
+                      Hae palveluseteliä valitsemalla hakutoiveeksi se
+                      palveluseteliyksikkö, johon haluat hakea. Kun haet
+                      palveluseteliyksikköön, myös yksikön johtaja saa tiedon
+                      hakemuksestasi.
                     </P>
                     <P>
                       Näet eri varhaiskasvatusyksiköiden sijainnin valitsemalla
@@ -510,11 +519,11 @@ const customizations: CitizenCustomizations = {
               asiakasmaksuperusteisiin: *
             </span>
             <a
-              href="https://www.petajavesi.fi/lapset-ja-nuoret/varhaiskasvatus/asiakasmaksut"
+              href="https://www.espoo.fi/fi/kasvatus-ja-opetus/varhaiskasvatus/varhaiskasvatuksen-asiakasmaksut#section-59617"
               target="_blank"
               rel="noreferrer"
             >
-              Lasten varhaiskasvatuksesta perittävät maksut | Petäjäveden kunta
+              Lasten varhaiskasvatuksesta perittävät maksut | Espoon kaupunki
             </a>
           </MultiLineCheckboxLabel>
         ),
@@ -1647,8 +1656,8 @@ const customizations: CitizenCustomizations = {
     }
   },
   cityLogo: {
-    src: PetajavesiLogo,
-    alt: 'Petajavesi Logo'
+    src: EspooLogo,
+    alt: 'Espoo Logo'
   },
   routeLinkRootUrl: 'https://reittiopas.hsl.fi/reitti/',
   mapConfig,

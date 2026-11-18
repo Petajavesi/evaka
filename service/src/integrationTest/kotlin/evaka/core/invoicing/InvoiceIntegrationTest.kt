@@ -849,7 +849,7 @@ class InvoiceIntegrationTest : FullApplicationTest(resetDbBeforeEach = true) {
     }
 
     private fun createDraftInvoices() {
-        invoiceController.createDraftInvoices(dbInstance(), employee.user, RealEvakaClock(), null, null) // Petäjävesi added null, null
+        invoiceController.createDraftInvoices(dbInstance(), employee.user, RealEvakaClock())
     }
 
     private fun sendInvoices(invoiceIds: List<InvoiceId>) {
@@ -972,7 +972,6 @@ class InvoiceIntegrationTest : FullApplicationTest(resetDbBeforeEach = true) {
                         description = row.description,
                         correctionId = row.correctionId,
                         note = null,
-                        serviceNeed = "Satunnainen palveluntarve",
                     )
                 },
             number = invoice.number,

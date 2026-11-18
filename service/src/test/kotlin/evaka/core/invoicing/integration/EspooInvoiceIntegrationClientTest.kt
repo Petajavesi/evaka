@@ -318,7 +318,6 @@ class EspooInvoiceIntegrationClientTest {
             description = "",
             correctionId = null,
             note = null,
-            serviceNeed = "Satunnainen palveluntarve",
         )
 
     private fun testPerson(

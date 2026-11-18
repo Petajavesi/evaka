@@ -286,9 +286,9 @@ export const fi = {
     logout: 'Kirjaudu ulos'
   },
   footer: {
-    cityLabel: 'Petäjäveden kunta',
-    linkLabel: 'Petäjäveden varhaiskasvatus',
-    linkHref: 'https://www.petajavesi.fi/lapset-ja-nuoret/varhaiskasvatus'
+    cityLabel: 'Espoon kaupunki',
+    linkLabel: 'Espoon varhaiskasvatus',
+    linkHref: 'https://www.espoo.fi/fi/kasvatus-ja-opetus/varhaiskasvatus'
   },
   language: {
     title: 'Kieli',
@@ -320,11 +320,11 @@ export const fi = {
     startDateNotOnTerm: 'Aloituspäivän pitää kohdistua jollekin kaudelle'
   },
   login: {
-    title: 'Petäjäveden kunnan varhaiskasvatus',
-    subtitle: 'Henkilökunnan kirjautuminen',
+    title: 'Varhaiskasvatus',
+    subtitle: 'Asiakastiedot ja yksiköt',
     systemNotification: 'Tärkeä tiedote',
     login: 'Kirjaudu sisään',
-    loginAD: 'Kirjaudu sisään',
+    loginAD: 'Espoo AD',
     loginEvaka: 'Palveluntuottaja',
     error: {
       noRole: 'Sinulla ei ole tarvittavaa roolia',
@@ -2424,6 +2424,9 @@ export const fi = {
         nekkuUnitTitle: 'Nekku-ruokatilausten yksikkö',
         nekkuCustomerNumberTitle: 'Nekku-ruokatilausten asiakasnumero'
       },
+      nekkuOrderModal: {
+        title: 'Nekku-ruokatilaus'
+      },
       startDate: 'Perustettu',
       endDate: 'Viimeinen toimintapäivä',
       caretakers: 'Henkilökuntaa',
@@ -2452,6 +2455,7 @@ export const fi = {
       diaryButton: 'Avaa päiväkirja',
       deleteGroup: 'Poista ryhmä',
       update: 'Muokkaa tietoja',
+      nekkuOrder: 'Nekku-tilaus',
       daycareDailyNote: {
         dailyNote: 'Päivän muistiinpanot',
         header: 'Tänään koettua ja opittua',
@@ -2698,7 +2702,6 @@ export const fi = {
           ? 'Lähetä valittu lasku uudelleen'
           : 'Lähetä valitut laskut uudelleen',
       createInvoices: 'Luo laskuluonnokset',
-      selectMonth: 'Valitse kuukausi',
       deleteInvoice: (count: number): string =>
         count === 1 ? 'Poista valittu lasku' : 'Poista valitut laskut',
       checkAreaInvoices: (customRange: boolean): string =>

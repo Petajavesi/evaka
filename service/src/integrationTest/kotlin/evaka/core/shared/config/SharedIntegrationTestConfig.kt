@@ -190,8 +190,8 @@ class SharedIntegrationTestConfig {
     }
 
     @Bean
-    fun invoiceIntegrationClient(s3Client: S3Client, jsonMapper: JsonMapper, bucketEnv: BucketEnv): InvoiceIntegrationClient =
-        InvoiceIntegrationClient.MockClient(s3Client, jsonMapper, bucketEnv)
+    fun invoiceIntegrationClient(jsonMapper: JsonMapper): InvoiceIntegrationClient =
+        InvoiceIntegrationClient.MockClient(jsonMapper)
 
     @Bean fun invoiceGenerationLogicChooser() = DefaultInvoiceGenerationLogic
 
@@ -283,8 +283,8 @@ val testFeatureConfig =
         applyPlacementUnitFromDecision = false,
         preferredStartRelativeApplicationDueDate = false,
         fiveYearsOldDaycareEnabled = true,
-        archiveMetadataOrganization = "Petäjäveden esiopetus ja varhaiskasvatus",
-        metadataBusinessId = "0176769-2",
+        archiveMetadataOrganization = "Espoon kaupungin esiopetus ja varhaiskasvatus",
+        metadataBusinessId = "0101263-6",
         archiveMetadataConfigs = { type: ArchiveProcessType, _: Int ->
             when (type) {
                 ArchiveProcessType.APPLICATION_DAYCARE -> {

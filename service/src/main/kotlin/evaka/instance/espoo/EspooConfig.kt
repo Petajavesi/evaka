@@ -7,7 +7,6 @@ package evaka.instance.espoo
 import evaka.core.ArchiveEnv
 import evaka.core.ChildDocumentArchivalEnv
 import evaka.core.EvakaEnv
-import evaka.core.BucketEnv
 import evaka.core.ScheduledJobsEnv
 import evaka.core.Sensitive
 import evaka.core.VtjXroadEnv
@@ -19,9 +18,6 @@ import evaka.core.holidayperiod.QuestionnaireType
 import evaka.core.invoicing.domain.PaymentIntegrationClient
 import evaka.core.invoicing.integration.EspooInvoiceIntegrationClient
 import evaka.core.invoicing.integration.InvoiceIntegrationClient
-import evaka.instance.petajavesi.invoice.PetajavesiInvoiceClient
-import evaka.instance.petajavesi.invoice.PetajavesiInvoiceSftpProperties
-import evaka.core.shared.sftp.SftpClient
 import evaka.core.invoicing.service.DefaultInvoiceGenerationLogic
 import evaka.core.invoicing.service.DefaultInvoiceNumberProvider
 import evaka.core.invoicing.service.EspooIncomeTypesProvider
@@ -86,27 +82,11 @@ class EspooConfig {
         env: EspooEnv,
         invoiceEnv: ObjectProvider<EspooInvoiceIntegrationEnv>,
         jsonMapper: JsonMapper,
-        s3Client: software.amazon.awssdk.services.s3.S3Client,
-        bucketEnv: BucketEnv,
-        environment: Environment,
-    ): InvoiceIntegrationClient {
-        // If Petäjävesi SFTP is configured, use dedicated client that writes S3 + sends SFTP
-        val sftpProperties = PetajavesiInvoiceSftpProperties.fromEnvironment(environment)
-        if (sftpProperties != null) {
-            val bucketName = System.getenv("EVAKA_BUCKET_INVOICES") ?: bucketEnv.data
-            return PetajavesiInvoiceClient(
-                s3Client = s3Client,
-                bucketName = bucketName,
-                sftpClient = SftpClient(sftpProperties.toSftpEnv()),
-                sftpPrefix = sftpProperties.prefix,
-            )
-        }
-
-        return when (env.invoiceIntegrationEnabled) {
+    ): InvoiceIntegrationClient =
+        when (env.invoiceIntegrationEnabled) {
             true -> EspooInvoiceIntegrationClient(invoiceEnv.getObject(), jsonMapper)
-            false -> InvoiceIntegrationClient.MockClient(s3Client, jsonMapper, bucketEnv)
+            false -> InvoiceIntegrationClient.MockClient(jsonMapper)
         }
-    }
 
     @Bean
     fun patuIntegrationClient(
@@ -231,7 +211,7 @@ class EspooConfig {
     fun featureConfig(): FeatureConfig =
         FeatureConfig(
             valueDecisionCapacityFactorEnabled = false,
-            citizenReservationThresholdHours = 144,
+            citizenReservationThresholdHours = 150,
             freeAbsenceGivesADailyRefund = true,
             alwaysUseDaycareFinanceDecisionHandler = false, // Doesn't affect Espoo
             paymentNumberSeriesStart = 1, // Payments are not yet in use in Espoo
@@ -240,18 +220,18 @@ class EspooConfig {
             useContractDaysAsDailyFeeDivisor = true, // Doesn't affect Espoo
             requestedStartUpperLimit = 14,
             postOffice = "ESPOO",
-            municipalMessageAccountName = "Petäjäveden kunta",
+            municipalMessageAccountName = "Espoon kaupunki - Esbo stad - City of Espoo",
             serviceWorkerMessageAccountName =
-                "Petäjäveden varhaiskasvatus",
+                "Varhaiskasvatuksen palveluohjaus - Småbarnspedagogikens servicehandledning - Early childhood education service guidance",
             financeMessageAccountName =
-                "Varhaiskasvatuksen asiakasmaksut",
-            messageSupportEmail = "varhaiskasvatus@petajavesi.fi",
+                "Varhaiskasvatuksen asiakasmaksut - Småbarnspedagogikens avgifter - Early childhood education fees",
+            messageSupportEmail = "evaka@espoo.fi",
             applyPlacementUnitFromDecision = false,
             preferredStartRelativeApplicationDueDate = false,
-            fiveYearsOldDaycareEnabled = false,
+            fiveYearsOldDaycareEnabled = true,
             freeJulyStartOnSeptember = true,
-            archiveMetadataOrganization = "Petäjäveden esiopetus ja varhaiskasvatus",
-            metadataBusinessId = "0176769-2",
+            archiveMetadataOrganization = "Espoon kaupungin esiopetus ja varhaiskasvatus",
+            metadataBusinessId = "0101263-6",
             archiveMetadataConfigs = { type: ArchiveProcessType, year: Int ->
                 when (type) {
                     ArchiveProcessType.APPLICATION_DAYCARE -> {

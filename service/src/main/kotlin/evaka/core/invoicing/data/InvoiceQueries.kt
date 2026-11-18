@@ -101,7 +101,6 @@ fun invoiceDetailedQuery(where: Predicate) = QuerySql {
                 'periodStart', row.period_start,
                 'periodEnd', row.period_end,
                 'product', row.product,
-                'serviceNeed', service_need_option.name_fi,
                 'unitId', row.unit_id,
                 'unitName', daycare.name,
                 'unitProviderType', daycare.provider_type,
@@ -118,11 +117,6 @@ fun invoiceDetailedQuery(where: Predicate) = QuerySql {
             LEFT JOIN daycare ON row.unit_id = daycare.id
             LEFT JOIN care_area AS row_care_area ON daycare.care_area_id = row_care_area.id
             LEFT JOIN person as child ON row.child = child.id
-            LEFT JOIN fee_decision_child ON child.id = fee_decision_child.child_id
-            JOIN fee_decision ON fee_decision_child.fee_decision_id = fee_decision.id
-                AND fee_decision.status = 'SENT'
-                AND fee_decision.valid_during && daterange(row.period_start, row.period_end, '[]')
-            LEFT JOIN service_need_option ON fee_decision_child.service_need_option_id = service_need_option.id
             WHERE invoice.id = row.invoice_id
         ), '[]'::jsonb) as rows,
         

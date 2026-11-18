@@ -9,7 +9,7 @@ import {
 import type { EmployeeCustomizations } from 'lib-customizations/types'
 
 import { appConfig } from './appConfigs'
-import PetajavesiLogo from './assets/eVakaPetajavesi1_web.svg'
+import Logo from './assets/EspooLogoPrimary.svg'
 import featureFlags from './featureFlags'
 import { additionalStaffAttendanceTypes } from './shared'
 
@@ -20,7 +20,7 @@ const customizations: EmployeeCustomizations = {
       common: {
         retroactiveConfirmation: {
           checkboxLabel:
-            'Ymmärrän, olen asiasta yhteydessä laskutustiimiin sari.salonen@petajavesi.fi *'
+            'Ymmärrän, olen asiasta yhteydessä laskutustiimiin vaka.maksut@espoo.fi *'
         }
       },
       childInformation: {
@@ -43,10 +43,7 @@ const customizations: EmployeeCustomizations = {
     },
     sv: {}
   },
-  cityLogo: {
-    src: PetajavesiLogo,
-    alt: 'Petajavesi Logo'
-  },
+  cityLogo: <img src={Logo} alt="Espoo Logo" data-qa="footer-city-logo" />,
   featureFlags,
   placementTypes: [
     'PRESCHOOL',

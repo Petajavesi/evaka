@@ -579,21 +579,10 @@ export async function updateIncome(
 /**
 * Generated from evaka.core.invoicing.controller.InvoiceController.createDraftInvoices
 */
-//Petajaveden muutos 2025
-export async function createDraftInvoices(
-  request?: {
-    year?: number | null,
-    month?: number | null
-  }
-): Promise<void> {
-  const params = request ? createUrlSearchParams(
-    ['year', request.year?.toString()],
-    ['month', request.month?.toString()]
-  ) : undefined
+export async function createDraftInvoices(): Promise<void> {
   const { data: json } = await client.request<JsonOf<void>>({
     url: uri`/employee/invoices/create-drafts`.toString(),
-    method: 'POST',
-    params
+    method: 'POST'
   })
   return json
 }

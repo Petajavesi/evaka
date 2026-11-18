@@ -34,6 +34,21 @@ jobs:
     outputs:
       cache-bust: ${{ steps.cache-bust.outputs.cache-bust }}
 
+  # Petäjävesi: upstream-drift-tarkistus. Imaget rakennetaan ja otetaan käyttöön
+  # vain, jos Petäjäveden muutokset ovat omissa poluissaan ja upstreamin tiedostot vastaavat tagia.
+  upstream-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # upstream-tagi tarvitaan diff-vertailuun
+      - name: Fetch upstream tags
+        run: git fetch --tags https://github.com/espoon-voltti/evaka.git
+      - name: Self-test of the drift check
+        run: bin/check-upstream-drift.test.sh
+      - name: Upstream drift check
+        run: bin/check-upstream-drift.sh
+
   frontend-common:
     runs-on: ubuntu-latest
     environment:
@@ -43,6 +58,7 @@ jobs:
       contents: read
     needs:
       - cache-bust
+      - upstream-drift
     steps:
 
       - uses: actions/checkout@v4
@@ -86,7 +102,8 @@ jobs:
             build=${{ github.run_number }}
             commit=${{ github.sha }}
             ICONS=free
-          build-contexts: customizations=frontend/src/lib-customizations/espoo
+            EVAKA_CUSTOMIZATIONS=petajavesi
+          build-contexts: customizations=frontend/src/lib-customizations/petajavesi
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           push: true
@@ -121,6 +138,7 @@ jobs:
       contents: read
     needs:
       - cache-bust
+      - upstream-drift
     steps:
 
       - uses: actions/checkout@v4
@@ -195,6 +213,7 @@ jobs:
       contents: read
     needs:
       - cache-bust
+      - upstream-drift
     steps:
 
       - uses: actions/checkout@v4
@@ -271,6 +290,7 @@ jobs:
       contents: read
     needs:
       - cache-bust
+      - upstream-drift
     steps:
 
       - uses: actions/checkout@v4
@@ -346,6 +366,7 @@ jobs:
       contents: read
     needs:
       - cache-bust
+      - upstream-drift
     steps:
       
       - uses: actions/checkout@v4

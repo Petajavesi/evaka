@@ -19,7 +19,10 @@ import org.springframework.context.annotation.Configuration
 class Main
 
 fun main(args: Array<String>) {
-    val municipality = System.getenv("EVAKA_MUNICIPALITY") ?: "espoo"
+    // Petäjävesi: oletuskunta on petajavesi, jotta CI:n pushista käyttöönottama image käynnistyy
+    // Petäjäveden instanssilla jo ennen kuin EVAKA_MUNICIPALITY on asetettu
+    // (Petajavesi/evaka-fork).
+    val municipality = System.getenv("EVAKA_MUNICIPALITY") ?: "petajavesi"
     val municipalityProfile = "${municipality}_evaka"
 
     val municipalityConfig =
@@ -36,6 +39,7 @@ fun main(args: Array<String>) {
             "kangasala" -> KangasalaInstance::class.java
             "lempaala" -> LempaalaInstance::class.java
             "orivesi" -> OrivesiInstance::class.java
+            "petajavesi" -> PetajavesiInstance::class.java // Petäjävesi (Petajavesi/evaka-fork)
             else -> error("Unknown municipality: $municipality")
         }
 
@@ -112,3 +116,10 @@ class LempaalaInstance
 @ComponentScan("evaka.trevaka", "evaka.instance.orivesi")
 @ConfigurationPropertiesScan(basePackages = ["evaka.trevaka", "evaka.instance.orivesi"])
 class OrivesiInstance
+
+// Petäjävesi (Petajavesi/evaka-fork): instanssin valinta on upstreamin oma mekanismi ilman
+// kuntakohtaista laajennuspistettä, joten instanssiluokka määritellään tässä muiden tapaan.
+@Configuration
+@ComponentScan("evaka.instance.petajavesi")
+@ConfigurationPropertiesScan(basePackages = ["evaka.instance.petajavesi"])
+class PetajavesiInstance

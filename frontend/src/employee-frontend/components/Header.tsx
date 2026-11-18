@@ -11,10 +11,10 @@ import { Link } from 'wouter'
 
 import { combine } from 'lib-common/api'
 import { ChipWrapper, SelectionChip } from 'lib-components/atoms/Chip'
+import { CityLogo } from 'lib-components/atoms/CityLogo' // Petäjävesi: kuntalogo ylätunnisteeseen (upstream-poikkeuslista)
 import { EvakaLogo } from 'lib-components/atoms/EvakaLogo'
 import HorizontalLine from 'lib-components/atoms/HorizontalLine'
 import NavLink, { useIsRouteActive } from 'lib-components/atoms/NavLink'
-import { CityLogo } from 'lib-components/atoms/CityLogo'
 import { Button } from 'lib-components/atoms/buttons/Button'
 import { desktopMin } from 'lib-components/breakpoints'
 import {

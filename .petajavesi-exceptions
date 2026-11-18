@@ -1,0 +1,16 @@
+# SPDX-FileCopyrightText: 2026 City of Petäjävesi
+#
+# SPDX-License-Identifier: LGPL-2.1-or-later
+#
+# Poikkeuslista: upstreamin (espoon-voltti/evaka) omistamat tiedostot, jotka saavat erota tagista
+# .petajavesi-upstream-tag. Muoto: <polku><TAB><peruste>. Lista on kaksisuuntainen:
+# jokaisen rivin on oikeasti erottava tagista, ja jokaisen eroavan upstream-tiedoston on oltava listalla
+# (bin/check-upstream-drift.sh). Petäjäveden omat polut (bin/check-upstream-drift.sh, ALLOWED) eivät kuulu tänne.
+service/src/main/kotlin/evaka/Main.kt	Instanssin valinta (when-haara, PetajavesiInstance) ja oletuskunta petajavesi; upstream ei tarjoa kuntakohtaista laajennuspistettä
+service/src/main/kotlin/evaka/core/shared/config/AsyncJobConfig.kt	AsyncJob.varda-työjonon kuristusväli 3 s; ei asetettavissa ympäristöstä, upstream käyttää samaa tekniikkaa email- ja suomiFi-jonoille
+frontend/src/lib-components/atoms/CityLogo.tsx	Kuntalogo työntekijäkäyttöliittymän ylätunnisteessa; upstream ei tarjoa customization-pistettä
+frontend/src/employee-frontend/components/Header.tsx	Kuntalogon sijoitus ylätunnisteeseen
+frontend/src/employee-frontend/components/Footer.tsx	Kuntalogon ja eVaka-logon poisto alatunnisteesta, footerHeight 120px -> 72px
+frontend/src/employee-frontend/components/invoices/Invoices.tsx	Laskuluonnosten kuukausivalitsin ja käsin kirjoitettu kutsu Petäjäveden päätepisteeseen
+apigw/config/certificates/saml-signing-testi.apro.tunnistus.fi.2024.pem	Petäjäveden tunnistautumisympäristön IdP-varmenne
+apigw/config/certificates/saml-signing.idp.tunnistautuminen.suomi.fi.2024.pem	Petäjäveden tunnistautumisympäristön IdP-varmenne

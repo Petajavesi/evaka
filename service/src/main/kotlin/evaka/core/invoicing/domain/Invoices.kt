@@ -84,7 +84,6 @@ data class InvoiceRowDetailed(
     val periodStart: LocalDate,
     val periodEnd: LocalDate,
     val product: ProductKey,
-    val serviceNeed: String?,
     val unitId: DaycareId,
     val unitName: String,
     val unitProviderType: ProviderType,

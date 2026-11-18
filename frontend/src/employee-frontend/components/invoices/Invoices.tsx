@@ -1,9 +1,10 @@
 // SPDX-FileCopyrightText: 2017-2022 City of Espoo
+// SPDX-FileCopyrightText: 2026 City of Petäjävesi
 //
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import React, { useContext, useState } from 'react' //Pet�j�veden muutos 2025
+import React, { useContext, useState } from 'react'
 import styled from 'styled-components'
 import { useLocation } from 'wouter'
 
@@ -17,7 +18,9 @@ import type {
 } from 'lib-common/generated/api-types/invoicing'
 import type { InvoiceId } from 'lib-common/generated/api-types/shared'
 import { formatCents } from 'lib-common/money'
+import { Queries } from 'lib-common/query'
 import type { UUID } from 'lib-common/types'
+import { uri } from 'lib-common/uri'
 import YearMonth from 'lib-common/year-month'
 import Pagination from 'lib-components/Pagination'
 import Title from 'lib-components/atoms/Title'
@@ -37,6 +40,7 @@ import { Gap } from 'lib-components/white-space'
 import colors from 'lib-customizations/common'
 import { faExclamation, faSync } from 'lib-icons'
 
+import { client } from '../../api/client'
 import { useTranslation } from '../../state/i18n'
 import { InvoicingUiContext } from '../../state/invoicing-ui'
 import { hasGlobalAction } from '../../utils/roles'
@@ -44,7 +48,7 @@ import ChildrenCell from '../common/ChildrenCell'
 import NameWithSsn from '../common/NameWithSsn'
 import { StatusIconContainer } from '../common/StatusIconContainer'
 
-import { createDraftInvoicesMutation } from './queries'
+import { invoicesQuery } from './queries'
 
 interface Props {
   user: User | undefined
@@ -67,6 +71,27 @@ interface Props {
   setFullAreaSelection: (checked: boolean) => void
   fullAreaSelectionDisabled: boolean
 }
+
+// Petäjävesi (Petajavesi/evaka-fork): käsin kirjoitettu kutsu Petäjäveden omaan luonnoslaskujen
+// päätepisteeseen (PetajavesiInvoiceController, @ExcludeCodeGen). Upstreamin generoitu asiakas
+// createDraftInvoices ei tunne year/month-parametreja; tiedosto on upstream-poikkeuslistalla.
+async function createPetajavesiDraftInvoices(request: {
+  year: number
+  month: number
+}): Promise<void> {
+  await client.request<void>({
+    url: uri`/employee/petajavesi/invoices/create-drafts`.toString(),
+    method: 'POST',
+    params: { year: request.year, month: request.month }
+  })
+}
+
+const petajavesiQueries = new Queries()
+
+const createPetajavesiDraftInvoicesMutation = petajavesiQueries.mutation(
+  createPetajavesiDraftInvoices,
+  [invoicesQuery.prefix]
+)
 
 export default React.memo(function Invoices({
   user,
@@ -97,8 +122,10 @@ export default React.memo(function Invoices({
     { on: setDraftCreationError, off: clearDraftCreationError }
   ] = useBoolean(false)
 
-  const previousMonth = YearMonth.todayInHelsinkiTz().subMonths(1) //Pet�j�veden muutos 2025
-  const [selectedMonth, setSelectedMonth] = useState<YearMonth>(previousMonth) //Pet�j�veden muutos 2025
+  // Petäjävesi (Petajavesi/evaka-fork): laskuluonnosten kuukausivalitsin. Kutsuu Petäjäveden omaa
+  // päätepistettä /employee/petajavesi/invoices/create-drafts; upstream-poikkeuslista.
+  const previousMonth = YearMonth.todayInHelsinkiTz().subMonths(1)
+  const [selectedMonth, setSelectedMonth] = useState<YearMonth>(previousMonth)
 
   return (
     <div className="invoices" data-isloading={isLoading}>
@@ -107,16 +134,19 @@ export default React.memo(function Invoices({
           {draftCreationError && (
             <RefreshError>{i18n.common.error.unknown}</RefreshError>
           )}
-          //Pet�j�veden muutos 2025
           <MonthSelector>
-            <label htmlFor="invoice-month">{i18n.invoices.buttons.selectMonth}:</label>
+            <label htmlFor="invoice-month">Valitse kuukausi:</label>
             <select
               id="invoice-month"
               value={selectedMonth.formatIso()}
-              onChange={(e) => setSelectedMonth(YearMonth.parseIso(e.target.value))}
+              onChange={(e) =>
+                setSelectedMonth(YearMonth.parseIso(e.target.value))
+              }
               data-qa="invoice-month-selector"
             >
-              {Array.from({ length: 12 }, (_, i) => previousMonth.subMonths(i)).map((month) => (
+              {Array.from({ length: 12 }, (_, i) =>
+                previousMonth.subMonths(i)
+              ).map((month) => (
                 <option key={month.formatIso()} value={month.formatIso()}>
                   {month.format()}
                 </option>
@@ -126,8 +156,11 @@ export default React.memo(function Invoices({
           <MutateButton
             appearance="inline"
             icon={faSync}
-            mutation={createDraftInvoicesMutation}
-            onClick={() => ({ year: selectedMonth.year, month: selectedMonth.month })} //Pet�j�veden muutos 2025
+            mutation={createPetajavesiDraftInvoicesMutation}
+            onClick={() => ({
+              year: selectedMonth.year,
+              month: selectedMonth.month
+            })}
             onSuccess={clearDraftCreationError}
             onFailure={setDraftCreationError}
             text={i18n.invoices.buttons.createInvoices}

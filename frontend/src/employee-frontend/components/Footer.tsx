@@ -10,6 +10,8 @@ import { defaultMargins } from 'lib-components/white-space'
 
 import { useTranslation } from '../state/i18n'
 
+// Petäjävesi: kuntalogo ja eVaka-logo on siirretty alatunnisteesta ylätunnisteeseen (CityLogo),
+// joten alatunniste on matalampi. Upstream ei tarjoa customization-pistettä; upstream-poikkeuslista.
 export const footerHeight = '72px'
 
 const FooterContainer = styled.div`

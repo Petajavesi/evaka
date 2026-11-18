@@ -1,0 +1,53 @@
+<!--
+SPDX-FileCopyrightText: 2017-2020 City of Espoo
+
+SPDX-License-Identifier: LGPL-2.1-or-later
+-->
+
+<!DOCTYPE html>
+
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:fragment="correction">
+    <h1 th:text="#{title}"></h1>
+    <div class="correction-content">
+        <p th:text="#{intro}"></p>
+
+        <h2 th:text="#{right.title}"></h2>
+        <p th:text="#{right.body}"></p>
+
+        <h2 th:text="#{time.title}"></h2>
+        <p th:text="#{time.body.1}"></p>
+        <p th:text="#{time.body.2}"></p>
+        <p th:text="#{time.body.3}"></p>
+        <p th:text="#{time.body.4}"></p>
+
+        <h2 th:text="#{authority.title}"></h2>
+        <p th:text="#{authority.body}"></p>
+
+        <h2 th:text="#{delivery.title}"></h2>
+        <div>
+            <div class="col-row"><span th:text="#{delivery.visit.caption}"></span> <span th:text="#{delivery.visit.value}"></span></div>
+            <div class="col-row"><span th:text="#{delivery.opening.caption}"></span> <span th:text="#{delivery.opening.value}"></span></div>
+            <div class="col-row"><span th:text="#{delivery.postal.caption}"></span> <span th:text="#{delivery.postal.value}"></span></div>
+            <div class="col-row"><span th:text="#{delivery.email.caption}"></span> <span th:text="#{delivery.email.value}"></span></div>
+            <div class="col-row"><span th:text="#{delivery.phone.caption}"></span> <span th:text="#{delivery.phone.value}"></span></div>
+        </div>
+        <p class="strong" th:text="#{delivery.securemail}"></p>
+
+        <div class="keep-together">
+            <h2 th:text="#{form.title}"></h2>
+            <p th:text="#{form.intro}"></p>
+            <p th:text="#{form.required.lead}"></p>
+            <ul>
+                <li th:text="#{form.required.1}"></li>
+                <li th:text="#{form.required.2}"></li>
+                <li th:text="#{form.required.3}"></li>
+            </ul>
+            <p th:text="#{form.contact}"></p>
+            <p th:text="#{form.email}"></p>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>

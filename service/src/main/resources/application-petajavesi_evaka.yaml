@@ -1,0 +1,30 @@
+# SPDX-FileCopyrightText: 2026 City of Petäjävesi
+#
+# SPDX-License-Identifier: LGPL-2.1-or-later
+#
+# Petäjäveden Spring-profiili. Avaimet, joita ei määritellä tässä, tulevat
+# application.yaml-tiedoston oletuksista; ympäristömuuttujat ohittavat kaikki arvot.
+# Tiedostossa ei ole salaisuuksia eikä ympäristökohtaisia osoitteita.
+---
+evaka:
+  email:
+    sender_address: "no-reply@petajavesi.fi"
+    sender_name:
+      fi: "Petäjäveden kunnan varhaiskasvatus"
+      sv: "Petäjäveden kunnan varhaiskasvatus"
+  oph:
+    municipality_code: "592"
+    organizer_oid: "1.2.246.562.10.28690502241"
+    organizer_id: "290"
+  database:
+    flyway:
+      locations:
+        - db/migration
+        - petajavesi/db/migration
+  integration:
+    sfi:
+      contact_organization:
+        name: "eVaka Petäjävesi"
+        street_address: "Suutarintie 4"
+        postal_code: "41900"
+        post_office: "Petäjävesi"
